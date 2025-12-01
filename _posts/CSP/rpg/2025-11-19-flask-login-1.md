@@ -1,7 +1,6 @@
 ---
 layout: post
 title: RPG Game Login
-description: Centered RPG login page with fixed window and comment-safe layout.
 permalink: /rpg/login
 comments: true
 ---
