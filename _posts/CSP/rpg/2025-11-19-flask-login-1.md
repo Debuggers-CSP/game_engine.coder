@@ -47,6 +47,31 @@ body::before {
     to { transform: translate(-50%, -50%); }
 }
 
+/* Animated background image */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 100%;
+    background-image: url('/images/prettysky.png');
+    background-size: 50% 100%;
+    background-repeat: repeat-x;
+    opacity: 0.3;
+    z-index: 0;
+    animation: skyDrift 60s linear infinite;
+}
+
+@keyframes skyDrift {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+
 .container {
     position: relative;
     z-index: 10;
