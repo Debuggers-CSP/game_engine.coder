@@ -400,7 +400,7 @@ body::after {
 </div>
 
 <script>
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'http://localhost:8587/api';
 
 function switchTab(tab) {
     // Update tab buttons
@@ -455,7 +455,7 @@ async function handleRegister(event) {
     };
     
     try {
-        const response = await fetch(`${API_URL}/data`, {
+        const response = await fetch(`${API_URL}/rpg/data`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -504,7 +504,7 @@ async function handleLogin(event) {
     };
     
     try {
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${API_URL}/rpg/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
