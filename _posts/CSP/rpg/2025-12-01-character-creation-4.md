@@ -505,8 +505,58 @@ comments: True
     <div class="container">
         <header>
             <h1>Character Creation</h1>
-            <p class="subtitle">Choose your character's class and customize their appearance. Your pixel art character will update in real-time.</p>
+            <p class="subtitle">Build your character's background story and customize their visual appearance!</p>
         </header>
+        
+        <!-- Character Background Builder Section -->
+        <div style="background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95)); border-radius: 20px; padding: 40px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 215, 0, 0.1); border: 2px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(10px); margin-bottom: 40px;">
+            <h2 style="color: #ffd700; font-size: 2em; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); text-align: center;">Character Background Builder</h2>
+            <p style="color: #c0c0c0; margin-bottom: 25px; text-align: center;">Create a detailed character sheet by filling out the form below!</p>
+            
+            <form id="character-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; text-align: left;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #ffd700; margin-bottom: 8px; font-weight: bold;">Character Name:</label>
+                    <input type="text" id="char-name" name="name" required
+                        style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 8px; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 1em;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #ffd700; margin-bottom: 8px; font-weight: bold;">Motivation (What drives them?):</label>
+                    <textarea id="char-motivation" name="motivation" required rows="3"
+                        style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 8px; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 1em; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #ffd700; margin-bottom: 8px; font-weight: bold;">Greatest Fear:</label>
+                    <textarea id="char-fear" name="fear" required rows="3"
+                        style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 8px; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 1em; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: #ffd700; margin-bottom: 8px; font-weight: bold;">Hidden Secret:</label>
+                    <textarea id="char-secret" name="secret" required rows="3"
+                        style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(255, 215, 0, 0.3); border-radius: 8px; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; font-size: 1em; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="grid-column: 1 / -1;">
+                    <button type="submit" class="btn btn-confirm" style="width: 100%; max-width: 500px; margin: 0 auto; display: block;">
+                        <span style="position: relative; z-index: 1;">Create Character Sheet</span>
+                    </button>
+                </div>
+            </form>
+            
+            <div id="character-sheet-result" style="margin-top: 30px; display: none; opacity: 0; transition: opacity 0.3s ease;">
+                <div id="character-sheet-content" style="color: #e0e0e0;"></div>
+                <button onclick="downloadCharacterSheet()" class="btn btn-confirm" style="margin-top: 20px; padding: 12px 30px; font-size: 1em; display: block; margin-left: auto; margin-right: auto;">
+                    <span style="position: relative; z-index: 1;"><i class="fas fa-download"></i> Download Character Sheet</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Visual Character Creator Section -->
+        <div style="background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95)); border-radius: 20px; padding: 40px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(255, 215, 0, 0.1); border: 2px solid rgba(255, 215, 0, 0.3); backdrop-filter: blur(10px); margin-bottom: 40px;">
+            <h2 style="color: #ffd700; font-size: 2em; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255, 215, 0, 0.3); text-align: center;">Visual Character Creator</h2>
+            <p style="color: #c0c0c0; margin-bottom: 25px; text-align: center;">Customize your character's appearance. Your pixel art character will update in real-time.</p>
         
         <div class="main-content">
             <div class="options-panel">
@@ -569,6 +619,7 @@ comments: True
             <button class="btn btn-confirm" id="confirmButton">
                 <i class="fas fa-check-circle"></i> Confirm Character
             </button>
+        </div>
         </div>
         
         <footer>
@@ -862,6 +913,155 @@ document.getElementById('confirmButton').addEventListener('click', function() {
 
         }
 
+        // Character Builder Form Handler
+        let characterSheetData = null;
+        let gameMode = localStorage.getItem('rpgGameMode') || 'action';
+
+        // Setup character form event listener
+        const characterForm = document.getElementById('character-form');
+        if (characterForm) {
+            characterForm.addEventListener('submit', handleCharacterSubmit);
+        }
+
+        async function handleCharacterSubmit(event) {
+            event.preventDefault();
+            
+            // Get user session data
+            const userSession = localStorage.getItem('userSession');
+            if (!userSession) {
+                alert('Please login first to create characters!');
+                window.location.href = '/rpg/login';
+                return;
+            }
+            
+            const sessionData = JSON.parse(userSession);
+            
+            const formData = {
+                name: document.getElementById('char-name').value,
+                motivation: document.getElementById('char-motivation').value,
+                fear: document.getElementById('char-fear').value,
+                secret: document.getElementById('char-secret').value,
+                gameMode: gameMode,
+                userGithubId: sessionData.githubId
+            };
+            
+            try {
+                const response = await fetch('http://localhost:8587/api/rpg/character', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    characterSheetData = result;
+                    displayCharacterSheet(result);
+                } else {
+                    alert('Error creating character sheet. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Could not connect to server. Please make sure the Flask backend is running.');
+            }
+        }
+
+        function displayCharacterSheet(data) {
+            const resultBox = document.getElementById('character-sheet-result');
+            const content = document.getElementById('character-sheet-content');
+            
+            content.innerHTML = `
+                <div style="border: 3px solid #ffd700; border-radius: 15px; padding: 30px; background: rgba(0, 0, 0, 0.6);">
+                    <h2 style="color: #ffd700; text-align: center; font-size: 2.5em; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 3px;">
+                        ${data.name}
+                    </h2>
+                    <p style="text-align: center; color: #ffed4e; font-style: italic; margin-bottom: 30px; font-size: 1.1em;">
+                        ${data.gameMode === 'cozy' ? '🌿 Cozy RPG Character' : '⚔️ Action RPG Character'}
+                    </p>
+                    
+                    <div style="margin-bottom: 25px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border-left: 4px solid #ffd700;">
+                        <h3 style="color: #ffed4e; margin-bottom: 10px; font-size: 1.3em;">💫 Motivation</h3>
+                        <p style="color: #e0e0e0; line-height: 1.8; font-size: 1.1em;">${data.motivation}</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 25px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border-left: 4px solid #ffd700;">
+                        <h3 style="color: #ffed4e; margin-bottom: 10px; font-size: 1.3em;">😰 Greatest Fear</h3>
+                        <p style="color: #e0e0e0; line-height: 1.8; font-size: 1.1em;">${data.fear}</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 25px; padding: 20px; background: rgba(255, 215, 0, 0.1); border-radius: 10px; border-left: 4px solid #ffd700;">
+                        <h3 style="color: #ffed4e; margin-bottom: 10px; font-size: 1.3em;">🤫 Hidden Secret</h3>
+                        <p style="color: #e0e0e0; line-height: 1.8; font-size: 1.1em;">${data.secret}</p>
+                    </div>
+                    
+                    <div style="padding: 20px; background: rgba(255, 215, 0, 0.05); border-radius: 10px; border: 2px dashed #ffd700;">
+                        <h3 style="color: #ffed4e; margin-bottom: 15px; font-size: 1.3em;">📝 Character Analysis</h3>
+                        <p style="color: #c0c0c0; line-height: 1.8; font-size: 1em;">${data.analysis}</p>
+                    </div>
+                    
+                    <p style="text-align: center; color: #888; margin-top: 25px; font-size: 0.9em;">
+                        Created on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+                    </p>
+                </div>
+            `;
+            
+            resultBox.style.display = 'block';
+            setTimeout(() => {
+                resultBox.style.opacity = '1';
+            }, 10);
+        }
+
+        function downloadCharacterSheet() {
+            if (!characterSheetData) {
+                alert('No character sheet to download!');
+                return;
+            }
+            
+            const textContent = `
+═══════════════════════════════════════════════════════
+    CHARACTER SHEET
+═══════════════════════════════════════════════════════
+
+NAME: ${characterSheetData.name}
+TYPE: ${characterSheetData.gameMode === 'cozy' ? 'Cozy RPG Character' : 'Action RPG Character'}
+
+═══════════════════════════════════════════════════════
+MOTIVATION
+═══════════════════════════════════════════════════════
+${characterSheetData.motivation}
+
+═══════════════════════════════════════════════════════
+GREATEST FEAR
+═══════════════════════════════════════════════════════
+${characterSheetData.fear}
+
+═══════════════════════════════════════════════════════
+HIDDEN SECRET
+═══════════════════════════════════════════════════════
+${characterSheetData.secret}
+
+═══════════════════════════════════════════════════════
+CHARACTER ANALYSIS
+═══════════════════════════════════════════════════════
+${characterSheetData.analysis}
+
+═══════════════════════════════════════════════════════
+Created on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+═══════════════════════════════════════════════════════
+            `;
+            
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${characterSheetData.name.replace(/\s+/g, '_')}_CharacterSheet.txt`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
         // Navigation Sidebar Functionality
         const sidebar = document.getElementById('rpg-nav-sidebar');
         const navToggle = document.getElementById('nav-toggle');
@@ -914,4 +1114,5 @@ document.getElementById('confirmButton').addEventListener('click', function() {
         updateReviewLock();
     </script>
 </body>
+</html>
 </html>
