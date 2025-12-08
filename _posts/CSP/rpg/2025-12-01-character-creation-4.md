@@ -47,7 +47,7 @@ comments: True
   </div>
 </div>
 
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -89,7 +89,7 @@ comments: True
         
         h1 {
             font-size: 2.8rem;
-            color: #4cc9f0;
+            color: #804cf0ff;
             text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
             margin-bottom: 10px;
             letter-spacing: 1px;
@@ -155,11 +155,11 @@ comments: True
             color: #b8c1d9;
         }
         
-        .class-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 12px;
-        }
+       .class-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px;
+}
         
         .class-option {
             background-color: #0f3460;
@@ -845,14 +845,21 @@ comments: True
                 updateCharacterPreview();
             });
             
-            // Confirm button
-            document.getElementById('confirmButton').addEventListener('click', function() {
-                const selectedClass = characterClasses.find(c => c.id === currentClass);
-                const hairColorName = hairColors.find(c => c.value === currentHairColor)?.name || 'Custom';
-                const clothingColorName = clothingColors.find(c => c.value === currentClothingColor)?.name || 'Custom';
-                
-                alert(`Character Created!\n\nClass: ${selectedClass.name}\nHair Color: ${hairColorName}\nClothing Color: ${clothingColorName}\n\nYour character is ready for adventure!`);
-            });
+            // Second confirm button with navigation
+document.getElementById('confirmButton').addEventListener('click', function() {
+    const selectedClass = characterClasses.find(c => c.id === currentClass);
+    const hairColorName = hairColors.find(c => c.value === currentHairColor)?.name || 'Custom';
+    const clothingColorName = clothingColors.find(c => c.value === currentClothingColor)?.name || 'Custom';
+    
+    // Show confirmation with emoji
+    const userConfirmed = confirm(`🎉 Character Created!\n\nClass: ${selectedClass.name}\nHair Color: ${hairColorName}\nClothing Color: ${clothingColorName}\n\nYour character is ready for adventure!\n\nClick OK to continue to controls page.`);
+    
+    // Navigate to controls page if user confirms
+    if (userConfirmed) {
+        window.location.href = 'http://localhost:4500/rpg/controls';
+    }
+});
+
         }
 
         // Navigation Sidebar Functionality
