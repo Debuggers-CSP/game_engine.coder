@@ -1,8 +1,8 @@
 ---
 layout: post
 title: Key Bindings & Player Controls
-description: Guide users through implementing core game controls.
-permalink: /rpg/controls
+description: Choose and save your RPG key bindings.
+permalink: /rpg/keybindings
 comments: True
 ---
 
@@ -33,7 +33,7 @@ comments: True
         <span class="nav-check">✓</span>
       </a>
       <!-- This is the current page -->
-      <a href="/rpg/controls" class="nav-link active" data-page="5">
+      <a href="/rpg/keybindings" class="nav-link active" data-page="5">
         <span class="nav-number">5</span>
         <span class="nav-text">Controls</span>
         <span class="nav-check">✓</span>
@@ -190,6 +190,13 @@ body::before {
     margin-bottom: 4px;
 }
 
+.mode-random-tip {
+    text-align: center;
+    color: #c0ffc4;
+    font-size: 0.85em;
+    margin-top: 6px;
+}
+
 /* Prompt box */
 .prompt-box {
     background: rgba(0, 0, 0, 0.4);
@@ -199,6 +206,21 @@ body::before {
     border-radius: 5px;
     color: #ffed4e;
     font-size: 0.9em;
+}
+
+/* Mode specific tip text */
+.mode-tip {
+    display: none;
+    margin-top: 6px;
+    font-size: 0.85em;
+}
+
+.mode-tip.action {
+    color: #ffb3b3;
+}
+
+.mode-tip.cozy {
+    color: #b3ffe0;
 }
 
 /* Generic section card (used only for keybind panel now) */
@@ -577,6 +599,7 @@ body::before {
             💡 Your key layout is saved separately for each mode.
         </p>
         <p class="mode-description" id="mode-description"></p>
+        <p class="mode-random-tip" id="mode-random-tip"></p>
     </div>
 
     <!-- Save Your Key Bindings -->
@@ -586,12 +609,18 @@ body::before {
         <div class="section-content">
             <p style="color:#e0e0e0; line-height:1.6; font-size:0.95em;">
                 Select the main key for each action below. 
-                <strong>Action RPG</strong> uses a fast-paced WASD + mouse layout. 
-                <strong>Cozy RPG</strong> uses slower, arrow-key-friendly controls.
+                <strong>Action RPG</strong> uses a fast-paced, no-duplicate WASD layout. 
+                <strong>Cozy RPG</strong> allows shared keys and slower, arrow-key-friendly controls.
             </p>
 
             <div class="prompt-box">
                 You need to be logged in first. We use your saved <strong>GitHub ID</strong> to remember these controls.
+                <div class="mode-tip action" id="mode-tip-action">
+                    ⚔️ Action rule: each action should use a different key so you can react quickly.
+                </div>
+                <div class="mode-tip cozy" id="mode-tip-cozy">
+                    🌿 Cozy rule: it’s okay if multiple actions share the same key (like Space) for comfy play.
+                </div>
             </div>
 
             <form id="keybind-preferences-form" onsubmit="handleKeybindingSave(event)">
@@ -691,8 +720,10 @@ body::before {
 
                     <div class="keybind-row">
                         <div>
-                            <div class="keybind-action-name">Jump / Hop</div>
-                            <div class="keybind-action-sub">Action: Space • Cozy: (None or small hop)</div>
+                            <div class="keybind-action-name">Jump / Tool Action</div>
+                            <div class="keybind-action-sub">
+                                Action: Space to jump • Cozy: optional, can be used for “Use Tool” or left empty
+                            </div>
                         </div>
                         <div>
                             <select id="bind-jump" class="keybind-select">
@@ -705,14 +736,16 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Vertical movement like jumping, vaulting, or light hops.
+                            In Action mode this is your jump/dodge. In Cozy mode it can be a tool key or disabled.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
-                            <div class="keybind-action-name">Sprint / Quick Walk</div>
-                            <div class="keybind-action-sub">Action: Shift • Cozy: (Off by default)</div>
+                            <div class="keybind-action-name">Sprint / Comfort Action</div>
+                            <div class="keybind-action-sub">
+                                Action: Shift to sprint • Cozy: optional (emotes / auto-walk)
+                            </div>
                         </div>
                         <div>
                             <select id="bind-sprint" class="keybind-select">
@@ -724,7 +757,7 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Sprint in action games or a gentle quick-walk in cozy games.
+                            In Action mode this is your sprint or dash. In Cozy mode it can trigger emotes or comfort actions.
                         </div>
                     </div>
                 </div>
@@ -767,6 +800,19 @@ const modeDefaultBindings = {
     }
 };
 
+// Random tips for extra flavor
+const actionTips = [
+    "Tip: Keep your pinky on Shift so sprint and jump are never far from WASD.",
+    "Tip: Put dodge and jump on different keys to avoid fat-finger mistakes.",
+    "Tip: Avoid putting Interact on Space in Action mode so you don't jump by accident."
+];
+
+const cozyTips = [
+    "Tip: It’s okay if Space does almost everything in Cozy mode.",
+    "Tip: Arrow keys + Space is a classic comfy combo.",
+    "Tip: You can leave Sprint empty in Cozy mode for a slower, calmer vibe."
+];
+
 // Navigation sidebar + page tracking
 const currentPage = 5; // This is page 5
 const sidebar = document.getElementById('rpg-nav-sidebar');
@@ -807,6 +853,7 @@ function updateModeSelector(mode) {
 
     const subtitle = document.querySelector('.subtitle');
     const modeDesc = document.getElementById('mode-description');
+    const randomTipEl = document.getElementById('mode-random-tip');
 
     if (subtitle) {
         subtitle.textContent = mode === 'cozy'
@@ -816,8 +863,13 @@ function updateModeSelector(mode) {
 
     if (modeDesc) {
         modeDesc.textContent = mode === 'cozy'
-            ? '🌿 Cozy layout uses arrow keys, Space to interact, and no sprint or jump by default.'
+            ? '🌿 Cozy layout uses arrow keys, Space to interact, and can skip sprint/jump entirely.'
             : '⚔️ Action layout uses WASD movement, E to interact, Space to jump, and Shift to sprint.';
+    }
+
+    if (randomTipEl) {
+        const tips = mode === 'cozy' ? cozyTips : actionTips;
+        randomTipEl.textContent = tips[Math.floor(Math.random() * tips.length)];
     }
 }
 
@@ -833,10 +885,20 @@ function switchMode(event, mode) {
     loadExistingKeybindings();
 }
 
-// In this page, the content differences are mainly defaults & descriptions,
-// but we keep a hook in case you later want to show/hide mode-specific UI.
+// Update UI for current mode (tips, etc.)
 function updateContentForMode(mode) {
-    // No per-element show/hide needed anymore; left here for extension.
+    const actionTip = document.getElementById('mode-tip-action');
+    const cozyTip = document.getElementById('mode-tip-cozy');
+
+    if (actionTip && cozyTip) {
+        if (mode === 'action') {
+            actionTip.style.display = 'block';
+            cozyTip.style.display = 'none';
+        } else {
+            actionTip.style.display = 'none';
+            cozyTip.style.display = 'block';
+        }
+    }
 }
 
 /* ======== Save & Load Key Bindings via Backend ======== */
@@ -871,7 +933,6 @@ function applyDefaultBindingsForMode(mode) {
     Object.entries(mapping).forEach(([id, value]) => {
         const el = document.getElementById(id);
         if (el) {
-            // allow empty string for "(None)"
             el.value = (typeof value === 'string') ? value : '';
         }
     });
@@ -945,6 +1006,34 @@ function setKeybindingFormFromData(binding) {
     });
 }
 
+// Extra: enforce different rules per mode
+function validateKeysForMode(keys) {
+    // keys is an object of { actionName: keyValue }
+    if (gameMode === 'action') {
+        // In action mode, every non-empty key must be unique
+        const nonEmpty = Object.values(keys).filter(k => k && k.length > 0);
+        const seen = new Set();
+        for (const k of nonEmpty) {
+            if (seen.has(k)) {
+                return {
+                    ok: false,
+                    message: "In Action mode, each action should use a different key for quick reactions."
+                };
+            }
+            seen.add(k);
+        }
+    } else {
+        // Cozy mode: allow duplicates, but at least movement + interact should be set
+        if (!keys.moveUpKey || !keys.interactKey) {
+            return {
+                ok: false,
+                message: "In Cozy mode, make sure at least Move Up and Interact have keys."
+            };
+        }
+    }
+    return { ok: true };
+}
+
 // Handle save button: send preferred bindings to backend
 async function handleKeybindingSave(event) {
     event.preventDefault();
@@ -959,9 +1048,7 @@ async function handleKeybindingSave(event) {
         return;
     }
 
-    const payload = {
-        userGithubId: session.githubId,
-        gameMode: gameMode,
+    const keys = {
         moveUpKey: document.getElementById('bind-move-up').value,
         moveLeftKey: document.getElementById('bind-move-left').value,
         moveDownKey: document.getElementById('bind-move-down').value,
@@ -969,6 +1056,20 @@ async function handleKeybindingSave(event) {
         interactKey: document.getElementById('bind-interact').value,
         jumpKey: document.getElementById('bind-jump').value,
         sprintKey: document.getElementById('bind-sprint').value
+    };
+
+    // Validate differently for each mode
+    const validation = validateKeysForMode(keys);
+    if (!validation.ok) {
+        status.textContent = "❌ " + validation.message;
+        status.style.color = "#ff6b6b";
+        return;
+    }
+
+    const payload = {
+        userGithubId: session.githubId,
+        gameMode: gameMode,
+        ...keys
     };
 
     try {
