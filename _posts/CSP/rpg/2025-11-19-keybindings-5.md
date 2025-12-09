@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Key Bindings & Player Controls
-description: Guide users through implementing core game controls.
+description: Choose and save your RPG key bindings.
 permalink: /rpg/keybindings
 comments: True
 ---
@@ -94,14 +94,15 @@ body::before {
 .container {
     position: relative;
     z-index: 10;
-    max-width: 1200px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
+/* Header card */
 .header-card {
     background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
     border-radius: 20px;
-    padding: 40px;
+    padding: 32px 28px;
     box-shadow: 
         0 8px 32px 0 rgba(0, 0, 0, 0.7),
         inset 0 0 20px rgba(255, 215, 0, 0.1),
@@ -109,213 +110,56 @@ body::before {
     border: 2px solid rgba(255, 215, 0, 0.3);
     backdrop-filter: blur(10px);
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 28px;
 }
 
 .title-icon {
-    font-size: 4em;
-    margin-bottom: 20px;
+    font-size: 3.5em;
+    margin-bottom: 12px;
     filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
 }
 
 .main-title {
     color: #ffd700;
-    font-size: 3em;
-    margin-bottom: 15px;
+    font-size: 2.4em;
+    margin-bottom: 10px;
     text-shadow: 
         0 0 10px rgba(255, 215, 0, 0.5),
         0 0 20px rgba(255, 215, 0, 0.3),
         2px 2px 4px rgba(0, 0, 0, 0.8);
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
 .subtitle {
     color: #c0c0c0;
-    font-size: 1.2em;
+    font-size: 1.05em;
     font-style: italic;
     opacity: 0.9;
+    margin-bottom: 16px;
 }
 
-.content-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
-}
-
-.section-card {
-    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.7),
-        inset 0 0 20px rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-}
-
-.section-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.8),
-        inset 0 0 30px rgba(255, 215, 0, 0.2),
-        0 0 60px rgba(255, 215, 0, 0.3);
-}
-
-.section-icon {
-    font-size: 2.5em;
-    margin-bottom: 15px;
-    display: block;
-}
-
-.section-title {
-    color: #ffd700;
-    font-size: 1.8em;
-    margin-bottom: 15px;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.section-content {
-    color: #e0e0e0;
-    line-height: 1.8;
-    font-size: 1em;
-}
-
-.section-content ul {
-    list-style: none;
-    padding-left: 0;
-    margin-top: 15px;
-}
-
-.section-content li {
-    padding: 8px 0 8px 25px;
-    position: relative;
-    color: #c0c0c0;
-}
-
-.section-content li::before {
-    content: '🎮';
-    position: absolute;
-    left: 0;
-    font-size: 0.8em;
-}
-
-.prompt-box {
-    background: rgba(0, 0, 0, 0.4);
-    border-left: 4px solid #ffd700;
-    padding: 15px 20px;
-    margin: 15px 0;
-    border-radius: 5px;
-    color: #ffed4e;
-    font-style: italic;
-}
-
-.generator-card {
-    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.7),
-        inset 0 0 20px rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    backdrop-filter: blur(10px);
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.generator-title {
-    color: #ffd700;
-    font-size: 2em;
-    margin-bottom: 20px;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.generator-btn {
-    padding: 16px 40px;
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    border: none;
-    border-radius: 10px;
-    color: #1a1a2e;
-    font-size: 1.2em;
-    font-weight: bold;
-    font-family: 'Cinzel', 'Georgia', serif;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
-    position: relative;
-    overflow: hidden;
-}
-
-.generator-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.generator-btn:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-.generator-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
-}
-
-.result-box {
-    margin-top: 30px;
-    padding: 25px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 2px solid #ffd700;
-    border-radius: 15px;
-    min-height: 100px;
-    display: none;
-}
-
-.result-box.active {
-    display: block;
-    animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.result-text {
-    color: #ffd700;
-    font-size: 1.1em;
-    line-height: 1.8;
-    text-align: left;
-}
-
+/* Mode selector */
 .mode-selector {
     display: flex;
-    gap: 20px;
+    gap: 16px;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
 }
 
 .mode-btn {
-    padding: 12px 30px;
+    padding: 10px 22px;
     background: rgba(0, 0, 0, 0.4);
     border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 10px;
+    border-radius: 999px;
     color: #c0c0c0;
-    font-size: 1em;
+    font-size: 0.95em;
     font-family: 'Cinzel', 'Georgia', serif;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .mode-btn:hover {
@@ -335,60 +179,66 @@ body::before {
     text-align: center;
     color: #c0c0c0;
     font-size: 0.9em;
-    margin-bottom: 20px;
+    margin-bottom: 4px;
     font-style: italic;
 }
 
-.cozy-only {
-    display: none;
+.mode-description {
+    text-align: center;
+    color: #ffed4e;
+    font-size: 0.9em;
+    margin-bottom: 4px;
 }
 
-.action-only {
+/* Prompt box */
+.prompt-box {
+    background: rgba(0, 0, 0, 0.4);
+    border-left: 4px solid #ffd700;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 5px;
+    color: #ffed4e;
+    font-size: 0.9em;
+}
+
+/* Generic section card (used only for keybind panel now) */
+.section-card {
+    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
+    border-radius: 20px;
+    padding: 26px 24px;
+    box-shadow: 
+        0 8px 32px 0 rgba(0, 0, 0, 0.7),
+        inset 0 0 20px rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    margin-bottom: 28px;
+}
+
+.section-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 
+        0 12px 40px 0 rgba(0, 0, 0, 0.8),
+        inset 0 0 30px rgba(255, 215, 0, 0.2),
+        0 0 60px rgba(255, 215, 0, 0.3);
+}
+
+.section-icon {
+    font-size: 2.3em;
+    margin-bottom: 8px;
     display: block;
 }
 
-.example-card {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    margin: 15px 0;
-}
-
-.example-title {
+.section-title {
     color: #ffd700;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.example-text {
-    color: #c0c0c0;
-    line-height: 1.6;
-}
-
-/* Simple key table */
-.key-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-    font-size: 0.95em;
-}
-
-.key-table th,
-.key-table td {
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    padding: 8px 10px;
-    text-align: left;
-}
-
-.key-table th {
-    background: rgba(255, 215, 0, 0.1);
-    color: #ffed4e;
+    font-size: 1.7em;
+    margin-bottom: 8px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
 /* Keybinding preferences – “Bindings Manager” look */
 .keybind-table {
-    margin-top: 20px;
+    margin-top: 12px;
     border-radius: 14px;
     overflow: hidden;
     border: 1px solid rgba(255, 215, 0, 0.35);
@@ -462,7 +312,7 @@ body::before {
     color: #c0c0c0;
 }
 
-/* Re-use existing select styling */
+/* Select styling */
 .keybind-select {
     width: 100%;
     padding: 8px 10px;
@@ -479,19 +329,61 @@ body::before {
     box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
 }
 
-.keybind-save-btn {
-    margin-top: 24px;
-    padding: 12px 28px;
-    font-size: 1em;
+/* Button styling (reused for Save) */
+.generator-btn {
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    border: none;
+    border-radius: 10px;
+    color: #1a1a2e;
+    font-size: 1.05em;
+    font-weight: bold;
+    font-family: 'Cinzel', 'Georgia', serif;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    position: relative;
+    overflow: hidden;
 }
 
-.keybind-status {
-    margin-top: 15px;
+.generator-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.generator-btn:hover::before {
+    width: 280px;
+    height: 280px;
+}
+
+.generator-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+}
+
+.keybind-save-btn {
+    margin-top: 20px;
     font-size: 0.95em;
+}
+
+/* Status text */
+.keybind-status {
+    margin-top: 12px;
+    font-size: 0.9em;
     font-weight: bold;
 }
 
-/* Responsive design */
+/* Responsive */
 @media (max-width: 900px) {
     .keybind-header-row,
     .keybind-row {
@@ -505,16 +397,8 @@ body::before {
 }
 
 @media (max-width: 768px) {
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .main-title {
         font-size: 2em;
-    }
-    
-    .section-title {
-        font-size: 1.5em;
     }
 }
 
@@ -676,215 +560,34 @@ body::before {
     <!-- Header -->
     <div class="header-card">
         <div class="title-icon">🎮</div>
-        <h1 class="main-title">KEY BINDINGS & CONTROLS</h1>
-        <p class="subtitle">Make your RPG feel great to play</p>
-        
-        <div class="mode-selector">
-            <button class="mode-btn" data-mode="action" onclick="switchMode(event, 'action')">⚔️ Action RPG</button>
-            <button class="mode-btn" data-mode="cozy" onclick="switchMode(event, 'cozy')">🌿 Cozy RPG</button>
-        </div>
-        <p class="mode-indicator">💡 Choose a mode to tailor your control scheme</p>
-    </div>
-
-    <!-- Main Content Sections -->
-    <div class="content-grid">
-        <!-- Movement Basics -->
-        <div class="section-card">
-            <span class="section-icon">⌨️</span>
-            <h2 class="section-title">Movement Basics</h2>
-            <div class="section-content">
-                <p>Start with a simple, standard layout so players feel at home immediately.</p>
-                
-                <div class="prompt-box">
-                    💭 How should players move, jump, and navigate your world?
-                </div>
-
-                <ul>
-                    <li><strong>WASD</strong> keys to move the character: W = forward/up, A = left, S = backward/down, D = right.</li>
-                    <li>Arrow keys as an optional alternative for movement (↑ ↓ ← →).</li>
-                    <li><strong>Spacebar</strong> to jump.</li>
-                    <li class="action-only"><strong>Left Shift</strong> to sprint or dodge.</li>
-                    <li class="cozy-only"><strong>Left Shift</strong> for a gentle “quick walk” or short dash.</li>
-                    <li><strong>Left Ctrl</strong> or <strong>C</strong> to crouch or sneak (if your game uses stealth).</li>
-                </ul>
-
-                <div class="example-card">
-                    <div class="example-title">Standard Movement Layout:</div>
-                    <div class="example-text">
-                        • WASD / Arrow keys – Move<br>
-                        • Space – Jump / Climb small ledges<br>
-                        • Shift – Sprint (Action) / Brisk walk (Cozy)<br>
-                        • Ctrl or C – Crouch / Sneak
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Interaction & Actions -->
-        <div class="section-card">
-            <span class="section-icon">🖱️</span>
-            <h2 class="section-title">Interaction & Actions</h2>
-            <div class="section-content">
-                <p>Next, define how players talk, pick up items, and fight (if your game has combat).</p>
-
-                <div class="prompt-box">
-                    💭 Which actions should feel instant and easy to reach with one hand?
-                </div>
-
-                <ul>
-                    <li><strong>E</strong> or <strong>F</strong> to interact (talk, open doors, pick up items).</li>
-                    <li class="action-only"><strong>Left Mouse Button</strong> – Primary attack / main ability.</li>
-                    <li class="action-only"><strong>Right Mouse Button</strong> – Block, aim, or secondary ability.</li>
-                    <li class="cozy-only"><strong>Left Mouse Button</strong> – Confirm, interact, place items.</li>
-                    <li class="cozy-only"><strong>Right Mouse Button</strong> – Cancel, rotate item, back.</li>
-                    <li><strong>Q</strong> or <strong>R</strong> – Special ability or tool.</li>
-                    <li><strong>1–4</strong> – Quick access slots (tools, potions, emotes, etc.).</li>
-                </ul>
-
-                <div class="example-card">
-                    <div class="example-title">Interaction Examples:</div>
-                    <div class="example-text action-only">
-                        • E – Talk / Use<br>
-                        • F – Heavy interact (levers, switches)<br>
-                        • LMB – Light attack<br>
-                        • RMB – Block / Aim<br>
-                        • Q – Special skill
-                    </div>
-                    <div class="example-text cozy-only">
-                        • E – Talk / Use<br>
-                        • F – Pet animals / Special interact<br>
-                        • LMB – Place object / Harvest<br>
-                        • RMB – Cancel / Rotate object<br>
-                        • Q – Use tool (watering can, brush, etc.)
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Keyboard Cheat Sheet -->
-        <div class="section-card">
-            <span class="section-icon">📜</span>
-            <h2 class="section-title">Keyboard Cheat Sheet</h2>
-            <div class="section-content">
-                <p>Give players a quick reference for all the important keys.</p>
-
-                <table class="key-table">
-                    <thead>
-                        <tr>
-                            <th>Key</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>W / ↑</td><td>Move up / forward</td></tr>
-                        <tr><td>A / ←</td><td>Move left</td></tr>
-                        <tr><td>S / ↓</td><td>Move down / backward</td></tr>
-                        <tr><td>D / →</td><td>Move right</td></tr>
-                        <tr><td>Space</td><td>Jump</td></tr>
-                        <tr class="action-only-row"><td>Shift</td><td>Sprint / Dodge</td></tr>
-                        <tr class="cozy-only-row" style="display:none;"><td>Shift</td><td>Quick walk / Short dash</td></tr>
-                        <tr><td>E / F</td><td>Interact</td></tr>
-                        <tr><td>Left Mouse</td><td class="action-only-row">Primary attack</td></tr>
-                        <tr class="cozy-only-row" style="display:none;"><td>Left Mouse</td><td>Main interact / place</td></tr>
-                        <tr><td>Esc</td><td>Pause / Open menu</td></tr>
-                        <tr><td>M</td><td>Map</td></tr>
-                        <tr><td>I</td><td>Inventory</td></tr>
-                    </tbody>
-                </table>
-
-                <div class="prompt-box">
-                    Tip: Keep the most-used actions close to WASD so players rarely have to move their hand.
-                </div>
-            </div>
-        </div>
-
-        <!-- Controller Support -->
-        <div class="section-card">
-            <span class="section-icon">🕹️</span>
-            <h2 class="section-title">Controller Layout (Optional)</h2>
-            <div class="section-content">
-                <p>Many players love using a gamepad. Mirror your keyboard controls on a controller when possible.</p>
-
-                <ul>
-                    <li>Left Stick – Move / walk.</li>
-                    <li>Right Stick – Camera control (if 3D) or aim.</li>
-                    <li><strong>A / Cross</strong> – Jump / Confirm.</li>
-                    <li><strong>B / Circle</strong> – Cancel / Dodge / Back.</li>
-                    <li><strong>X / Square</strong> – Interact / Use.</li>
-                    <li><strong>Y / Triangle</strong> – Special action / Inventory.</li>
-                    <li>Triggers (LT / RT) – Aim / Attack or Tool use.</li>
-                    <li>Start – Pause menu. Select – Map / Journal.</li>
-                </ul>
-
-                <div class="example-card">
-                    <div class="example-title">Example Mapping:</div>
-                    <div class="example-text">
-                        • A – Jump<br>
-                        • X – Interact<br>
-                        • RT – Attack / Use tool<br>
-                        • LT – Block / Aim<br>
-                        • D-Pad – Change items / emotes
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Comfort & Accessibility -->
-        <div class="section-card">
-            <span class="section-icon">🧩</span>
-            <h2 class="section-title">Comfort & Accessibility</h2>
-            <div class="section-content">
-                <p>Good controls feel comfortable for as many players as possible.</p>
-
-                <div class="prompt-box">
-                    💭 Can players change their key bindings if something doesn’t feel right?
-                </div>
-
-                <ul>
-                    <li>Allow players to rebind keys and buttons wherever possible.</li>
-                    <li>Offer multiple layouts: “Classic”, “Left-handed”, “One-hand friendly”.</li>
-                    <li>Avoid forcing complex combos for basic actions.</li>
-                    <li class="action-only">Give separate options for tap vs hold (e.g., tap to dodge, hold to sprint).</li>
-                    <li class="cozy-only">Allow slower-paced controls with no time pressure.</li>
-                    <li>Provide clear on-screen prompts (e.g., “Press E to interact”).</li>
-                </ul>
-
-                <div class="example-card cozy-only">
-                    <div class="example-title">Cozy-Friendly Ideas:</div>
-                    <div class="example-text">
-                        • Auto-run toggle instead of holding a key<br>
-                        • Simple one-button actions for tools<br>
-                        • No penalty for pressing the “wrong” key
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Control Preset Generator -->
-    <div class="generator-card">
-        <h2 class="generator-title">🎲 Control Scheme Generator</h2>
-        <p style="color: #c0c0c0; margin-bottom: 25px;">
-            Need a starting point? Generate a suggested key layout for your RPG.
+        <h1 class="main-title">KEY BINDINGS</h1>
+        <p class="subtitle">
+            Pick your keys and save them to your RPG profile.
         </p>
         
-        <button class="generator-btn" onclick="generateControlsPreset()">
-            <span style="position: relative; z-index: 1;">Generate Control Preset</span>
-        </button>
-        
-        <div id="controls-result-box" class="result-box">
-            <div class="result-text" id="controls-result"></div>
+        <div class="mode-selector">
+            <button class="mode-btn" data-mode="action" onclick="switchMode(event, 'action')">
+                ⚔️ Action RPG
+            </button>
+            <button class="mode-btn" data-mode="cozy" onclick="switchMode(event, 'cozy')">
+                🌿 Cozy RPG
+            </button>
         </div>
+        <p class="mode-indicator">
+            💡 Your key layout is saved separately for each mode.
+        </p>
+        <p class="mode-description" id="mode-description"></p>
     </div>
 
-    <!-- Save Your Key Bindings to the Backend -->
+    <!-- Save Your Key Bindings -->
     <div class="section-card">
         <span class="section-icon">💾</span>
-        <h2 class="section-title">Save Your Key Bindings</h2>
+        <h2 class="section-title">Choose Your Keys</h2>
         <div class="section-content">
-            <p>
-                Choose which keys you want for each action. When you click save, your preferences will be
-                stored in the RPG backend and linked to your GitHub ID (from the Login step).
+            <p style="color:#e0e0e0; line-height:1.6; font-size:0.95em;">
+                Select the main key for each action below. 
+                <strong>Action RPG</strong> uses a fast-paced WASD + mouse layout. 
+                <strong>Cozy RPG</strong> uses slower, arrow-key-friendly controls.
             </p>
 
             <div class="prompt-box">
@@ -902,7 +605,7 @@ body::before {
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Up / Forward</div>
-                            <div class="keybind-action-sub">Typical: W or Arrow Up</div>
+                            <div class="keybind-action-sub">Action: W • Cozy: ↑</div>
                         </div>
                         <div>
                             <select id="bind-move-up" class="keybind-select">
@@ -912,14 +615,14 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Moves your character forward in the world or up on a 2D grid.
+                            Move your character forward or up.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Down / Backward</div>
-                            <div class="keybind-action-sub">Typical: S or Arrow Down</div>
+                            <div class="keybind-action-sub">Action: S • Cozy: ↓</div>
                         </div>
                         <div>
                             <select id="bind-move-down" class="keybind-select">
@@ -929,14 +632,14 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Walk backward or move down on a tile-based map.
+                            Move backward or down on a 2D map.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Left</div>
-                            <div class="keybind-action-sub">Typical: A or Arrow Left</div>
+                            <div class="keybind-action-sub">Action: A • Cozy: ←</div>
                         </div>
                         <div>
                             <select id="bind-move-left" class="keybind-select">
@@ -946,14 +649,14 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Strafe or walk left. Often paired with D on the right.
+                            Move or strafe left.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Right</div>
-                            <div class="keybind-action-sub">Typical: D or Arrow Right</div>
+                            <div class="keybind-action-sub">Action: D • Cozy: →</div>
                         </div>
                         <div>
                             <select id="bind-move-right" class="keybind-select">
@@ -963,14 +666,14 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Strafe or walk right, completing the WASD cluster.
+                            Move or strafe right.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Interact</div>
-                            <div class="keybind-action-sub">Talk, open, pick up, etc.</div>
+                            <div class="keybind-action-sub">Action: E • Cozy: Space</div>
                         </div>
                         <div>
                             <select id="bind-interact" class="keybind-select">
@@ -982,14 +685,14 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Use this for doors, NPCs, loot, switches, and context actions.
+                            Use for doors, NPCs, loot, and context actions.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
-                            <div class="keybind-action-name">Jump</div>
-                            <div class="keybind-action-sub">Hop, vault, or climb.</div>
+                            <div class="keybind-action-name">Jump / Hop</div>
+                            <div class="keybind-action-sub">Action: Space • Cozy: (None or small hop)</div>
                         </div>
                         <div>
                             <select id="bind-jump" class="keybind-select">
@@ -998,17 +701,18 @@ body::before {
                                 <option value="k">K</option>
                                 <option value="ShiftLeft">Left Shift</option>
                                 <option value="ShiftRight">Right Shift</option>
+                                <option value="">(None)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Controls vertical movement like jumps and short dodges.
+                            Vertical movement like jumping, vaulting, or light hops.
                         </div>
                     </div>
 
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Sprint / Quick Walk</div>
-                            <div class="keybind-action-sub">Hold or toggle based on your design.</div>
+                            <div class="keybind-action-sub">Action: Shift • Cozy: (Off by default)</div>
                         </div>
                         <div>
                             <select id="bind-sprint" class="keybind-select">
@@ -1020,7 +724,7 @@ body::before {
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Use for sprinting in action games or “brisk walk” in cozy games.
+                            Sprint in action games or a gentle quick-walk in cozy games.
                         </div>
                     </div>
                 </div>
@@ -1041,6 +745,28 @@ const API_URL = 'http://localhost:8587/api';
 // Shared game mode with other pages
 let gameMode = localStorage.getItem('rpgGameMode') || 'action'; // default to action
 
+// Default layouts that are VERY different between modes
+const modeDefaultBindings = {
+    action: {
+        moveUpKey: 'w',
+        moveDownKey: 's',
+        moveLeftKey: 'a',
+        moveRightKey: 'd',
+        interactKey: 'e',
+        jumpKey: 'Space',
+        sprintKey: 'ShiftLeft'
+    },
+    cozy: {
+        moveUpKey: 'ArrowUp',
+        moveDownKey: 'ArrowDown',
+        moveLeftKey: 'ArrowLeft',
+        moveRightKey: 'ArrowRight',
+        interactKey: 'Space',
+        jumpKey: '',
+        sprintKey: ''
+    }
+};
+
 // Navigation sidebar + page tracking
 const currentPage = 5; // This is page 5
 const sidebar = document.getElementById('rpg-nav-sidebar');
@@ -1056,7 +782,8 @@ window.addEventListener('load', () => {
     updateVisitedIndicators();
     updateReviewLock();
 
-    // Load any previously saved key bindings for this user and mode
+    // Load any previously saved key bindings for this user and mode,
+    // or fall back to the mode's default layout.
     loadExistingKeybindings();
 });
 
@@ -1079,10 +806,18 @@ function updateModeSelector(mode) {
     });
 
     const subtitle = document.querySelector('.subtitle');
+    const modeDesc = document.getElementById('mode-description');
+
     if (subtitle) {
         subtitle.textContent = mode === 'cozy'
-            ? 'Make your controls calm, comfy, and low-stress'
-            : 'Make your RPG feel responsive and powerful';
+            ? 'Cozy mode: slow, comfy controls that focus on exploration and chill vibes.'
+            : 'Action mode: fast, responsive controls built for combat and quick reactions.';
+    }
+
+    if (modeDesc) {
+        modeDesc.textContent = mode === 'cozy'
+            ? '🌿 Cozy layout uses arrow keys, Space to interact, and no sprint or jump by default.'
+            : '⚔️ Action layout uses WASD movement, E to interact, Space to jump, and Shift to sprint.';
     }
 }
 
@@ -1093,182 +828,15 @@ function switchMode(event, mode) {
     updateContentForMode(mode);
     updateModeSelector(mode);
 
-    // When mode changes, load that mode's bindings if they exist
+    // When mode changes, load that mode's bindings if they exist,
+    // otherwise apply the mode-specific defaults.
     loadExistingKeybindings();
 }
 
-// Show/hide action vs cozy content
+// In this page, the content differences are mainly defaults & descriptions,
+// but we keep a hook in case you later want to show/hide mode-specific UI.
 function updateContentForMode(mode) {
-    const cozyElements = document.querySelectorAll('.cozy-only');
-    const actionElements = document.querySelectorAll('.action-only');
-
-    cozyElements.forEach(el => {
-        el.style.display = mode === 'cozy' ? 'block' : 'none';
-    });
-
-    actionElements.forEach(el => {
-        el.style.display = mode === 'action' ? 'block' : 'none';
-    });
-
-    // rows in the key table that are mode-specific
-    const cozyRows = document.querySelectorAll('.cozy-only-row');
-    const actionRows = document.querySelectorAll('.action-only-row');
-
-    cozyRows.forEach(row => {
-        row.style.display = mode === 'cozy' ? '' : 'none';
-    });
-
-    actionRows.forEach(row => {
-        row.style.display = mode === 'action' ? 'none' : '';
-    });
-}
-
-// Preset generator data
-const presets = {
-    action: [
-        {
-            name: "Classic Action Layout",
-            description: "Fast-paced and familiar to most PC action RPG players.",
-            keys: [
-                "WASD – Move",
-                "Mouse – Aim / Camera",
-                "Space – Jump / Dodge",
-                "Shift – Sprint",
-                "E – Interact",
-                "LMB – Attack",
-                "RMB – Block / Aim",
-                "Q / R – Skills"
-            ]
-        },
-        {
-            name: "Ability-Focused Layout",
-            description: "Perfect if your game has many active abilities.",
-            keys: [
-                "WASD – Move",
-                "Space – Jump",
-                "Shift – Dash",
-                "E – Interact",
-                "LMB – Basic attack",
-                "RMB – Strong attack",
-                "Q / E / R / F – Abilities",
-                "1–4 – Items / quick slots"
-            ]
-        },
-        {
-            name: "Keyboard-Centric Layout",
-            description: "Good for players who prefer less mouse usage.",
-            keys: [
-                "WASD – Move",
-                "Space – Jump",
-                "Shift – Sprint",
-                "J – Primary action / attack",
-                "K – Secondary action",
-                "L – Interact",
-                "I – Inventory",
-                "M – Map"
-            ]
-        }
-    ],
-    cozy: [
-        {
-            name: "Relaxed Exploration Layout",
-            description: "Low-stress controls for walking, talking, and exploring.",
-            keys: [
-                "WASD / Arrows – Move",
-                "Shift – Quick walk",
-                "Space – Small hop / interact animation",
-                "E – Talk / Use",
-                "F – Special interact (hug, pet, play)",
-                "I – Inventory",
-                "M – Map / Journal"
-            ]
-        },
-        {
-            name: "Farming & Crafting Layout",
-            description: "Focused on tools and daily tasks.",
-            keys: [
-                "WASD – Move",
-                "Space – Context action (use tool / talk)",
-                "Q / E – Cycle tools",
-                "Number keys – Select tools",
-                "Left Mouse – Use tool / place object",
-                "Right Mouse – Cancel / rotate",
-                "Tab – Open backpack",
-                "J – Quest / task log"
-            ]
-        },
-        {
-            name: "One-Hand Friendly Layout",
-            description: "Great for accessibility and casual play.",
-            keys: [
-                "Arrow keys – Move",
-                "Space – Interact / confirm",
-                "Enter – Open main menu",
-                "Right Ctrl – Special action",
-                "Left Hand on mouse – Camera & clicking",
-                "Esc – Pause / Settings"
-            ]
-        }
-    ]
-};
-
-function generateControlsPreset() {
-    const modePresets = gameMode === 'cozy' ? presets.cozy : presets.action;
-    const preset = modePresets[Math.floor(Math.random() * modePresets.length)];
-    const resultBox = document.getElementById('controls-result-box');
-    const result = document.getElementById('controls-result');
-
-    if (!resultBox || !result) return;
-
-    result.innerHTML = `
-        <h3 style="color:#ffed4e; font-size:1.4em; margin-bottom:10px;">${preset.name}</h3>
-        <p style="color:#c0c0c0; margin-bottom:15px;">${preset.description}</p>
-        <ul style="list-style:none; padding-left:0;">
-            ${preset.keys.map(k => `<li style="padding-left:22px; position:relative; margin-bottom:6px;">
-                <span style="position:absolute; left:0;">🎮</span>${k}
-            </li>`).join('')}
-        </ul>
-    `;
-
-    resultBox.classList.add('active');
-}
-
-// Navigation Sidebar Functionality
-
-// Track page visit
-function trackPageVisit(pageNumber) {
-    let visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
-    if (!visitedPages.includes(pageNumber)) {
-        visitedPages.push(pageNumber);
-        localStorage.setItem('rpgVisitedPages', JSON.stringify(visitedPages));
-    }
-}
-
-// Check if review page should be unlocked
-function updateReviewLock() {
-    const visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
-    const requiredPages = [2, 3, 4, 5];
-    const allVisited = requiredPages.every(page => visitedPages.includes(page));
-    
-    const reviewLink = document.getElementById('review-link');
-    if (reviewLink) {
-        if (allVisited) {
-            reviewLink.classList.remove('locked');
-        } else {
-            reviewLink.classList.add('locked');
-        }
-    }
-}
-
-// Update visited page indicators
-function updateVisitedIndicators() {
-    const visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
-    document.querySelectorAll('.nav-link').forEach(link => {
-        const pageNum = parseInt(link.dataset.page);
-        if (visitedPages.includes(pageNum)) {
-            link.classList.add('visited');
-        }
-    });
+    // No per-element show/hide needed anymore; left here for extension.
 }
 
 /* ======== Save & Load Key Bindings via Backend ======== */
@@ -1285,27 +853,53 @@ function getCurrentUserSession() {
     }
 }
 
+// Apply mode-specific defaults to the select fields
+function applyDefaultBindingsForMode(mode) {
+    const defaults = modeDefaultBindings[mode];
+    if (!defaults) return;
+
+    const mapping = {
+        'bind-move-up': defaults.moveUpKey,
+        'bind-move-down': defaults.moveDownKey,
+        'bind-move-left': defaults.moveLeftKey,
+        'bind-move-right': defaults.moveRightKey,
+        'bind-interact': defaults.interactKey,
+        'bind-jump': defaults.jumpKey,
+        'bind-sprint': defaults.sprintKey
+    };
+
+    Object.entries(mapping).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            // allow empty string for "(None)"
+            el.value = (typeof value === 'string') ? value : '';
+        }
+    });
+}
+
 // Load existing key bindings for the current user + mode
 async function loadExistingKeybindings() {
     const status = document.getElementById('keybind-status');
     const session = getCurrentUserSession();
 
+    if (!status) return;
+
     if (!session || !session.githubId) {
-        if (status) {
-            status.textContent = "Tip: Log in first so we can save your key bindings.";
-            status.style.color = "#ffed4e";
-        }
+        applyDefaultBindingsForMode(gameMode);
+        status.textContent = "Tip: Log in to save these bindings. Using the default layout for this mode.";
+        status.style.color = "#ffed4e";
         return;
     }
-
-    if (!status) return;
 
     try {
         const url = `${API_URL}/rpg/keybindings?userGithubId=${encodeURIComponent(session.githubId)}&gameMode=${encodeURIComponent(gameMode)}`;
         const response = await fetch(url);
 
         if (!response.ok) {
-            // It's okay if nothing exists yet
+            // No saved binding yet: use defaults
+            applyDefaultBindingsForMode(gameMode);
+            status.textContent = "No saved key bindings found for this mode. Using the default layout.";
+            status.style.color = "#ffed4e";
             return;
         }
 
@@ -1314,13 +908,20 @@ async function loadExistingKeybindings() {
             setKeybindingFormFromData(data.binding);
             status.textContent = "✅ Loaded your saved key bindings for this mode.";
             status.style.color = "#7CFC00";
+        } else {
+            applyDefaultBindingsForMode(gameMode);
+            status.textContent = "No saved key bindings found for this mode. Using the default layout.";
+            status.style.color = "#ffed4e";
         }
     } catch (error) {
         console.error('Error loading key bindings:', error);
+        applyDefaultBindingsForMode(gameMode);
+        status.textContent = "⚠️ Could not load saved bindings. Using the default layout.";
+        status.style.color = "#ffed4e";
     }
 }
 
-// Apply binding data to the select fields
+// Apply binding data returned from backend to the select fields
 function setKeybindingFormFromData(binding) {
     // Normalize legacy space values to the new "Space" string
     if (binding.jumpKey === ' ') binding.jumpKey = 'Space';
@@ -1338,7 +939,7 @@ function setKeybindingFormFromData(binding) {
 
     Object.entries(mapping).forEach(([id, value]) => {
         const el = document.getElementById(id);
-        if (el && typeof value === 'string' && value.length > 0) {
+        if (el && typeof value === 'string') {
             el.value = value;
         }
     });
@@ -1396,5 +997,43 @@ async function handleKeybindingSave(event) {
         status.textContent = "❌ Could not reach the server. Make sure the Flask backend is running.";
         status.style.color = "#ff6b6b";
     }
+}
+
+/* ======== Navigation Sidebar Functionality ======== */
+
+// Track page visit
+function trackPageVisit(pageNumber) {
+    let visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
+    if (!visitedPages.includes(pageNumber)) {
+        visitedPages.push(pageNumber);
+        localStorage.setItem('rpgVisitedPages', JSON.stringify(visitedPages));
+    }
+}
+
+// Check if review page should be unlocked
+function updateReviewLock() {
+    const visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
+    const requiredPages = [2, 3, 4, 5];
+    const allVisited = requiredPages.every(page => visitedPages.includes(page));
+    
+    const reviewLink = document.getElementById('review-link');
+    if (reviewLink) {
+        if (allVisited) {
+            reviewLink.classList.remove('locked');
+        } else {
+            reviewLink.classList.add('locked');
+        }
+    }
+}
+
+// Update visited page indicators
+function updateVisitedIndicators() {
+    const visitedPages = JSON.parse(localStorage.getItem('rpgVisitedPages') || '[]');
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const pageNum = parseInt(link.dataset.page);
+        if (visitedPages.includes(pageNum)) {
+            link.classList.add('visited');
+        }
+    });
 }
 </script>
