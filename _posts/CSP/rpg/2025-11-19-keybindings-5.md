@@ -343,6 +343,12 @@ body::before {
     color: #ffc;
 }
 
+/* Mode-conditional rows: hidden by default, JS will show */
+.mode-row-cozy,
+.mode-row-action {
+    display: none;
+}
+
 /* Select styling */
 .keybind-select {
     width: 100%;
@@ -894,13 +900,13 @@ body::before {
                     </div>
 
                     <!-- ============ COZY MODE EXTRAS ============ -->
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div class="keybind-section-label">Cozy Mode – Tools & Daily Life</div>
                         <div></div>
                         <div></div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Tool Slot 1</div>
                             <div class="keybind-action-sub">Cozy: 1</div>
@@ -917,7 +923,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Tool Slot 2</div>
                             <div class="keybind-action-sub">Cozy: 2</div>
@@ -934,7 +940,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Tool Slot 3</div>
                             <div class="keybind-action-sub">Cozy: 3</div>
@@ -951,7 +957,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Tool Slot 4</div>
                             <div class="keybind-action-sub">Cozy: 4</div>
@@ -968,7 +974,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Tool Slot 5</div>
                             <div class="keybind-action-sub">Cozy: 5</div>
@@ -985,7 +991,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Emote Wheel</div>
                             <div class="keybind-action-sub">Cozy: Q</div>
@@ -1002,7 +1008,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Craft / Cook Menu</div>
                             <div class="keybind-action-sub">Cozy: C</div>
@@ -1019,7 +1025,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Cozy Zoom Focus</div>
                             <div class="keybind-action-sub">Cozy: Z</div>
@@ -1036,7 +1042,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Chill Action</div>
                             <div class="keybind-action-sub">Cozy: X</div>
@@ -1053,7 +1059,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Gardening Assistant</div>
                             <div class="keybind-action-sub">Cozy: G</div>
@@ -1070,7 +1076,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Backpack Sort / Auto-Organize</div>
                             <div class="keybind-action-sub">Cozy: B</div>
@@ -1087,7 +1093,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Decoration Mode</div>
                             <div class="keybind-action-sub">Cozy: V</div>
@@ -1104,7 +1110,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Cozy Slow Walk</div>
                             <div class="keybind-action-sub">Cozy: Ctrl (hold)</div>
@@ -1121,7 +1127,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Build Grid Toggle</div>
                             <div class="keybind-action-sub">Cozy: Alt</div>
@@ -1138,7 +1144,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Inspect Animal / Plant</div>
                             <div class="keybind-action-sub">Cozy: Middle Click</div>
@@ -1155,7 +1161,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-cozy">
                         <div>
                             <div class="keybind-action-name">Whistle for Pets</div>
                             <div class="keybind-action-sub">Cozy: H</div>
@@ -1173,13 +1179,13 @@ body::before {
                     </div>
 
                     <!-- ============ ACTION MODE: COMBAT & FLOW ============ -->
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div class="keybind-section-label">Action Mode – Combat & Skills</div>
                         <div></div>
                         <div></div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Primary Attack</div>
                             <div class="keybind-action-sub">Action: Left Click</div>
@@ -1196,7 +1202,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Heavy Attack / Block</div>
                             <div class="keybind-action-sub">Action: Right Click</div>
@@ -1213,7 +1219,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Ability Slot 1</div>
                             <div class="keybind-action-sub">Action: 1</div>
@@ -1230,7 +1236,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Ability Slot 2</div>
                             <div class="keybind-action-sub">Action: 2</div>
@@ -1247,7 +1253,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Ability Slot 3</div>
                             <div class="keybind-action-sub">Action: 3</div>
@@ -1264,7 +1270,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Ability Slot 4</div>
                             <div class="keybind-action-sub">Action: 4</div>
@@ -1281,7 +1287,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Ultimate / Special</div>
                             <div class="keybind-action-sub">Action: 5</div>
@@ -1298,7 +1304,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Dodge / Roll</div>
                             <div class="keybind-action-sub">Action: Shift (tap)</div>
@@ -1315,7 +1321,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Crouch / Stealth</div>
                             <div class="keybind-action-sub">Action: Ctrl</div>
@@ -1332,7 +1338,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Grenade / Throw</div>
                             <div class="keybind-action-sub">Action: G</div>
@@ -1349,7 +1355,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Reload / Recharge</div>
                             <div class="keybind-action-sub">Action: R</div>
@@ -1366,7 +1372,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Execute / Finisher</div>
                             <div class="keybind-action-sub">Action: Hold E</div>
@@ -1383,7 +1389,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Melee Strike</div>
                             <div class="keybind-action-sub">Action: F</div>
@@ -1400,7 +1406,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Weapon Swap</div>
                             <div class="keybind-action-sub">Action: Q</div>
@@ -1417,7 +1423,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Mark Target / Ping</div>
                             <div class="keybind-action-sub">Action: Z</div>
@@ -1434,7 +1440,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Rage / Focus State</div>
                             <div class="keybind-action-sub">Action: X</div>
@@ -1451,7 +1457,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Lock-On Target</div>
                             <div class="keybind-action-sub">Action: Middle Click</div>
@@ -1468,7 +1474,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Tactical Wheel</div>
                             <div class="keybind-action-sub">Action: Alt</div>
@@ -1485,7 +1491,7 @@ body::before {
                         </div>
                     </div>
 
-                    <div class="keybind-row">
+                    <div class="keybind-row mode-row-action">
                         <div>
                             <div class="keybind-action-name">Taunt / Aggro</div>
                             <div class="keybind-action-sub">Action: T</div>
@@ -1656,6 +1662,7 @@ const navToggle = document.getElementById('nav-toggle');
 window.addEventListener('load', () => {
     updateContentForMode(gameMode);
     updateModeSelector(gameMode);
+    updateRowsVisibility(gameMode);  // 🔥 show only relevant rows
 
     // Track current page visit and update sidebar state
     trackPageVisit(currentPage);
@@ -1707,12 +1714,27 @@ function updateModeSelector(mode) {
     }
 }
 
+// 🔥 Show only the relevant rows for the current mode
+function updateRowsVisibility(mode) {
+    const cozyRows = document.querySelectorAll('.mode-row-cozy');
+    const actionRows = document.querySelectorAll('.mode-row-action');
+
+    cozyRows.forEach(row => {
+        row.style.display = (mode === 'cozy') ? 'grid' : 'none';
+    });
+
+    actionRows.forEach(row => {
+        row.style.display = (mode === 'action') ? 'grid' : 'none';
+    });
+}
+
 // Handle mode switch
 function switchMode(event, mode) {
     gameMode = mode;
     localStorage.setItem('rpgGameMode', mode);
     updateContentForMode(mode);
     updateModeSelector(mode);
+    updateRowsVisibility(mode);
 
     // When mode changes, load that mode's bindings if they exist,
     // otherwise apply the mode-specific defaults.
