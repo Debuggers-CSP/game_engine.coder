@@ -367,16 +367,6 @@ body::after {
         <div id="login-form" class="form-container">
             <form onsubmit="handleLogin(event)">
                 <div class="form-group">
-                    <label class="form-label">First Name</label>
-                    <input type="text" class="form-input" id="login-firstname" placeholder="Enter your first name" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Last Name</label>
-                    <input type="text" class="form-input" id="login-lastname" placeholder="Enter your last name" required>
-                </div>
-                
-                <div class="form-group">
                     <label class="form-label">GitHub ID</label>
                     <input type="text" class="form-input" id="login-github" placeholder="Enter your GitHub username" required>
                 </div>
@@ -505,14 +495,10 @@ async function handleLogin(event) {
     hideMessage();
     showLoading();
     
-    const firstName = document.getElementById('login-firstname').value;
-    const lastName = document.getElementById('login-lastname').value;
     const githubId = document.getElementById('login-github').value;
     const password = document.getElementById('login-password').value;
     
     const loginData = {
-        FirstName: firstName,
-        LastName: lastName,
         GitHubID: githubId,
         Password: password
     };
@@ -530,11 +516,9 @@ async function handleLogin(event) {
         hideLoading();
         
         if (response.ok) {
-            showMessage(`✅ Welcome back, ${firstName}! Logging in...`, 'success');
+            showMessage(`✅ Login successful! Redirecting...`, 'success');
             
             localStorage.setItem('userSession', JSON.stringify({
-                firstName: firstName,
-                lastName: lastName,
                 githubId: githubId,
                 loginTime: new Date().toISOString()
             }));
@@ -557,7 +541,7 @@ window.addEventListener('load', () => {
     const session = localStorage.getItem('userSession');
     if (session) {
         const sessionData = JSON.parse(session);
-        showMessage(`👋 Welcome back, ${sessionData.firstName}! You're already logged in.`, 'success');
+        showMessage(`👋 You're already logged in. Click 'Continue to Game' to proceed.`, 'success');
         
         // Hide forms and show continue button
         document.querySelectorAll('.form-container').forEach(form => {
