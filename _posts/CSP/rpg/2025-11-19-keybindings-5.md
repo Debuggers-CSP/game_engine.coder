@@ -386,25 +386,83 @@ body::before {
     color: #ffed4e;
 }
 
-/* NEW: Keybinding preferences form */
-.keybind-grid {
+/* Keybinding preferences – “Bindings Manager” look */
+.keybind-table {
+    margin-top: 20px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    background: radial-gradient(circle at top left, rgba(255, 215, 0, 0.08), rgba(5, 5, 15, 0.95));
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.8),
+        inset 0 0 10px rgba(255, 215, 0, 0.08);
+    font-size: 0.9em;
+}
+
+.keybind-header-row,
+.keybind-row {
     display: grid;
-    grid-template-columns: repeat(2, minmax(260px, 1fr));
-    column-gap: 40px;
-    row-gap: 18px;
-    margin-top: 15px;
+    grid-template-columns: 1.7fr 1.1fr 1.3fr;
+    align-items: center;
+    column-gap: 18px;
+    padding: 10px 18px;
 }
 
-.keybind-field label {
-    display: block;
-    color: #ffd700;
-    margin-bottom: 6px;
-    font-size: 0.85em;
-    font-weight: 600;
+.keybind-header-row {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 215, 0, 0.22),
+        rgba(255, 215, 0, 0.08)
+    );
+    color: #ffed4e;
+    font-size: 0.8em;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.5);
 }
 
+.keybind-header-row div {
+    opacity: 0.95;
+}
+
+.keybind-row {
+    background: rgba(0, 0, 0, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.keybind-row:nth-child(odd) {
+    background: rgba(15, 15, 35, 0.85);
+}
+
+.keybind-row:last-child {
+    border-bottom: none;
+}
+
+.keybind-row:hover {
+    background: rgba(40, 40, 70, 0.95);
+    box-shadow: inset 2px 0 0 rgba(255, 215, 0, 0.7);
+    transform: translateY(-1px);
+}
+
+.keybind-action-name {
+    font-weight: 600;
+    color: #ffed4e;
+}
+
+.keybind-action-sub {
+    font-size: 0.78em;
+    color: #c0c0c0;
+    opacity: 0.85;
+    margin-top: 2px;
+}
+
+.keybind-desc {
+    font-size: 0.8em;
+    color: #c0c0c0;
+}
+
+/* Re-use existing select styling */
 .keybind-select {
     width: 100%;
     padding: 8px 10px;
@@ -434,6 +492,18 @@ body::before {
 }
 
 /* Responsive design */
+@media (max-width: 900px) {
+    .keybind-header-row,
+    .keybind-row {
+        grid-template-columns: 1.4fr 1fr;
+        row-gap: 6px;
+    }
+
+    .keybind-desc {
+        grid-column: 1 / -1;
+    }
+}
+
 @media (max-width: 768px) {
     .content-grid {
         grid-template-columns: 1fr;
@@ -445,10 +515,6 @@ body::before {
     
     .section-title {
         font-size: 1.5em;
-    }
-
-    .keybind-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -826,85 +892,135 @@ body::before {
             </div>
 
             <form id="keybind-preferences-form" onsubmit="handleKeybindingSave(event)">
-                <div class="keybind-grid">
-                    <!-- Row 1: Move Up / Move Down -->
-                    <div class="keybind-field">
-                        <label for="bind-move-up">Move Up / Forward</label>
-                        <select id="bind-move-up" class="keybind-select">
-                            <option value="w">W</option>
-                            <option value="ArrowUp">Arrow Up</option>
-                            <option value="i">I</option>
-                        </select>
+                <div class="keybind-table">
+                    <div class="keybind-header-row">
+                        <div>Action</div>
+                        <div>Primary Key</div>
+                        <div>Description</div>
                     </div>
 
-                    <div class="keybind-field">
-                        <label for="bind-move-down">Move Down / Backward</label>
-                        <select id="bind-move-down" class="keybind-select">
-                            <option value="s">S</option>
-                            <option value="ArrowDown">Arrow Down</option>
-                            <option value="k">K</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Move Up / Forward</div>
+                            <div class="keybind-action-sub">Typical: W or Arrow Up</div>
+                        </div>
+                        <div>
+                            <select id="bind-move-up" class="keybind-select">
+                                <option value="w">W</option>
+                                <option value="ArrowUp">Arrow Up</option>
+                                <option value="i">I</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Moves your character forward in the world or up on a 2D grid.
+                        </div>
                     </div>
 
-                    <!-- Row 2: Move Left / Move Right -->
-                    <div class="keybind-field">
-                        <label for="bind-move-left">Move Left</label>
-                        <select id="bind-move-left" class="keybind-select">
-                            <option value="a">A</option>
-                            <option value="ArrowLeft">Arrow Left</option>
-                            <option value="j">J</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Move Down / Backward</div>
+                            <div class="keybind-action-sub">Typical: S or Arrow Down</div>
+                        </div>
+                        <div>
+                            <select id="bind-move-down" class="keybind-select">
+                                <option value="s">S</option>
+                                <option value="ArrowDown">Arrow Down</option>
+                                <option value="k">K</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Walk backward or move down on a tile-based map.
+                        </div>
                     </div>
 
-                    <div class="keybind-field">
-                        <label for="bind-move-right">Move Right</label>
-                        <select id="bind-move-right" class="keybind-select">
-                            <option value="d">D</option>
-                            <option value="ArrowRight">Arrow Right</option>
-                            <option value="l">L</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Move Left</div>
+                            <div class="keybind-action-sub">Typical: A or Arrow Left</div>
+                        </div>
+                        <div>
+                            <select id="bind-move-left" class="keybind-select">
+                                <option value="a">A</option>
+                                <option value="ArrowLeft">Arrow Left</option>
+                                <option value="j">J</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Strafe or walk left. Often paired with D on the right.
+                        </div>
                     </div>
 
-                    <!-- Row 3: Interact / Jump -->
-                    <div class="keybind-field">
-                        <label for="bind-interact">Interact</label>
-                        <select id="bind-interact" class="keybind-select">
-                            <option value="e">E</option>
-                            <option value="f">F</option>
-                            <option value="q">Q</option>
-                            <option value="r">R</option>
-                            <option value=" ">Space</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Move Right</div>
+                            <div class="keybind-action-sub">Typical: D or Arrow Right</div>
+                        </div>
+                        <div>
+                            <select id="bind-move-right" class="keybind-select">
+                                <option value="d">D</option>
+                                <option value="ArrowRight">Arrow Right</option>
+                                <option value="l">L</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Strafe or walk right, completing the WASD cluster.
+                        </div>
                     </div>
 
-                    <div class="keybind-field">
-                        <label for="bind-jump">Jump</label>
-                        <select id="bind-jump" class="keybind-select">
-                            <option value=" ">Space</option>
-                            <option value="j">J</option>
-                            <option value="k">K</option>
-                            <option value="ShiftLeft">Left Shift</option>
-                            <option value="ShiftRight">Right Shift</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Interact</div>
+                            <div class="keybind-action-sub">Talk, open, pick up, etc.</div>
+                        </div>
+                        <div>
+                            <select id="bind-interact" class="keybind-select">
+                                <option value="e">E</option>
+                                <option value="f">F</option>
+                                <option value="q">Q</option>
+                                <option value="r">R</option>
+                                <option value=" ">Space</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Use this for doors, NPCs, loot, switches, and context actions.
+                        </div>
                     </div>
 
-                    <!-- Row 4: Sprint / (optional future action slot) -->
-                    <div class="keybind-field">
-                        <label for="bind-sprint">Sprint / Quick Walk</label>
-                        <select id="bind-sprint" class="keybind-select">
-                            <option value="ShiftLeft">Left Shift</option>
-                            <option value="ShiftRight">Right Shift</option>
-                            <option value="ControlLeft">Left Ctrl</option>
-                            <option value="ControlRight">Right Ctrl</option>
-                            <option value="">(None)</option>
-                        </select>
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Jump</div>
+                            <div class="keybind-action-sub">Hop, vault, or climb.</div>
+                        </div>
+                        <div>
+                            <select id="bind-jump" class="keybind-select">
+                                <option value=" ">Space</option>
+                                <option value="j">J</option>
+                                <option value="k">K</option>
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="ShiftRight">Right Shift</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Controls vertical movement like jumps and short dodges.
+                        </div>
                     </div>
 
-                    <!-- Placeholder for symmetry / future action -->
-                    <div class="keybind-field">
-                        <label>&nbsp;</label>
-                        <div style="color:#777; font-size:0.85em; font-style:italic;">
-                            Add another action here later (e.g., Dodge, Tool, Skill).
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Sprint / Quick Walk</div>
+                            <div class="keybind-action-sub">Hold or toggle based on your design.</div>
+                        </div>
+                        <div>
+                            <select id="bind-sprint" class="keybind-select">
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="ShiftRight">Right Shift</option>
+                                <option value="ControlLeft">Left Ctrl</option>
+                                <option value="ControlRight">Right Ctrl</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Use for sprinting in action games or “brisk walk” in cozy games.
                         </div>
                     </div>
                 </div>
