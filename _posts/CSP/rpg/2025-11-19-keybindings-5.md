@@ -223,7 +223,7 @@ body::before {
     color: #b3ffe0;
 }
 
-/* Generic section card (used only for keybind panel now) */
+/* Generic section card */
 .section-card {
     background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
     border-radius: 20px;
@@ -332,6 +332,15 @@ body::before {
 .keybind-desc {
     font-size: 0.8em;
     color: #c0c0c0;
+}
+
+/* Small category labels inside table */
+.keybind-section-label {
+    font-weight: 700;
+    font-size: 0.85em;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #ffc;
 }
 
 /* Select styling */
@@ -609,14 +618,14 @@ body::before {
         <div class="section-content">
             <p style="color:#e0e0e0; line-height:1.6; font-size:0.95em;">
                 Select the main key for each action below. 
-                <strong>Action RPG</strong> uses a fast-paced, no-duplicate WASD layout. 
-                <strong>Cozy RPG</strong> allows shared keys and slower, arrow-key-friendly controls.
+                <strong>Action RPG</strong> uses a fast, combat-oriented layout. 
+                <strong>Cozy RPG</strong> leans into daily-life, building, and chill controls.
             </p>
 
             <div class="prompt-box">
                 You need to be logged in first. We use your saved <strong>GitHub ID</strong> to remember these controls.
                 <div class="mode-tip action" id="mode-tip-action">
-                    ⚔️ Action rule: each action should use a different key so you can react quickly.
+                    ⚔️ Action rule: we suggest avoiding duplicate keys for important combat actions (but you can still customize).
                 </div>
                 <div class="mode-tip cozy" id="mode-tip-cozy">
                     🌿 Cozy rule: it’s okay if multiple actions share the same key (like Space) for comfy play.
@@ -631,7 +640,7 @@ body::before {
                         <div>Description</div>
                     </div>
 
-                    <!-- MOVE UP -->
+                    <!-- ============ UNIVERSAL: MOVEMENT & INTERACTION ============ -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Up / Forward</div>
@@ -639,17 +648,9 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-up" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="w">W (Action default)</option>
-                                <option value="t">T (ESDF-style layout)</option>
-                                <option value="r">R (Alt action layout)</option>
-                                <option value="8">8 (Top row movement)</option>
-                                <!-- Cozy-focused -->
-                                <option value="ArrowUp">Arrow Up (Cozy default)</option>
-                                <option value="i">I (IJKL movement)</option>
-                                <option value="Numpad8">Numpad 8 (Cozy keypad)</option>
-                                <option value="PageUp">Page Up (Scroll-style)</option>
-                                <option value="Home">Home (Alt cozy up)</option>
+                                <option value="w">W</option>
+                                <option value="ArrowUp">Arrow Up</option>
+                                <option value="i">I</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -657,7 +658,6 @@ body::before {
                         </div>
                     </div>
 
-                    <!-- MOVE DOWN -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Down / Backward</div>
@@ -665,17 +665,9 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-down" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="s">S (Action default)</option>
-                                <option value="g">G (ESDF-style)</option>
-                                <option value="f">F (Alt action layout)</option>
-                                <option value="2">2 (Top row movement)</option>
-                                <!-- Cozy-focused -->
-                                <option value="ArrowDown">Arrow Down (Cozy default)</option>
-                                <option value="k">K (IJKL movement)</option>
-                                <option value="Numpad2">Numpad 2 (Cozy keypad)</option>
-                                <option value="PageDown">Page Down (Scroll-style)</option>
-                                <option value="End">End (Alt cozy down)</option>
+                                <option value="s">S</option>
+                                <option value="ArrowDown">Arrow Down</option>
+                                <option value="k">K</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -683,7 +675,6 @@ body::before {
                         </div>
                     </div>
 
-                    <!-- MOVE LEFT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Left</div>
@@ -691,17 +682,9 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-left" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="a">A (Action default)</option>
-                                <option value="f">F (ESDF-style)</option>
-                                <option value="q">Q (Strafe / lean)</option>
-                                <option value="4">4 (Top row movement)</option>
-                                <!-- Cozy-focused -->
-                                <option value="ArrowLeft">Arrow Left (Cozy default)</option>
-                                <option value="j">J (IJKL movement)</option>
-                                <option value="Numpad4">Numpad 4 (Cozy keypad)</option>
-                                <option value="Home">Home (Diag cozy)</option>
-                                <option value="Delete">Delete (Alt cozy left)</option>
+                                <option value="a">A</option>
+                                <option value="ArrowLeft">Arrow Left</option>
+                                <option value="j">J</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -709,7 +692,6 @@ body::before {
                         </div>
                     </div>
 
-                    <!-- MOVE RIGHT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Right</div>
@@ -717,17 +699,9 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-right" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="d">D (Action default)</option>
-                                <option value="h">H (ESDF-style)</option>
-                                <option value="e">E (Strafe / lean)</option>
-                                <option value="6">6 (Top row movement)</option>
-                                <!-- Cozy-focused -->
-                                <option value="ArrowRight">Arrow Right (Cozy default)</option>
-                                <option value="l">L (IJKL movement)</option>
-                                <option value="Numpad6">Numpad 6 (Cozy keypad)</option>
-                                <option value="PageDown">Page Down (Diag cozy)</option>
-                                <option value="Insert">Insert (Alt cozy right)</option>
+                                <option value="d">D</option>
+                                <option value="ArrowRight">Arrow Right</option>
+                                <option value="l">L</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -735,7 +709,6 @@ body::before {
                         </div>
                     </div>
 
-                    <!-- INTERACT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Interact</div>
@@ -743,80 +716,789 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-interact" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="e">E (Action default)</option>
-                                <option value="f">F (Use / interact)</option>
-                                <option value="q">Q (Quick interact)</option>
-                                <option value="r">R (Reload / interact)</option>
-                                <option value="c">C (Action context)</option>
-                                <!-- Cozy-focused -->
-                                <option value="Space">Space (Cozy default)</option>
-                                <option value="Enter">Enter (Confirm / talk)</option>
-                                <option value="x">X (Tool / confirm)</option>
-                                <option value="z">Z (Alt cozy interact)</option>
-                                <option value="Tab">Tab (Cycle / interact)</option>
+                                <option value="e">E</option>
+                                <option value="f">F</option>
+                                <option value="q">Q</option>
+                                <option value="r">R</option>
+                                <option value="Space">Space</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            Use for doors, NPCs, loot, and context actions.
+                            Talk, open doors, harvest, and context actions.
                         </div>
                     </div>
 
-                    <!-- JUMP / TOOL -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Jump / Tool Action</div>
                             <div class="keybind-action-sub">
-                                Action: Space to jump • Cozy: optional, can be used for “Use Tool” or left empty
+                                Action: Space to jump • Cozy: optional tool key
                             </div>
                         </div>
                         <div>
                             <select id="bind-jump" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="Space">Space (Action jump)</option>
-                                <option value="ShiftLeft">Left Shift (Dodge / jump)</option>
-                                <option value="ShiftRight">Right Shift (Alt dodge)</option>
-                                <option value="AltLeft">Left Alt (Action special)</option>
-                                <option value="AltRight">Right Alt (Action special)</option>
-                                <option value="ControlLeft">Left Ctrl (Crouch / jump)</option>
-                                <option value="ControlRight">Right Ctrl (Alt crouch)</option>
-                                <!-- Cozy-focused -->
-                                <option value="j">J (Tool / interact)</option>
-                                <option value="k">K (Alt tool key)</option>
-                                <option value="">(None – Cozy no jump)</option>
+                                <option value="Space">Space</option>
+                                <option value="j">J</option>
+                                <option value="k">K</option>
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="ShiftRight">Right Shift</option>
+                                <option value="">(None)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            In Action mode this is your jump/dodge. In Cozy mode it can be a tool key or disabled.
+                            In Action mode this is jump/dodge. In Cozy, it can be a tool key or disabled.
                         </div>
                     </div>
 
-                    <!-- SPRINT / COMFORT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Sprint / Comfort Action</div>
                             <div class="keybind-action-sub">
-                                Action: Shift to sprint • Cozy: optional (emotes / auto-walk)
+                                Action: Shift (hold) to sprint • Cozy: optional (emotes/auto-walk)
                             </div>
                         </div>
                         <div>
                             <select id="bind-sprint" class="keybind-select">
-                                <!-- Action-focused -->
-                                <option value="ShiftLeft">Left Shift (Sprint default)</option>
-                                <option value="ShiftRight">Right Shift (Alt sprint)</option>
-                                <option value="ControlLeft">Left Ctrl (Run / slide)</option>
-                                <option value="ControlRight">Right Ctrl (Alt slide)</option>
-                                <option value="AltLeft">Left Alt (Dash / ability)</option>
-                                <option value="AltRight">Right Alt (Dash / ability)</option>
-                                <option value="CapsLock">Caps Lock (Toggle sprint)</option>
-                                <!-- Cozy-focused -->
-                                <option value="Space">Space (Cozy auto-walk / emote)</option>
-                                <option value="Tab">Tab (Cycle emotes)</option>
-                                <option value="">(None – Cozy no sprint)</option>
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="ShiftRight">Right Shift</option>
+                                <option value="ControlLeft">Left Ctrl</option>
+                                <option value="ControlRight">Right Ctrl</option>
+                                <option value="">(None)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
-                            In Action mode this is your sprint or dash. In Cozy mode it can trigger emotes or comfort actions.
+                            Fast sprint in Action mode or comfy actions in Cozy mode.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Secondary Interaction</div>
+                            <div class="keybind-action-sub">Universal: R</div>
+                        </div>
+                        <div>
+                            <select id="bind-secondary-interact" class="keybind-select">
+                                <option value="r">R</option>
+                                <option value="q">Q</option>
+                                <option value="f">F</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Rotate items, refill tools, extra context actions.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Quick Action</div>
+                            <div class="keybind-action-sub">Universal: F</div>
+                        </div>
+                        <div>
+                            <select id="bind-quick-action" class="keybind-select">
+                                <option value="f">F</option>
+                                <option value="e">E</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Context-sensitive quick action (pet animal, combo finisher, etc.).
+                        </div>
+                    </div>
+
+                    <!-- ============ UNIVERSAL: MENUS & SYSTEM ============ -->
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Inventory / Backpack</div>
+                            <div class="keybind-action-sub">Universal: I</div>
+                        </div>
+                        <div>
+                            <select id="bind-inventory" class="keybind-select">
+                                <option value="i">I</option>
+                                <option value="b">B</option>
+                                <option value="Tab">Tab</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Open your main inventory or backpack.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">World Map</div>
+                            <div class="keybind-action-sub">Universal: M</div>
+                        </div>
+                        <div>
+                            <select id="bind-map" class="keybind-select">
+                                <option value="m">M</option>
+                                <option value="Tab">Tab</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Open the world or region map.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Pause / Settings</div>
+                            <div class="keybind-action-sub">Universal: Esc</div>
+                        </div>
+                        <div>
+                            <select id="bind-pause" class="keybind-select">
+                                <option value="Escape">Escape</option>
+                                <option value="p">P</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Pause the game and open settings.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Quick Toggle Menu</div>
+                            <div class="keybind-action-sub">Universal: Tab</div>
+                        </div>
+                        <div>
+                            <select id="bind-quick-menu" class="keybind-select">
+                                <option value="Tab">Tab</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Quick access to quests, character sheet, or radial menus.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Screenshot / Photo Mode</div>
+                            <div class="keybind-action-sub">Universal: F11</div>
+                        </div>
+                        <div>
+                            <select id="bind-screenshot" class="keybind-select">
+                                <option value="F11">F11</option>
+                                <option value="F10">F10</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Take a screenshot or toggle photo mode.
+                        </div>
+                    </div>
+
+                    <!-- ============ COZY MODE EXTRAS ============ -->
+                    <div class="keybind-row">
+                        <div class="keybind-section-label">Cozy Mode – Tools & Daily Life</div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tool Slot 1</div>
+                            <div class="keybind-action-sub">Cozy: 1</div>
+                        </div>
+                        <div>
+                            <select id="bind-tool1" class="keybind-select">
+                                <option value="1">1</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            First tool (watering can, etc.).
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tool Slot 2</div>
+                            <div class="keybind-action-sub">Cozy: 2</div>
+                        </div>
+                        <div>
+                            <select id="bind-tool2" class="keybind-select">
+                                <option value="2">2</option>
+                                <option value="w">W</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Second tool slot.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tool Slot 3</div>
+                            <div class="keybind-action-sub">Cozy: 3</div>
+                        </div>
+                        <div>
+                            <select id="bind-tool3" class="keybind-select">
+                                <option value="3">3</option>
+                                <option value="e">E</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Third tool slot (fishing rod, etc.).
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tool Slot 4</div>
+                            <div class="keybind-action-sub">Cozy: 4</div>
+                        </div>
+                        <div>
+                            <select id="bind-tool4" class="keybind-select">
+                                <option value="4">4</option>
+                                <option value="r">R</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Fourth tool slot.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tool Slot 5</div>
+                            <div class="keybind-action-sub">Cozy: 5</div>
+                        </div>
+                        <div>
+                            <select id="bind-tool5" class="keybind-select">
+                                <option value="5">5</option>
+                                <option value="f">F</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Fifth tool slot (brush, pick, etc.).
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Emote Wheel</div>
+                            <div class="keybind-action-sub">Cozy: Q</div>
+                        </div>
+                        <div>
+                            <select id="bind-emote-wheel" class="keybind-select">
+                                <option value="q">Q</option>
+                                <option value="AltLeft">Left Alt</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Open emotes (wave, laugh, sit, pet).
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Craft / Cook Menu</div>
+                            <div class="keybind-action-sub">Cozy: C</div>
+                        </div>
+                        <div>
+                            <select id="bind-craft-menu" class="keybind-select">
+                                <option value="c">C</option>
+                                <option value="v">V</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Open crafting or cooking interface.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Cozy Zoom Focus</div>
+                            <div class="keybind-action-sub">Cozy: Z</div>
+                        </div>
+                        <div>
+                            <select id="bind-cozy-zoom" class="keybind-select">
+                                <option value="z">Z</option>
+                                <option value="x">X</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Zoom in for screenshots or details.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Chill Action</div>
+                            <div class="keybind-action-sub">Cozy: X</div>
+                        </div>
+                        <div>
+                            <select id="bind-chill-action" class="keybind-select">
+                                <option value="x">X</option>
+                                <option value="z">Z</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Sit on benches, lie in grass, sip tea, etc.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Gardening Assistant</div>
+                            <div class="keybind-action-sub">Cozy: G</div>
+                        </div>
+                        <div>
+                            <select id="bind-gardening" class="keybind-select">
+                                <option value="g">G</option>
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Toggle auto-rows or grid placement helper.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Backpack Sort / Auto-Organize</div>
+                            <div class="keybind-action-sub">Cozy: B</div>
+                        </div>
+                        <div>
+                            <select id="bind-backpack" class="keybind-select">
+                                <option value="b">B</option>
+                                <option value="i">I</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Auto-sort items in your bag.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Decoration Mode</div>
+                            <div class="keybind-action-sub">Cozy: V</div>
+                        </div>
+                        <div>
+                            <select id="bind-decor-mode" class="keybind-select">
+                                <option value="v">V</option>
+                                <option value="c">C</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Place, rotate, and move furniture or decor.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Cozy Slow Walk</div>
+                            <div class="keybind-action-sub">Cozy: Ctrl (hold)</div>
+                        </div>
+                        <div>
+                            <select id="bind-cozy-slow-walk" class="keybind-select">
+                                <option value="ControlLeft">Left Ctrl</option>
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Move extra slowly for cozy vibes.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Build Grid Toggle</div>
+                            <div class="keybind-action-sub">Cozy: Alt</div>
+                        </div>
+                        <div>
+                            <select id="bind-cozy-grid-toggle" class="keybind-select">
+                                <option value="AltLeft">Left Alt</option>
+                                <option value="AltRight">Right Alt</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Turn build/buy placement grid on or off.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Inspect Animal / Plant</div>
+                            <div class="keybind-action-sub">Cozy: Middle Click</div>
+                        </div>
+                        <div>
+                            <select id="bind-cozy-inspect" class="keybind-select">
+                                <option value="MouseMiddle">Middle Mouse</option>
+                                <option value="h">H</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Inspect mood, health, or stats of creatures and crops.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Whistle for Pets</div>
+                            <div class="keybind-action-sub">Cozy: H</div>
+                        </div>
+                        <div>
+                            <select id="bind-pet-whistle" class="keybind-select">
+                                <option value="h">H</option>
+                                <option value="g">G</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Call pets or animals to your location.
+                        </div>
+                    </div>
+
+                    <!-- ============ ACTION MODE: COMBAT & FLOW ============ -->
+                    <div class="keybind-row">
+                        <div class="keybind-section-label">Action Mode – Combat & Skills</div>
+                        <div></div>
+                        <div></div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Primary Attack</div>
+                            <div class="keybind-action-sub">Action: Left Click</div>
+                        </div>
+                        <div>
+                            <select id="bind-primary-attack" class="keybind-select">
+                                <option value="MouseLeft">Mouse Left</option>
+                                <option value="e">E</option>
+                                <option value="f">F</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Basic attack or primary fire.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Heavy Attack / Block</div>
+                            <div class="keybind-action-sub">Action: Right Click</div>
+                        </div>
+                        <div>
+                            <select id="bind-heavy-attack" class="keybind-select">
+                                <option value="MouseRight">Mouse Right</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Heavy attack, block, or ADS depending on class.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Ability Slot 1</div>
+                            <div class="keybind-action-sub">Action: 1</div>
+                        </div>
+                        <div>
+                            <select id="bind-ability1" class="keybind-select">
+                                <option value="1">1</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            First combat skill or spell.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Ability Slot 2</div>
+                            <div class="keybind-action-sub">Action: 2</div>
+                        </div>
+                        <div>
+                            <select id="bind-ability2" class="keybind-select">
+                                <option value="2">2</option>
+                                <option value="e">E</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Second combat skill.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Ability Slot 3</div>
+                            <div class="keybind-action-sub">Action: 3</div>
+                        </div>
+                        <div>
+                            <select id="bind-ability3" class="keybind-select">
+                                <option value="3">3</option>
+                                <option value="r">R</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Third combat skill.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Ability Slot 4</div>
+                            <div class="keybind-action-sub">Action: 4</div>
+                        </div>
+                        <div>
+                            <select id="bind-ability4" class="keybind-select">
+                                <option value="4">4</option>
+                                <option value="f">F</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Fourth combat skill or consumable slot.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Ultimate / Special</div>
+                            <div class="keybind-action-sub">Action: 5</div>
+                        </div>
+                        <div>
+                            <select id="bind-ultimate" class="keybind-select">
+                                <option value="5">5</option>
+                                <option value="x">X</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Ultimate ability or special mode.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Dodge / Roll</div>
+                            <div class="keybind-action-sub">Action: Shift (tap)</div>
+                        </div>
+                        <div>
+                            <select id="bind-dodge" class="keybind-select">
+                                <option value="ShiftLeft">Left Shift</option>
+                                <option value="AltLeft">Left Alt</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Quick dodge or roll to evade attacks.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Crouch / Stealth</div>
+                            <div class="keybind-action-sub">Action: Ctrl</div>
+                        </div>
+                        <div>
+                            <select id="bind-crouch" class="keybind-select">
+                                <option value="ControlLeft">Left Ctrl</option>
+                                <option value="c">C</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Crouch or enter stealth mode.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Grenade / Throw</div>
+                            <div class="keybind-action-sub">Action: G</div>
+                        </div>
+                        <div>
+                            <select id="bind-grenade" class="keybind-select">
+                                <option value="g">G</option>
+                                <option value="MouseMiddle">Middle Mouse</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Throw grenades or special throwables.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Reload / Recharge</div>
+                            <div class="keybind-action-sub">Action: R</div>
+                        </div>
+                        <div>
+                            <select id="bind-reload" class="keybind-select">
+                                <option value="r">R</option>
+                                <option value="e">E</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Reload weapons or recharge abilities.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Execute / Finisher</div>
+                            <div class="keybind-action-sub">Action: Hold E</div>
+                        </div>
+                        <div>
+                            <select id="bind-execute" class="keybind-select">
+                                <option value="e">E</option>
+                                <option value="f">F</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Execution or finisher on weakened enemies.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Melee Strike</div>
+                            <div class="keybind-action-sub">Action: F</div>
+                        </div>
+                        <div>
+                            <select id="bind-melee" class="keybind-select">
+                                <option value="f">F</option>
+                                <option value="MouseMiddle">Middle Mouse</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Quick melee hit at close range.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Weapon Swap</div>
+                            <div class="keybind-action-sub">Action: Q</div>
+                        </div>
+                        <div>
+                            <select id="bind-weapon-swap" class="keybind-select">
+                                <option value="q">Q</option>
+                                <option value="Tab">Tab</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Swap between primary/secondary weapons.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Mark Target / Ping</div>
+                            <div class="keybind-action-sub">Action: Z</div>
+                        </div>
+                        <div>
+                            <select id="bind-mark-target" class="keybind-select">
+                                <option value="z">Z</option>
+                                <option value="MouseMiddle">Middle Mouse</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Ping or mark a target for teammates.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Rage / Focus State</div>
+                            <div class="keybind-action-sub">Action: X</div>
+                        </div>
+                        <div>
+                            <select id="bind-focus-state" class="keybind-select">
+                                <option value="x">X</option>
+                                <option value="t">T</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Enter a rage or focus mode.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Lock-On Target</div>
+                            <div class="keybind-action-sub">Action: Middle Click</div>
+                        </div>
+                        <div>
+                            <select id="bind-lock-on" class="keybind-select">
+                                <option value="MouseMiddle">Middle Mouse</option>
+                                <option value="q">Q</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Lock camera onto the current target.
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Tactical Wheel</div>
+                            <div class="keybind-action-sub">Action: Alt</div>
+                        </div>
+                        <div>
+                            <select id="bind-tactical-wheel" class="keybind-select">
+                                <option value="AltLeft">Left Alt</option>
+                                <option value="AltRight">Right Alt</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Open radial tactical menu (items, grenades, magic).
+                        </div>
+                    </div>
+
+                    <div class="keybind-row">
+                        <div>
+                            <div class="keybind-action-name">Taunt / Aggro</div>
+                            <div class="keybind-action-sub">Action: T</div>
+                        </div>
+                        <div>
+                            <select id="bind-taunt" class="keybind-select">
+                                <option value="t">T</option>
+                                <option value="x">X</option>
+                                <option value="">(None)</option>
+                            </select>
+                        </div>
+                        <div class="keybind-desc">
+                            Taunt enemies or pull aggro.
                         </div>
                     </div>
                 </div>
@@ -837,7 +1519,7 @@ const API_URL = 'http://localhost:8587/api';
 // Shared game mode with other pages
 let gameMode = localStorage.getItem('rpgGameMode') || 'action'; // default to action
 
-// Default layouts that are VERY different between modes
+// Default layouts that match your Cozy vs Action docs
 const modeDefaultBindings = {
     action: {
         moveUpKey: 'w',
@@ -846,7 +1528,54 @@ const modeDefaultBindings = {
         moveRightKey: 'd',
         interactKey: 'e',
         jumpKey: 'Space',
-        sprintKey: 'ShiftLeft'
+        sprintKey: 'ShiftLeft',
+
+        secondaryInteractKey: 'r',
+        quickActionKey: 'f',
+        inventoryKey: 'i',
+        mapKey: 'm',
+        pauseKey: 'Escape',
+        quickMenuKey: 'Tab',
+        screenshotKey: 'F11',
+
+        // Cozy-only stuff left empty in Action mode
+        tool1Key: '',
+        tool2Key: '',
+        tool3Key: '',
+        tool4Key: '',
+        tool5Key: '',
+        emoteWheelKey: '',
+        craftMenuKey: '',
+        cozyZoomKey: '',
+        chillActionKey: '',
+        gardeningKey: '',
+        backpackKey: '',
+        decorModeKey: '',
+        cozySlowWalkKey: '',
+        cozyGridToggleKey: '',
+        cozyInspectKey: '',
+        petWhistleKey: '',
+
+        // Combat-specific
+        primaryAttackKey: 'MouseLeft',
+        heavyAttackKey: 'MouseRight',
+        ability1Key: '1',
+        ability2Key: '2',
+        ability3Key: '3',
+        ability4Key: '4',
+        ultimateKey: '5',
+        dodgeKey: 'ShiftLeft',      // tap vs hold is handled by the game
+        crouchKey: 'ControlLeft',
+        grenadeKey: 'g',
+        reloadKey: 'r',
+        executeKey: 'e',
+        meleeKey: 'f',
+        weaponSwapKey: 'q',
+        markTargetKey: 'z',
+        focusStateKey: 'x',
+        lockOnKey: 'MouseMiddle',
+        tacticalWheelKey: 'AltLeft',
+        tauntKey: 't'
     },
     cozy: {
         moveUpKey: 'ArrowUp',
@@ -855,21 +1584,67 @@ const modeDefaultBindings = {
         moveRightKey: 'ArrowRight',
         interactKey: 'Space',
         jumpKey: '',
-        sprintKey: ''
+        sprintKey: '',
+
+        secondaryInteractKey: 'r',
+        quickActionKey: 'f',
+        inventoryKey: 'i',
+        mapKey: 'm',
+        pauseKey: 'Escape',
+        quickMenuKey: 'Tab',
+        screenshotKey: 'F11',
+
+        tool1Key: '1',
+        tool2Key: '2',
+        tool3Key: '3',
+        tool4Key: '4',
+        tool5Key: '5',
+        emoteWheelKey: 'q',
+        craftMenuKey: 'c',
+        cozyZoomKey: 'z',
+        chillActionKey: 'x',
+        gardeningKey: 'g',
+        backpackKey: 'b',
+        decorModeKey: 'v',
+        cozySlowWalkKey: 'ControlLeft',
+        cozyGridToggleKey: 'AltLeft',
+        cozyInspectKey: 'MouseMiddle',
+        petWhistleKey: 'h',
+
+        // Cozy games can still use these but default to off
+        primaryAttackKey: '',
+        heavyAttackKey: '',
+        ability1Key: '',
+        ability2Key: '',
+        ability3Key: '',
+        ability4Key: '',
+        ultimateKey: '',
+        dodgeKey: '',
+        crouchKey: '',
+        grenadeKey: '',
+        reloadKey: '',
+        executeKey: '',
+        meleeKey: '',
+        weaponSwapKey: '',
+        markTargetKey: '',
+        focusStateKey: '',
+        lockOnKey: '',
+        tacticalWheelKey: '',
+        tauntKey: ''
     }
 };
 
 // Random tips for extra flavor
 const actionTips = [
-    "Tip: Keep your pinky on Shift so sprint and jump are never far from WASD.",
-    "Tip: Put dodge and jump on different keys to avoid fat-finger mistakes.",
-    "Tip: Avoid putting Interact on Space in Action mode so you don't jump by accident."
+    "Tip: Keep your pinky on Shift so sprint and dodge are always ready.",
+    "Tip: Separate your movement hand (WASD) from abilities (1-5) so you don’t fat-finger skills.",
+    "Tip: Put reload and interact on different keys if you keep reloading by accident."
 ];
 
 const cozyTips = [
-    "Tip: It’s okay if Space does almost everything in Cozy mode.",
-    "Tip: Arrow keys + Space is a classic comfy combo.",
-    "Tip: You can leave Sprint empty in Cozy mode for a slower, calmer vibe."
+    "Tip: Arrow keys + Space + 1-5 makes a super comfy setup.",
+    "Tip: Put your favorite cozy action (sit, sip tea) on X so it’s always in reach.",
+    "Tip: Use grid toggle on Alt so building feels precise but chill."
 ];
 
 // Navigation sidebar + page tracking
@@ -922,8 +1697,8 @@ function updateModeSelector(mode) {
 
     if (modeDesc) {
         modeDesc.textContent = mode === 'cozy'
-            ? '🌿 Cozy layout uses arrow keys, Space to interact, and can skip sprint/jump entirely.'
-            : '⚔️ Action layout uses WASD movement, E to interact, Space to jump, and Shift to sprint.';
+            ? '🌿 Cozy layout uses arrow keys, Space to interact, tool keys on 1-5, and lots of building shortcuts.'
+            : '⚔️ Action layout uses WASD movement, mouse for attacks, 1-5 for abilities, and classic shooter/RPG keys.';
     }
 
     if (randomTipEl) {
@@ -980,13 +1755,62 @@ function applyDefaultBindingsForMode(mode) {
     if (!defaults) return;
 
     const mapping = {
+        // Core movement & interaction
         'bind-move-up': defaults.moveUpKey,
         'bind-move-down': defaults.moveDownKey,
         'bind-move-left': defaults.moveLeftKey,
         'bind-move-right': defaults.moveRightKey,
         'bind-interact': defaults.interactKey,
         'bind-jump': defaults.jumpKey,
-        'bind-sprint': defaults.sprintKey
+        'bind-sprint': defaults.sprintKey,
+
+        // Universal extras
+        'bind-secondary-interact': defaults.secondaryInteractKey,
+        'bind-quick-action': defaults.quickActionKey,
+        'bind-inventory': defaults.inventoryKey,
+        'bind-map': defaults.mapKey,
+        'bind-pause': defaults.pauseKey,
+        'bind-quick-menu': defaults.quickMenuKey,
+        'bind-screenshot': defaults.screenshotKey,
+
+        // Cozy actions
+        'bind-tool1': defaults.tool1Key,
+        'bind-tool2': defaults.tool2Key,
+        'bind-tool3': defaults.tool3Key,
+        'bind-tool4': defaults.tool4Key,
+        'bind-tool5': defaults.tool5Key,
+        'bind-emote-wheel': defaults.emoteWheelKey,
+        'bind-craft-menu': defaults.craftMenuKey,
+        'bind-cozy-zoom': defaults.cozyZoomKey,
+        'bind-chill-action': defaults.chillActionKey,
+        'bind-gardening': defaults.gardeningKey,
+        'bind-backpack': defaults.backpackKey,
+        'bind-decor-mode': defaults.decorModeKey,
+        'bind-cozy-slow-walk': defaults.cozySlowWalkKey,
+        'bind-cozy-grid-toggle': defaults.cozyGridToggleKey,
+        'bind-cozy-inspect': defaults.cozyInspectKey,
+        'bind-pet-whistle': defaults.petWhistleKey,
+
+        // Action combat
+        'bind-primary-attack': defaults.primaryAttackKey,
+        'bind-heavy-attack': defaults.heavyAttackKey,
+        'bind-ability1': defaults.ability1Key,
+        'bind-ability2': defaults.ability2Key,
+        'bind-ability3': defaults.ability3Key,
+        'bind-ability4': defaults.ability4Key,
+        'bind-ultimate': defaults.ultimateKey,
+        'bind-dodge': defaults.dodgeKey,
+        'bind-crouch': defaults.crouchKey,
+        'bind-grenade': defaults.grenadeKey,
+        'bind-reload': defaults.reloadKey,
+        'bind-execute': defaults.executeKey,
+        'bind-melee': defaults.meleeKey,
+        'bind-weapon-swap': defaults.weaponSwapKey,
+        'bind-mark-target': defaults.markTargetKey,
+        'bind-focus-state': defaults.focusStateKey,
+        'bind-lock-on': defaults.lockOnKey,
+        'bind-tactical-wheel': defaults.tacticalWheelKey,
+        'bind-taunt': defaults.tauntKey
     };
 
     Object.entries(mapping).forEach(([id, value]) => {
@@ -1054,7 +1878,52 @@ function setKeybindingFormFromData(binding) {
         'bind-move-right': binding.moveRightKey,
         'bind-interact': binding.interactKey,
         'bind-jump': binding.jumpKey,
-        'bind-sprint': binding.sprintKey
+        'bind-sprint': binding.sprintKey,
+
+        'bind-secondary-interact': binding.secondaryInteractKey,
+        'bind-quick-action': binding.quickActionKey,
+        'bind-inventory': binding.inventoryKey,
+        'bind-map': binding.mapKey,
+        'bind-pause': binding.pauseKey,
+        'bind-quick-menu': binding.quickMenuKey,
+        'bind-screenshot': binding.screenshotKey,
+
+        'bind-tool1': binding.tool1Key,
+        'bind-tool2': binding.tool2Key,
+        'bind-tool3': binding.tool3Key,
+        'bind-tool4': binding.tool4Key,
+        'bind-tool5': binding.tool5Key,
+        'bind-emote-wheel': binding.emoteWheelKey,
+        'bind-craft-menu': binding.craftMenuKey,
+        'bind-cozy-zoom': binding.cozyZoomKey,
+        'bind-chill-action': binding.chillActionKey,
+        'bind-gardening': binding.gardeningKey,
+        'bind-backpack': binding.backpackKey,
+        'bind-decor-mode': binding.decorModeKey,
+        'bind-cozy-slow-walk': binding.cozySlowWalkKey,
+        'bind-cozy-grid-toggle': binding.cozyGridToggleKey,
+        'bind-cozy-inspect': binding.cozyInspectKey,
+        'bind-pet-whistle': binding.petWhistleKey,
+
+        'bind-primary-attack': binding.primaryAttackKey,
+        'bind-heavy-attack': binding.heavyAttackKey,
+        'bind-ability1': binding.ability1Key,
+        'bind-ability2': binding.ability2Key,
+        'bind-ability3': binding.ability3Key,
+        'bind-ability4': binding.ability4Key,
+        'bind-ultimate': binding.ultimateKey,
+        'bind-dodge': binding.dodgeKey,
+        'bind-crouch': binding.crouchKey,
+        'bind-grenade': binding.grenadeKey,
+        'bind-reload': binding.reloadKey,
+        'bind-execute': binding.executeKey,
+        'bind-melee': binding.meleeKey,
+        'bind-weapon-swap': binding.weaponSwapKey,
+        'bind-mark-target': binding.markTargetKey,
+        'bind-focus-state': binding.focusStateKey,
+        'bind-lock-on': binding.lockOnKey,
+        'bind-tactical-wheel': binding.tacticalWheelKey,
+        'bind-taunt': binding.tauntKey
     };
 
     Object.entries(mapping).forEach(([id, value]) => {
@@ -1065,24 +1934,29 @@ function setKeybindingFormFromData(binding) {
     });
 }
 
-// Extra: enforce different rules per mode
+// Extra: simple required-check per mode
 function validateKeysForMode(keys) {
-    // keys is an object of { actionName: keyValue }
     if (gameMode === 'action') {
-        // In action mode, every non-empty key must be unique
-        const nonEmpty = Object.values(keys).filter(k => k && k.length > 0);
-        const seen = new Set();
-        for (const k of nonEmpty) {
-            if (seen.has(k)) {
-                return {
-                    ok: false,
-                    message: "In Action mode, each action should use a different key for quick reactions."
-                };
-            }
-            seen.add(k);
+        // Make sure core movement + interact + basic combat inputs exist
+        const required = [
+            'moveUpKey',
+            'moveDownKey',
+            'moveLeftKey',
+            'moveRightKey',
+            'interactKey',
+            'jumpKey',
+            'sprintKey',
+            'primaryAttackKey'
+        ];
+        const missing = required.filter(k => !keys[k] || keys[k].length === 0);
+        if (missing.length) {
+            return {
+                ok: false,
+                message: "In Action mode, you must set movement, interact, jump, sprint, and primary attack."
+            };
         }
     } else {
-        // Cozy mode: allow duplicates, but at least movement + interact should be set
+        // Cozy mode: allow duplicates, but require at least movement + interact
         if (!keys.moveUpKey || !keys.interactKey) {
             return {
                 ok: false,
@@ -1108,13 +1982,61 @@ async function handleKeybindingSave(event) {
     }
 
     const keys = {
+        // Movement + core
         moveUpKey: document.getElementById('bind-move-up').value,
         moveLeftKey: document.getElementById('bind-move-left').value,
         moveDownKey: document.getElementById('bind-move-down').value,
         moveRightKey: document.getElementById('bind-move-right').value,
         interactKey: document.getElementById('bind-interact').value,
         jumpKey: document.getElementById('bind-jump').value,
-        sprintKey: document.getElementById('bind-sprint').value
+        sprintKey: document.getElementById('bind-sprint').value,
+
+        secondaryInteractKey: document.getElementById('bind-secondary-interact').value,
+        quickActionKey: document.getElementById('bind-quick-action').value,
+        inventoryKey: document.getElementById('bind-inventory').value,
+        mapKey: document.getElementById('bind-map').value,
+        pauseKey: document.getElementById('bind-pause').value,
+        quickMenuKey: document.getElementById('bind-quick-menu').value,
+        screenshotKey: document.getElementById('bind-screenshot').value,
+
+        // Cozy extras
+        tool1Key: document.getElementById('bind-tool1').value,
+        tool2Key: document.getElementById('bind-tool2').value,
+        tool3Key: document.getElementById('bind-tool3').value,
+        tool4Key: document.getElementById('bind-tool4').value,
+        tool5Key: document.getElementById('bind-tool5').value,
+        emoteWheelKey: document.getElementById('bind-emote-wheel').value,
+        craftMenuKey: document.getElementById('bind-craft-menu').value,
+        cozyZoomKey: document.getElementById('bind-cozy-zoom').value,
+        chillActionKey: document.getElementById('bind-chill-action').value,
+        gardeningKey: document.getElementById('bind-gardening').value,
+        backpackKey: document.getElementById('bind-backpack').value,
+        decorModeKey: document.getElementById('bind-decor-mode').value,
+        cozySlowWalkKey: document.getElementById('bind-cozy-slow-walk').value,
+        cozyGridToggleKey: document.getElementById('bind-cozy-grid-toggle').value,
+        cozyInspectKey: document.getElementById('bind-cozy-inspect').value,
+        petWhistleKey: document.getElementById('bind-pet-whistle').value,
+
+        // Action combat
+        primaryAttackKey: document.getElementById('bind-primary-attack').value,
+        heavyAttackKey: document.getElementById('bind-heavy-attack').value,
+        ability1Key: document.getElementById('bind-ability1').value,
+        ability2Key: document.getElementById('bind-ability2').value,
+        ability3Key: document.getElementById('bind-ability3').value,
+        ability4Key: document.getElementById('bind-ability4').value,
+        ultimateKey: document.getElementById('bind-ultimate').value,
+        dodgeKey: document.getElementById('bind-dodge').value,
+        crouchKey: document.getElementById('bind-crouch').value,
+        grenadeKey: document.getElementById('bind-grenade').value,
+        reloadKey: document.getElementById('bind-reload').value,
+        executeKey: document.getElementById('bind-execute').value,
+        meleeKey: document.getElementById('bind-melee').value,
+        weaponSwapKey: document.getElementById('bind-weapon-swap').value,
+        markTargetKey: document.getElementById('bind-mark-target').value,
+        focusStateKey: document.getElementById('bind-focus-state').value,
+        lockOnKey: document.getElementById('bind-lock-on').value,
+        tacticalWheelKey: document.getElementById('bind-tactical-wheel').value,
+        tauntKey: document.getElementById('bind-taunt').value
     };
 
     // Validate differently for each mode
