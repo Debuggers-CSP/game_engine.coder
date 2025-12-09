@@ -32,7 +32,8 @@ comments: True
         <span class="nav-text">Character Creation</span>
         <span class="nav-check">✓</span>
       </a>
-      <a href="/rpg/controls" class="nav-link active" data-page="5">
+      <!-- This is the current page -->
+      <a href="/rpg/keybindings" class="nav-link active" data-page="5">
         <span class="nav-number">5</span>
         <span class="nav-text">Controls</span>
         <span class="nav-check">✓</span>
@@ -385,53 +386,12 @@ body::before {
     color: #ffed4e;
 }
 
-/* Code display block */
-.code-block {
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 10px;
-    padding: 15px 20px;
-    margin-top: 15px;
-    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
-    font-size: 0.9em;
-    color: #ffed4e;
-    overflow-x: auto;
-}
-
-/* Interactive code input */
-.code-input-container {
-    margin-top: 15px;
-}
-
-.code-input {
-    width: 100%;
-    min-height: 180px;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 10px;
-    border: 1px solid rgba(255, 215, 0, 0.4);
-    padding: 12px 14px;
-    color: #ffed4e;
-    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
-    font-size: 0.9em;
-    resize: vertical;
-}
-
-.code-input:focus {
-    outline: none;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-}
-
-.code-feedback {
-    margin-top: 10px;
-    min-height: 24px;
-    font-weight: bold;
-    font-size: 0.95em;
-}
-
 /* NEW: Keybinding preferences form */
 .keybind-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px 25px;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+    column-gap: 40px;
+    row-gap: 18px;
     margin-top: 15px;
 }
 
@@ -462,7 +422,7 @@ body::before {
 }
 
 .keybind-save-btn {
-    margin-top: 20px;
+    margin-top: 24px;
     padding: 12px 28px;
     font-size: 1em;
 }
@@ -485,6 +445,10 @@ body::before {
     
     .section-title {
         font-size: 1.5em;
+    }
+
+    .keybind-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -829,41 +793,6 @@ body::before {
                 </div>
             </div>
         </div>
-
-        <!-- Teaching Controls -->
-        <div class="section-card">
-            <span class="section-icon">💡</span>
-            <h2 class="section-title">Teaching Your Controls</h2>
-            <div class="section-content">
-                <p>Introduce controls slowly so new players don’t feel overwhelmed.</p>
-
-                <ul>
-                    <li>Start with movement only: WASD / arrows + Space to jump.</li>
-                    <li>Then add interaction: E to talk / open / pick up.</li>
-                    <li class="action-only">Introduce combat later: mouse buttons and Q / R abilities.</li>
-                    <li class="cozy-only">Introduce tools slowly: watering can, fishing, decorating, etc.</li>
-                    <li>Repeat prompts in new areas (“Press Space to jump over gaps”).</li>
-                </ul>
-
-                <div class="example-card">
-                    <div class="example-title">Tutorial Sequence:</div>
-                    <div class="example-text action-only">
-                        1. Move with WASD / Arrows<br>
-                        2. Jump with Space<br>
-                        3. Interact with E<br>
-                        4. Attack with Left Mouse<br>
-                        5. Use skill with Q
-                    </div>
-                    <div class="example-text cozy-only">
-                        1. Move with WASD / Arrows<br>
-                        2. Interact with E<br>
-                        3. Use tool with Q<br>
-                        4. Open inventory with I<br>
-                        5. Place items with Left Mouse
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Control Preset Generator -->
@@ -882,154 +811,7 @@ body::before {
         </div>
     </div>
 
-    <!-- Practice & Reflection -->
-    <div class="header-card">
-        <h2 style="color: #ffd700; font-size: 2em; margin-bottom: 20px;">💡 Practice & Reflection</h2>
-        <div style="text-align: left; max-width: 800px; margin: 0 auto;">
-            <div class="prompt-box">
-                Can a new player understand your controls in under 30 seconds just by looking at a cheat sheet?
-            </div>
-            <div class="prompt-box action-only">
-                Are your combat controls responsive enough for quick reactions without finger gymnastics?
-            </div>
-            <div class="prompt-box cozy-only">
-                Do your controls feel relaxing, with no need to hold down many keys at once?
-            </div>
-            <div class="prompt-box">
-                Which keys are pressed the most in your game, and are they the easiest ones to reach?
-            </div>
-            <div class="prompt-box">
-                Have you given players options to customize controls if they struggle with the default layout?
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW: How to Code Key Bindings -->
-    <div class="content-grid">
-        <div class="section-card">
-            <span class="section-icon">🧪</span>
-            <h2 class="section-title">How to Code Key Bindings (JavaScript)</h2>
-            <div class="section-content">
-                <p>In code, a <strong>key binding</strong> is usually just a mapping from a key to an action.</p>
-
-                <div class="prompt-box">
-                    Think: “When the player presses this key, which function should run?”
-                </div>
-
-                <ul>
-                    <li>Create an object that stores which keys do what.</li>
-                    <li>Listen for <code>keydown</code> events with JavaScript.</li>
-                    <li>Look up the pressed key in your object.</li>
-                    <li>Call the correct function (move, jump, interact, etc.).</li>
-                </ul>
-
-                <div class="code-block">
-                    <pre><code>// 1. Key binding map
-const keyBindings = {
-  moveUp: 'w',
-  moveLeft: 'a',
-  moveDown: 's',
-  moveRight: 'd',
-  interact: 'e',
-  jump: ' '
-};
-
-// 2. Listen for key presses
-window.addEventListener('keydown', (event) =&gt; {
-  const key = event.key.toLowerCase();
-
-  if (key === keyBindings.moveUp) {
-    movePlayerUp();
-  } else if (key === keyBindings.jump) {
-    playerJump();
-  } else if (key === keyBindings.interact) {
-    interactWithWorld();
-  }
-});
-
-// 3. Example functions
-function movePlayerUp() {
-  console.log('Moving up!');
-}
-
-function playerJump() {
-  console.log('Jump!');
-}
-
-function interactWithWorld() {
-  console.log('Interact!');
-}</code></pre>
-                </div>
-            </div>
-        </div>
-
-        <!-- Example Code Card -->
-        <div class="section-card">
-            <span class="section-icon">📦</span>
-            <h2 class="section-title">Example: WASD Movement Bindings</h2>
-            <div class="section-content">
-                <p>Here is a smaller example that just sets up the <strong>keyBindings</strong> object.</p>
-
-                <div class="code-block">
-                    <pre><code>const keyBindings = {
-  moveUp: 'w',
-  moveLeft: 'a',
-  moveDown: 's',
-  moveRight: 'd',
-  interact: 'e',
-  jump: ' '
-};</code></pre>
-                </div>
-
-                <div class="prompt-box">
-                    This is the pattern you'll practice in the box below:
-                    <br>
-                    <strong>const keyBindings = &#123; ... &#125;;</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW: Interactive Code Practice -->
-    <div class="section-card">
-        <span class="section-icon">🧪</span>
-        <h2 class="section-title">Try It Yourself: Write the Key Bindings</h2>
-        <div class="section-content">
-            <p>
-                In the box below, write a <strong>JavaScript object</strong> named 
-                <code>keyBindings</code> that follows these rules:
-            </p>
-            <ul>
-                <li>Use <code>const keyBindings = &#123; ... &#125;;</code></li>
-                <li>Include these properties: <code>moveUp</code>, <code>moveLeft</code>, <code>moveDown</code>, <code>moveRight</code>, <code>interact</code>, <code>jump</code></li>
-                <li>Use string values for the keys (for example, <code>'w'</code>, <code>'a'</code>, <code>' '</code> for Space).</li>
-            </ul>
-
-            <div class="prompt-box">
-                Tip: When you're ready, press <strong>Enter</strong> (without Shift) inside the box to check your answer.
-            </div>
-
-            <div class="code-input-container">
-                <textarea
-                    id="keybind-code-input"
-                    class="code-input"
-                    spellcheck="false"
-                    placeholder="Write your code here, for example:
-
-const keyBindings = {
-  moveUp: 'w',
-  moveLeft: 'a',
-  moveDown: 's',
-  moveRight: 'd',
-  interact: 'e',
-  jump: ' '
-};"></textarea>
-                <div id="keybind-feedback" class="code-feedback"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW: Save Your Key Bindings to the Backend -->
+    <!-- Save Your Key Bindings to the Backend -->
     <div class="section-card">
         <span class="section-icon">💾</span>
         <h2 class="section-title">Save Your Key Bindings</h2>
@@ -1045,19 +827,13 @@ const keyBindings = {
 
             <form id="keybind-preferences-form" onsubmit="handleKeybindingSave(event)">
                 <div class="keybind-grid">
+                    <!-- Row 1: Move Up / Move Down -->
                     <div class="keybind-field">
                         <label for="bind-move-up">Move Up / Forward</label>
                         <select id="bind-move-up" class="keybind-select">
                             <option value="w">W</option>
                             <option value="ArrowUp">Arrow Up</option>
-                        </select>
-                    </div>
-
-                    <div class="keybind-field">
-                        <label for="bind-move-left">Move Left</label>
-                        <select id="bind-move-left" class="keybind-select">
-                            <option value="a">A</option>
-                            <option value="ArrowLeft">Arrow Left</option>
+                            <option value="i">I</option>
                         </select>
                     </div>
 
@@ -1066,6 +842,17 @@ const keyBindings = {
                         <select id="bind-move-down" class="keybind-select">
                             <option value="s">S</option>
                             <option value="ArrowDown">Arrow Down</option>
+                            <option value="k">K</option>
+                        </select>
+                    </div>
+
+                    <!-- Row 2: Move Left / Move Right -->
+                    <div class="keybind-field">
+                        <label for="bind-move-left">Move Left</label>
+                        <select id="bind-move-left" class="keybind-select">
+                            <option value="a">A</option>
+                            <option value="ArrowLeft">Arrow Left</option>
+                            <option value="j">J</option>
                         </select>
                     </div>
 
@@ -1074,14 +861,19 @@ const keyBindings = {
                         <select id="bind-move-right" class="keybind-select">
                             <option value="d">D</option>
                             <option value="ArrowRight">Arrow Right</option>
+                            <option value="l">L</option>
                         </select>
                     </div>
 
+                    <!-- Row 3: Interact / Jump -->
                     <div class="keybind-field">
                         <label for="bind-interact">Interact</label>
                         <select id="bind-interact" class="keybind-select">
                             <option value="e">E</option>
                             <option value="f">F</option>
+                            <option value="q">Q</option>
+                            <option value="r">R</option>
+                            <option value=" ">Space</option>
                         </select>
                     </div>
 
@@ -1090,15 +882,30 @@ const keyBindings = {
                         <select id="bind-jump" class="keybind-select">
                             <option value=" ">Space</option>
                             <option value="j">J</option>
+                            <option value="k">K</option>
+                            <option value="ShiftLeft">Left Shift</option>
+                            <option value="ShiftRight">Right Shift</option>
                         </select>
                     </div>
 
+                    <!-- Row 4: Sprint / (optional future action slot) -->
                     <div class="keybind-field">
                         <label for="bind-sprint">Sprint / Quick Walk</label>
                         <select id="bind-sprint" class="keybind-select">
                             <option value="ShiftLeft">Left Shift</option>
+                            <option value="ShiftRight">Right Shift</option>
+                            <option value="ControlLeft">Left Ctrl</option>
+                            <option value="ControlRight">Right Ctrl</option>
                             <option value="">(None)</option>
                         </select>
+                    </div>
+
+                    <!-- Placeholder for symmetry / future action -->
+                    <div class="keybind-field">
+                        <label>&nbsp;</label>
+                        <div style="color:#777; font-size:0.85em; font-style:italic;">
+                            Add another action here later (e.g., Dodge, Tool, Skill).
+                        </div>
                     </div>
                 </div>
 
@@ -1123,16 +930,10 @@ const currentPage = 5; // This is page 5
 const sidebar = document.getElementById('rpg-nav-sidebar');
 const navToggle = document.getElementById('nav-toggle');
 
-// On load: mode state, code practice hook, page tracking, and keybinding load
+// On load: mode state, page tracking, and keybinding load
 window.addEventListener('load', () => {
     updateContentForMode(gameMode);
     updateModeSelector(gameMode);
-
-    // Attach Enter key handler for the code input
-    const codeInput = document.getElementById('keybind-code-input');
-    if (codeInput) {
-        codeInput.addEventListener('keydown', handleKeybindKeyDown);
-    }
 
     // Track current page visit and update sidebar state
     trackPageVisit(currentPage);
@@ -1202,7 +1003,7 @@ function updateContentForMode(mode) {
     });
 
     actionRows.forEach(row => {
-        row.style.display = mode === 'action' ? '' : 'none';
+        row.style.display = mode === 'action' ? 'none' : '';
     });
 }
 
@@ -1354,51 +1155,7 @@ function updateVisitedIndicators() {
     });
 }
 
-// Interactive code checker for keyBindings
-
-function validateKeybindCode() {
-    const input = document.getElementById('keybind-code-input');
-    const feedback = document.getElementById('keybind-feedback');
-    if (!input || !feedback) return;
-
-    const code = input.value.trim();
-    if (!code) {
-        feedback.textContent = "Type your code above first.";
-        feedback.style.color = "#ffed4e";
-        return;
-    }
-
-    // Very simple pattern checks – not a real parser, just enough for the exercise
-    const checks = [
-        code.includes('const keyBindings'),
-        code.includes('moveUp'),
-        code.includes('moveLeft'),
-        code.includes('moveDown'),
-        code.includes('moveRight'),
-        code.includes('interact'),
-        code.includes('jump')
-    ];
-
-    const allGood = checks.every(Boolean);
-
-    if (allGood) {
-        feedback.textContent = "✅ Nice! Your keyBindings object matches the expected pattern.";
-        feedback.style.color = "#7CFC00";
-    } else {
-        feedback.textContent = "❌ Not quite. Make sure you have const keyBindings = { ... } with moveUp, moveLeft, moveDown, moveRight, interact, and jump properties.";
-        feedback.style.color = "#ff6b6b";
-    }
-}
-
-// When user presses Enter (without Shift) inside the textarea, check the answer
-function handleKeybindKeyDown(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        validateKeybindCode();
-    }
-}
-
-/* ======== NEW: Save & Load Key Bindings via Backend ======== */
+/* ======== Save & Load Key Bindings via Backend ======== */
 
 // Safely get the logged-in user session from localStorage
 function getCurrentUserSession() {
@@ -1425,7 +1182,6 @@ async function loadExistingKeybindings() {
         return;
     }
 
-    // No status element (could be removed in some layouts)
     if (!status) return;
 
     try {
@@ -1433,7 +1189,7 @@ async function loadExistingKeybindings() {
         const response = await fetch(url);
 
         if (!response.ok) {
-            // It's okay if nothing exists yet; just silently ignore
+            // It's okay if nothing exists yet
             return;
         }
 
