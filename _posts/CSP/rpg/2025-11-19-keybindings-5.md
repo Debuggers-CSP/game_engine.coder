@@ -1,8 +1,8 @@
 ---
 layout: post
 title: Key Bindings & Player Controls
-description: Choose and save your RPG key bindings.
-permalink: /rpg/keybindings
+description: Guide users through implementing core game controls.
+permalink: /rpg/controls
 comments: True
 ---
 
@@ -33,7 +33,7 @@ comments: True
         <span class="nav-check">✓</span>
       </a>
       <!-- This is the current page -->
-      <a href="/rpg/keybindings" class="nav-link active" data-page="5">
+      <a href="/rpg/controls" class="nav-link active" data-page="5">
         <span class="nav-number">5</span>
         <span class="nav-text">Controls</span>
         <span class="nav-check">✓</span>
