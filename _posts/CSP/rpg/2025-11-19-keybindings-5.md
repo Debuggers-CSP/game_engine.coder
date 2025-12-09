@@ -631,6 +631,7 @@ body::before {
                         <div>Description</div>
                     </div>
 
+                    <!-- MOVE UP -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Up / Forward</div>
@@ -638,9 +639,17 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-up" class="keybind-select">
-                                <option value="w">W</option>
-                                <option value="ArrowUp">Arrow Up</option>
-                                <option value="i">I</option>
+                                <!-- Action-focused -->
+                                <option value="w">W (Action default)</option>
+                                <option value="t">T (ESDF-style layout)</option>
+                                <option value="r">R (Alt action layout)</option>
+                                <option value="8">8 (Top row movement)</option>
+                                <!-- Cozy-focused -->
+                                <option value="ArrowUp">Arrow Up (Cozy default)</option>
+                                <option value="i">I (IJKL movement)</option>
+                                <option value="Numpad8">Numpad 8 (Cozy keypad)</option>
+                                <option value="PageUp">Page Up (Scroll-style)</option>
+                                <option value="Home">Home (Alt cozy up)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -648,6 +657,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- MOVE DOWN -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Down / Backward</div>
@@ -655,9 +665,17 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-down" class="keybind-select">
-                                <option value="s">S</option>
-                                <option value="ArrowDown">Arrow Down</option>
-                                <option value="k">K</option>
+                                <!-- Action-focused -->
+                                <option value="s">S (Action default)</option>
+                                <option value="g">G (ESDF-style)</option>
+                                <option value="f">F (Alt action layout)</option>
+                                <option value="2">2 (Top row movement)</option>
+                                <!-- Cozy-focused -->
+                                <option value="ArrowDown">Arrow Down (Cozy default)</option>
+                                <option value="k">K (IJKL movement)</option>
+                                <option value="Numpad2">Numpad 2 (Cozy keypad)</option>
+                                <option value="PageDown">Page Down (Scroll-style)</option>
+                                <option value="End">End (Alt cozy down)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -665,6 +683,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- MOVE LEFT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Left</div>
@@ -672,9 +691,17 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-left" class="keybind-select">
-                                <option value="a">A</option>
-                                <option value="ArrowLeft">Arrow Left</option>
-                                <option value="j">J</option>
+                                <!-- Action-focused -->
+                                <option value="a">A (Action default)</option>
+                                <option value="f">F (ESDF-style)</option>
+                                <option value="q">Q (Strafe / lean)</option>
+                                <option value="4">4 (Top row movement)</option>
+                                <!-- Cozy-focused -->
+                                <option value="ArrowLeft">Arrow Left (Cozy default)</option>
+                                <option value="j">J (IJKL movement)</option>
+                                <option value="Numpad4">Numpad 4 (Cozy keypad)</option>
+                                <option value="Home">Home (Diag cozy)</option>
+                                <option value="Delete">Delete (Alt cozy left)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -682,6 +709,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- MOVE RIGHT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Move Right</div>
@@ -689,9 +717,17 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-move-right" class="keybind-select">
-                                <option value="d">D</option>
-                                <option value="ArrowRight">Arrow Right</option>
-                                <option value="l">L</option>
+                                <!-- Action-focused -->
+                                <option value="d">D (Action default)</option>
+                                <option value="h">H (ESDF-style)</option>
+                                <option value="e">E (Strafe / lean)</option>
+                                <option value="6">6 (Top row movement)</option>
+                                <!-- Cozy-focused -->
+                                <option value="ArrowRight">Arrow Right (Cozy default)</option>
+                                <option value="l">L (IJKL movement)</option>
+                                <option value="Numpad6">Numpad 6 (Cozy keypad)</option>
+                                <option value="PageDown">Page Down (Diag cozy)</option>
+                                <option value="Insert">Insert (Alt cozy right)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -699,6 +735,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- INTERACT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Interact</div>
@@ -706,11 +743,18 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-interact" class="keybind-select">
-                                <option value="e">E</option>
-                                <option value="f">F</option>
-                                <option value="q">Q</option>
-                                <option value="r">R</option>
-                                <option value="Space">Space</option>
+                                <!-- Action-focused -->
+                                <option value="e">E (Action default)</option>
+                                <option value="f">F (Use / interact)</option>
+                                <option value="q">Q (Quick interact)</option>
+                                <option value="r">R (Reload / interact)</option>
+                                <option value="c">C (Action context)</option>
+                                <!-- Cozy-focused -->
+                                <option value="Space">Space (Cozy default)</option>
+                                <option value="Enter">Enter (Confirm / talk)</option>
+                                <option value="x">X (Tool / confirm)</option>
+                                <option value="z">Z (Alt cozy interact)</option>
+                                <option value="Tab">Tab (Cycle / interact)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -718,6 +762,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- JUMP / TOOL -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Jump / Tool Action</div>
@@ -727,12 +772,18 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-jump" class="keybind-select">
-                                <option value="Space">Space</option>
-                                <option value="j">J</option>
-                                <option value="k">K</option>
-                                <option value="ShiftLeft">Left Shift</option>
-                                <option value="ShiftRight">Right Shift</option>
-                                <option value="">(None)</option>
+                                <!-- Action-focused -->
+                                <option value="Space">Space (Action jump)</option>
+                                <option value="ShiftLeft">Left Shift (Dodge / jump)</option>
+                                <option value="ShiftRight">Right Shift (Alt dodge)</option>
+                                <option value="AltLeft">Left Alt (Action special)</option>
+                                <option value="AltRight">Right Alt (Action special)</option>
+                                <option value="ControlLeft">Left Ctrl (Crouch / jump)</option>
+                                <option value="ControlRight">Right Ctrl (Alt crouch)</option>
+                                <!-- Cozy-focused -->
+                                <option value="j">J (Tool / interact)</option>
+                                <option value="k">K (Alt tool key)</option>
+                                <option value="">(None – Cozy no jump)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -740,6 +791,7 @@ body::before {
                         </div>
                     </div>
 
+                    <!-- SPRINT / COMFORT -->
                     <div class="keybind-row">
                         <div>
                             <div class="keybind-action-name">Sprint / Comfort Action</div>
@@ -749,11 +801,18 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-sprint" class="keybind-select">
-                                <option value="ShiftLeft">Left Shift</option>
-                                <option value="ShiftRight">Right Shift</option>
-                                <option value="ControlLeft">Left Ctrl</option>
-                                <option value="ControlRight">Right Ctrl</option>
-                                <option value="">(None)</option>
+                                <!-- Action-focused -->
+                                <option value="ShiftLeft">Left Shift (Sprint default)</option>
+                                <option value="ShiftRight">Right Shift (Alt sprint)</option>
+                                <option value="ControlLeft">Left Ctrl (Run / slide)</option>
+                                <option value="ControlRight">Right Ctrl (Alt slide)</option>
+                                <option value="AltLeft">Left Alt (Dash / ability)</option>
+                                <option value="AltRight">Right Alt (Dash / ability)</option>
+                                <option value="CapsLock">Caps Lock (Toggle sprint)</option>
+                                <!-- Cozy-focused -->
+                                <option value="Space">Space (Cozy auto-walk / emote)</option>
+                                <option value="Tab">Tab (Cycle emotes)</option>
+                                <option value="">(None – Cozy no sprint)</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
