@@ -978,7 +978,7 @@ body::before {
                                 <option value="f">F</option>
                                 <option value="q">Q</option>
                                 <option value="r">R</option>
-                                <option value=" ">Space</option>
+                                <option value="Space">Space</option>
                             </select>
                         </div>
                         <div class="keybind-desc">
@@ -993,7 +993,7 @@ body::before {
                         </div>
                         <div>
                             <select id="bind-jump" class="keybind-select">
-                                <option value=" ">Space</option>
+                                <option value="Space">Space</option>
                                 <option value="j">J</option>
                                 <option value="k">K</option>
                                 <option value="ShiftLeft">Left Shift</option>
@@ -1322,6 +1322,10 @@ async function loadExistingKeybindings() {
 
 // Apply binding data to the select fields
 function setKeybindingFormFromData(binding) {
+    // Normalize legacy space values to the new "Space" string
+    if (binding.jumpKey === ' ') binding.jumpKey = 'Space';
+    if (binding.interactKey === ' ') binding.interactKey = 'Space';
+
     const mapping = {
         'bind-move-up': binding.moveUpKey,
         'bind-move-left': binding.moveLeftKey,
