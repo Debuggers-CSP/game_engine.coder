@@ -919,7 +919,7 @@ document.getElementById('confirmButton').addEventListener('click', function() {
     
     // Navigate to controls page if user confirms
     if (userConfirmed) {
-        window.location.href = 'http://localhost:4500/rpg/controls';
+        window.location.href = 'http://localhost:4500//rpg/keybindings';
     }
 });
 
