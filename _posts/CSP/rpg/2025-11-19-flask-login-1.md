@@ -330,8 +330,9 @@ body::after {
         <p class="game-subtitle">Login to Continue</p>
         
         <div class="tab-buttons">
-            <button class="tab-btn active" onclick="switchTab('register')">Register</button>
-            <button class="tab-btn" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn active" onclick="switchTab('register', event)">Register</button>
+            <button class="tab-btn" onclick="switchTab('login', event)">Login</button>
+
         </div>
         
         <!-- Registration Form -->
@@ -400,172 +401,156 @@ body::after {
 </div>
 
 <script>
-const API_URL = 'http://localhost:8587/api';
+const API_URL = (location.hostname === "localhost")
+    ? "http://localhost:8587/api"
+    : `${window.location.origin}/api`;
 
-function switchTab(tab) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
-    
-    // Update form containers
-    document.querySelectorAll('.form-container').forEach(form => {
-        form.classList.remove('active');
-    });
+  function switchTab(tab, ev) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if (ev?.target) ev.target.classList.add('active');
+
+    document.querySelectorAll('.form-container').forEach(form => form.classList.remove('active'));
     document.getElementById(tab + '-form').classList.add('active');
-    
-    // Clear message
-    hideMessage();
-}
 
-function showMessage(text, type) {
+    hideMessage();
+  }
+
+  function showMessage(text, type) {
     const messageDiv = document.getElementById('message');
     messageDiv.textContent = text;
     messageDiv.className = 'message ' + type;
     messageDiv.style.display = 'block';
-}
+  }
 
-function hideMessage() {
-    const messageDiv = document.getElementById('message');
-    messageDiv.style.display = 'none';
-}
+  function hideMessage() {
+    document.getElementById('message').style.display = 'none';
+  }
 
-function showLoading() {
+  function showLoading() {
     document.querySelector('.loading').classList.add('active');
-}
+  }
 
-function hideLoading() {
+  function hideLoading() {
     document.querySelector('.loading').classList.remove('active');
-}
+  }
 
-async function handleRegister(event) {
+  function getSession() {
+    try {
+      return JSON.parse(localStorage.getItem("userSession") || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setSession(githubId, extra = {}) {
+    localStorage.setItem("userSession", JSON.stringify({
+      githubId,
+      loginTime: new Date().toISOString(),
+      ...extra
+    }));
+  }
+
+  function clearSession() {
+    localStorage.removeItem("userSession");
+  }
+
+  // --- RPG REGISTER ---
+  async function handleRegister(event) {
     event.preventDefault();
     hideMessage();
     showLoading();
-    
-    const firstName = document.getElementById('reg-firstname').value;
-    const lastName = document.getElementById('reg-lastname').value;
-    const githubId = document.getElementById('reg-github').value;
+
+    const firstName = document.getElementById('reg-firstname').value.trim();
+    const lastName = document.getElementById('reg-lastname').value.trim();
+    const githubId = document.getElementById('reg-github').value.trim();
     const password = document.getElementById('reg-password').value;
-    
-    const userData = {
-        FirstName: firstName,
-        LastName: lastName,
-        GitHubID: githubId,
-        Password: password
-    };
-    
-    try {
-        const response = await fetch(`${API_URL}/rpg/data`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        const data = await response.json();
-        hideLoading();
-        
-        if (response.ok) {
-            showMessage(`🎉 Welcome, ${firstName}! Your account has been created successfully.`, 'success');
-            event.target.reset();
-            
-            setTimeout(() => {
-                document.querySelectorAll('.tab-btn')[1].click();
-            }, 2000);
-        } else {
-            // Check if it's a duplicate user error
-            if (response.status === 409 || (data.message && data.message.includes('already exists'))) {
-                showMessage(`⚠️ An account with this GitHub ID already exists. Please login instead.`, 'error');
-            } else {
-                showMessage(`⚠️ ${data.message || 'Registration failed. Please try again.'}`, 'error');
-            }
-        }
-    } catch (error) {
-        hideLoading();
-        showMessage('⚠️ Connection failed. Ensure the Flask server is running.', 'error');
-        console.error('Error:', error);
-    }
-}
 
-async function handleLogin(event) {
+    const userData = { FirstName: firstName, LastName: lastName, GitHubID: githubId, Password: password };
+
+    try {
+      const response = await fetch(`${API_URL}/rpg/data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+
+      const data = await response.json().catch(() => ({}));
+      hideLoading();
+
+      if (response.ok) {
+        showMessage(`🎉 Welcome, ${firstName}! Your account has been created successfully.`, 'success');
+        event.target.reset();
+        setTimeout(() => document.querySelectorAll('.tab-btn')[1].click(), 1200);
+      } else {
+        if (response.status === 409 || (data.message && data.message.includes('already exists'))) {
+          showMessage(`⚠️ An account with this GitHub ID already exists. Please login instead.`, 'error');
+        } else {
+          showMessage(`⚠️ ${data.message || 'Registration failed. Please try again.'}`, 'error');
+        }
+      }
+    } catch (error) {
+      hideLoading();
+      showMessage('⚠️ Connection failed. Ensure the Flask server is running.', 'error');
+      console.error(error);
+    }
+  }
+
+  // --- RPG LOGIN (Option A) ---
+  async function handleLogin(event) {
     event.preventDefault();
     hideMessage();
     showLoading();
-    
-    const githubId = document.getElementById('login-github').value;
+
+    const githubId = document.getElementById('login-github').value.trim();
     const password = document.getElementById('login-password').value;
-    
-    const loginData = {
-        GitHubID: githubId,
-        Password: password
-    };
-    
+
     try {
-        const response = await fetch(`${API_URL}/rpg/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(loginData)
-        });
-        
-        const data = await response.json();
-        hideLoading();
-        
-        if (response.ok) {
-            showMessage(`✅ Login successful! Redirecting...`, 'success');
-            
-            localStorage.setItem('userSession', JSON.stringify({
-                githubId: githubId,
-                loginTime: new Date().toISOString()
-            }));
-            
-+            setTimeout(() => {
-                window.location.href = '/rpg/mode';
-            }, 1500);
-        } else {
-            showMessage(`⚠️ ${data.message || 'Login failed. Please check your information.'}`, 'error');
-        }
+      const response = await fetch(`${API_URL}/rpg/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ GitHubID: githubId, Password: password })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      hideLoading();
+
+      if (!response.ok) {
+        showMessage(`⚠️ ${data.message || 'Login failed. Check your credentials.'}`, 'error');
+        return;
+      }
+
+      // ✅ Store session locally (this is now the source of truth)
+      setSession(githubId, { name: data?.user?.name });
+
+      showMessage(`✅ Logged in as ${githubId}. Redirecting...`, 'success');
+      setTimeout(() => window.location.href = '/rpg/mode', 900);
+
     } catch (error) {
-        hideLoading();
-        showMessage('⚠️ Connection failed. Ensure the Flask server is running.', 'error');
-        console.error('Error:', error);
+      hideLoading();
+      showMessage('⚠️ Connection failed. Ensure the Flask server is running.', 'error');
+      console.error(error);
     }
-}
+  }
 
-// Check if user is already logged in
-window.addEventListener('load', () => {
-    const session = localStorage.getItem('userSession');
-    if (session) {
-        const sessionData = JSON.parse(session);
-        showMessage(`👋 You're already logged in. Click 'Continue to Game' to proceed.`, 'success');
-        
-        // Hide forms and show continue button
-        document.querySelectorAll('.form-container').forEach(form => {
-            form.style.display = 'none';
-        });
-        document.querySelector('.tab-buttons').style.display = 'none';
-        document.getElementById('continue-section').style.display = 'block';
+  // Check if user is already logged in (Option A: localStorage)
+  window.addEventListener('load', () => {
+    const s = getSession();
+    if (s?.githubId) {
+      showMessage(`👋 You're already logged in as ${s.githubId}. Click 'Continue to Game' to proceed.`, 'success');
+
+      document.querySelectorAll('.form-container').forEach(form => form.style.display = 'none');
+      document.querySelector('.tab-buttons').style.display = 'none';
+      document.getElementById('continue-section').style.display = 'block';
     }
-});
+  });
 
-function continueToGame() {
+  function continueToGame() {
     window.location.href = '/rpg/mode';
-}
+  }
 
-function signOut() {
-    // Clear the user session
-    localStorage.removeItem('userSession');
-    
-    // Show success message
+  async function signOut() {
+    clearSession();
     showMessage('✅ Successfully signed out!', 'success');
-    
-    // Reload page to show login forms again
-    setTimeout(() => {
-        location.reload();
-    }, 1000);
-}
+    setTimeout(() => location.reload(), 800);
+  }
 </script>
