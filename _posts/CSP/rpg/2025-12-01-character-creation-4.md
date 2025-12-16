@@ -29,7 +29,7 @@ comments: True
       </a>
       <a href="/rpg/character-creation" class="nav-link active" data-page="4">
         <span class="nav-number">4</span>
-        <span class="nav-text">Character Creation</span>
+        <span class="nav-text">Simple RPG Game Creater</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/keybindings" class="nav-link" data-page="5">
@@ -52,7 +52,7 @@ comments: True
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Character Creation</title>
+    <title>Simple RPG Game Creater</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -72,13 +72,7 @@ comments: True
             padding: 20px;
         }
         
-        .container {
-            max-width: 1200px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-        }
+
         
         header {
             text-align: center;
@@ -101,6 +95,7 @@ comments: True
             max-width: 600px;
             margin: 0 auto;
         }
+        
         
         .main-content {
             display: grid;
@@ -328,12 +323,12 @@ comments: True
         }
         
         .btn-confirm {
-            background-color: #4cc9f0;
+            background-color: #ffd700;
             color: #1a1a2e;
         }
         
         .btn-confirm:hover {
-            background-color: #3aa8d8;
+            background-color: #ffd700;
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(76, 201, 240, 0.4);
         }
@@ -533,8 +528,8 @@ comments: True
     .wm-side { display:flex; flex-direction:column; gap:8px; align-self:stretch; height:100%; overflow:hidden; }
     .wm-panel { background: rgba(0,0,0,0.35); border:1px solid rgba(255,215,0,0.25); border-radius:10px; padding:8px; display:flex; flex-direction:column; min-height:0; }
     .wm-panel .wm-title { color:#ffd700; text-align:center; font-size:1.3em !important; line-height:1.15 !important; font-weight: 400; margin: 0 0 2px 0; letter-spacing: 0.3px; }
-    .wm-palette-panel { flex: 1 1 70%; padding:6px; font-size:0.95em; }
-    .wm-tools-panel { flex: 1 1 30%; }
+    .wm-palette-panel { flex: 1 1 50%; padding:6px; font-size:0.95em; }
+    .wm-tools-panel { flex: 1 1 60%; }
     .wm-palette { display:flex; flex-direction:column; gap:3px; overflow: auto; min-height:0; }
     .wm-group-title { color:#cfe3ff; font-size:0.72em; margin:0; padding:1px 3px; border-left:3px solid rgba(255,215,0,0.35); background: rgba(255,215,0,0.06); border-radius:6px; }
     .wm-group-grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:3px; }
@@ -1035,22 +1030,15 @@ comments: True
                 <small style="color: #a0a0a0; font-size: 0.85em; margin-top: 5px; display: block;">What players earn for completing the quest (e.g., "500 gold coins and a magic sword")</small>
             </div>
             
-            <div style="grid-column: 1 / -1;">
-                <button type="submit" class="generator-btn" style="width: 100%; max-width: 500px; margin: 0 auto; display: block;">
-                    <span style="position: relative; z-index: 1;">Add Quest to Log</span>
-                </button>
-            </div>
+<div style="grid-column: 1 / -1;">
+    <button type="submit" 
+            class="btn btn-confirm" 
+            style="width: 100%; max-width: 500px; margin: 0 auto; display: block;">
+        <i class="fas fa-plus-circle"></i>
+        <span style="position: relative; z-index: 1;">Add Quest to Log</span>
+    </button>
+</div>
         </form>
-        
-        <div id="quest-log-result" class="result-box" style="margin: 30px auto 0; padding: 20px 40px; max-width: 1400px; width: 100%;">
-            <h3 style="color: #ffd700; margin-bottom: 20px; text-align: center;">Your Quest Log</h3>
-            <div id="quest-log-content" class="result-text"></div>
-            <button onclick="downloadQuestLog()" class="generator-btn" style="margin-top: 20px; padding: 12px 30px; font-size: 1em;">
-                <span style="position: relative; z-index: 1;">Download Quest Log</span>
-            </button>
-        </div>
-        </div>
-    </div>
 
     <div class="container">
         <header>
@@ -1660,5 +1648,3 @@ Created on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString
         updateVisitedIndicators();
         updateReviewLock();
     </script>
-</body>
-</html>
