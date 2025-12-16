@@ -906,9 +906,19 @@ comments: True
       canvas.addEventListener('touchmove', (e)=>{ if(!drawing) return; const {c,r}=cellFromEvent(e); if (state.selected.kind==='tile') { if (state.tool==='paint') { paintAt(c,r); } else if (state.tool==='erase') { eraseAt(c,r); } redraw(); } e.preventDefault(); }, { passive:false });
       window.addEventListener('touchend', ()=> drawing=false);
 
-      // Keyboard pan (hold Space to pan)
-      window.addEventListener('keydown', (e)=>{ if (e.code==='Space') { spaceDown = true; e.preventDefault(); } });
-      window.addEventListener('keyup', (e)=>{ if (e.code==='Space') { spaceDown = false; } });
+            // Keyboard pan (hold Space to pan) — do not block typing in inputs/textareas
+            function isTextInput(el){
+                return el && (el.tagName==='INPUT' || el.tagName==='TEXTAREA' || el.isContentEditable);
+            }
+            window.addEventListener('keydown', (e)=>{
+                if (e.code==='Space') {
+                    const target = e.target || document.activeElement;
+                    if (!isTextInput(target)) { spaceDown = true; e.preventDefault(); }
+                }
+            });
+            window.addEventListener('keyup', (e)=>{
+                if (e.code==='Space') { spaceDown = false; }
+            });
 
       // Mouse wheel zoom (focus under cursor)
       canvas.addEventListener('wheel', (e)=>{
