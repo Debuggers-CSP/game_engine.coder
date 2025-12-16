@@ -429,6 +429,9 @@ comments: True
     </div>
 
     <div class="grid-tiles" id="loop-tiles"></div>
+    <div class="loop-diagram">
+      <div class="loop-row" id="loop-diagram-row"></div>
+    </div>
 
     <div class="mini-row">
       <div class="field">
@@ -472,8 +475,12 @@ comments: True
   </div>
 </div>
 
-<script>
-  const API_URL = 'http://localhost:8587/api';
+<script type="module">
+  import { pythonURI } from '{{ site.baseurl }}/assets/js/api/config.js';
+
+  // Use the same pattern as your other working page: pythonURI is imported, not global.
+  const API_BASE = pythonURI || 'http://localhost:8587'; // fallback only if needed
+
   const currentPage = 6;
 
   let gameMode = localStorage.getItem('rpgGameMode') || 'action';
@@ -616,7 +623,8 @@ comments: True
     setPageStatus('Loading your saved game systems…', 'warn');
 
     try {
-      const url = `${API_URL}/rpg/systems?userGithubId=${encodeURIComponent(session.githubId)}&gameMode=${encodeURIComponent(gameMode)}`;
+      const url = `${API_BASE}/api/rpg/systems?userGithubId=${encodeURIComponent(session.githubId)}&gameMode=${encodeURIComponent(gameMode)}`;
+
       const res = await fetch(url);
 
       if (res.ok) {
@@ -665,7 +673,7 @@ comments: True
       status.textContent = 'Saving…';
       status.className = 'status warn';
 
-      const res = await fetch(`${API_URL}/rpg/systems`, {
+      const res = await fetch(`${API_BASE}/api/rpg/systems`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify(payload)
