@@ -694,6 +694,12 @@ comments: True
       trackPageVisit(currentPage);
       updateVisitedIndicators();
       updateReviewLock();
+
+      // Redirect to Review page after confirmation
+      setTimeout(() => {
+        window.location.href = '/rpg/review';
+      }, 600);
+
     } catch (e) {
       console.error(e);
       status.textContent = '❌ Could not reach the server.';
