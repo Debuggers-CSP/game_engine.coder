@@ -29,7 +29,7 @@ comments: True
       </a>
       <a href="/rpg/character-creation" class="nav-link" data-page="4">
         <span class="nav-number">4</span>
-        <span class="nav-text">Character Creation</span>
+        <span class="nav-text">Game creator</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/keybindings" class="nav-link" data-page="5">

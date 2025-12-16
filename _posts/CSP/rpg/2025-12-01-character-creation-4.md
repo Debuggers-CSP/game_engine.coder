@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Character Creation
+title: Game creator
 description: Let the user create character
 permalink: /rpg/character-creation
 comments: True
@@ -29,7 +29,7 @@ comments: True
       </a>
       <a href="/rpg/character-creation" class="nav-link active" data-page="4">
         <span class="nav-number">4</span>
-        <span class="nav-text">Simple RPG Game Creater</span>
+        <span class="nav-text">Game creator</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/keybindings" class="nav-link" data-page="5">
@@ -52,7 +52,7 @@ comments: True
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple RPG Game Creater</title>
+    <title>Game creator</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -1052,7 +1052,7 @@ comments: True
 
     <div class="container">
         <header>
-            <h1>Character Creation</h1>
+            <h1>Game creator</h1>
             <p class="subtitle">Build your character's background story and customize their visual appearance!</p>
         </header>
         
