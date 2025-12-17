@@ -37,6 +37,11 @@ comments: True
         <span class="nav-text">Controls</span>
         <span class="nav-check">✓</span>
       </a>
+      <a href="/rpg/systems" class="nav-link active" data-page="6">
+        <span class="nav-number">6</span>
+        <span class="nav-text">Game Systems</span>
+        <span class="nav-check">✓</span>
+      </a>
       <a href="/rpg/review" class="nav-link locked" data-page="6" id="review-link">
         <span class="nav-number">6</span>
         <span class="nav-text">Review</span>
