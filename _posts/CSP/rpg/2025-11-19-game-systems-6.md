@@ -59,6 +59,7 @@ comments: True
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
 
+
   body{
     font-family:'Cinzel','Georgia',serif;
     background:#1a1a2e;
@@ -84,7 +85,33 @@ comments: True
   }
   @keyframes stars { from{ transform:translate(0,0);} to{ transform:translate(-50%,-50%);} }
 
-  .container{ position:relative; z-index:10; max-width:980px; margin:0 auto; }
+.page-content .wrapper {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+}
+
+.page-content {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+}
+
+  .container{
+  position: relative;
+  z-index: 10;
+
+  /* Wider on desktop, still centered */
+  max-width: 1400px;
+  margin: 0 auto;
+
+  /* Adds breathing room near edges */
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
 
   .card{
     background:linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
