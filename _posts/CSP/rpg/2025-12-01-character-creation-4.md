@@ -1473,6 +1473,12 @@ document.getElementById('confirmButton').addEventListener('click', function() {
             characterForm.addEventListener('submit', handleCharacterSubmit);
         }
 
+        // Setup quest form event listener
+        const questForm = document.getElementById('quest-form');
+        if (questForm) {
+          questForm.addEventListener('submit', handleQuestSubmit);
+        }
+
         async function handleCharacterSubmit(event) {
             event.preventDefault();
             
@@ -1516,6 +1522,95 @@ document.getElementById('confirmButton').addEventListener('click', function() {
                 alert('Could not connect to server. Please make sure the Flask backend is running.');
             }
         }
+
+          // --- Quest creation handler (saves to backend and verifies) ---
+          async function handleQuestSubmit(event) {
+            event.preventDefault();
+
+            // Require login for associating quests with a user
+            const userSession = localStorage.getItem('userSession');
+            if (!userSession) {
+              alert('Please login first to create quests!');
+              window.location.href = '/rpg/login';
+              return;
+            }
+
+            const sessionData = JSON.parse(userSession);
+
+            const questData = {
+              title: document.getElementById('quest-title').value,
+              location: document.getElementById('quest-location').value,
+              objective: document.getElementById('quest-objective').value,
+              difficulty: document.getElementById('quest-difficulty').value,
+              reward: document.getElementById('quest-reward').value,
+              gameMode: gameMode,
+              userGithubId: sessionData.githubId
+            };
+
+            try {
+              const isLocal = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+              const pythonBase = isLocal ? 'http://localhost:8587' : 'https://flask.opencodingsociety.com';
+              const API_URL = `${pythonBase}/api`;
+
+              const response = await fetch(`${API_URL}/rpg/quest`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Origin': 'client'
+                },
+                credentials: 'include',
+                body: JSON.stringify(questData)
+              });
+
+              if (response.ok) {
+                const created = await response.json();
+                // Verify round-trip by refetching quests
+                try {
+                  const verifyRes = await fetch(`${API_URL}/rpg/quests?userGithubId=${encodeURIComponent(questData.userGithubId)}`, { credentials: 'include' });
+                  const verifyBody = verifyRes.ok ? (await verifyRes.json()) : { quests: [] };
+                  const found = Array.isArray(verifyBody.quests) && verifyBody.quests.some(q => String(q.id) === String(created.id));
+
+                  // Clear form regardless to provide fresh state
+                  event.target.reset();
+
+                  if (found) {
+                    showToast('✅ Quest saved to backend and verified.', true);
+                  } else {
+                    showToast('⚠️ Saved response received, but backend verification failed.', false);
+                  }
+                } catch (verifyErr) {
+                  event.target.reset();
+                  showToast('✅ Quest saved (verification skipped due to network).', true);
+                }
+              } else {
+                let msg = 'Error adding quest. Please try again.';
+                try { const err = await response.json(); if (err?.message) msg = `Error: ${err.message}`; } catch {}
+                showToast(msg, false);
+              }
+            } catch (e) {
+              console.error('Quest save error:', e);
+              showToast('Could not connect to server. Please make sure the backend is running.', false);
+            }
+          }
+
+          // Simple toast utility for inline feedback
+          function showToast(message, ok) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.right = '16px';
+            toast.style.bottom = '16px';
+            toast.style.zIndex = '2000';
+            toast.style.padding = '12px 16px';
+            toast.style.borderRadius = '8px';
+            toast.style.color = ok ? '#0b2e13' : '#3d0a0a';
+            toast.style.background = ok ? 'linear-gradient(135deg,#b7f7c5,#6ee7b7)' : 'linear-gradient(135deg,#fecaca,#fda4af)';
+            toast.style.border = ok ? '1px solid #34d399' : '1px solid #f87171';
+            toast.style.boxShadow = '0 8px 30px rgba(0,0,0,0.2)';
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .4s'; }, 3000);
+            setTimeout(() => { toast.remove(); }, 3600);
+          }
 
         function displayCharacterSheet(data) {
             const resultBox = document.getElementById('character-sheet-result');
