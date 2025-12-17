@@ -1,8 +1,8 @@
 ---
 layout: post
 title: Game creator
-description: Let the user create character
-permalink: /rpg/character-creation
+description: Let the user create a simple game
+permalink: /rpg/game-creater
 comments: True
 ---
 
