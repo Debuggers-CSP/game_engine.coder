@@ -46,7 +46,7 @@ comments: True
       </a>
 
       <!-- Final page -->
-      <a href="/rpg/review" class="nav-link locked" data-page="7" id="review-link">
+      <a href="/rpg/review" class="nav-link" data-page="7" id="review-link">
         <span class="nav-number">7</span>
         <span class="nav-text">Review</span>
         <span class="nav-lock">🔒</span>
