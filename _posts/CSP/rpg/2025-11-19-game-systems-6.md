@@ -27,7 +27,7 @@ comments: True
         <span class="nav-text">Story & Narrative</span>
         <span class="nav-check">✓</span>
       </a>
-      <a href="/rpg/character-creation" class="nav-link" data-page="4">
+      <a href="/rpg/game-creater" class="nav-link" data-page="4">
         <span class="nav-number">4</span>
         <span class="nav-text">Game creator</span>
         <span class="nav-check">✓</span>
