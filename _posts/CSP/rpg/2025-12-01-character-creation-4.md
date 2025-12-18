@@ -17,7 +17,7 @@ comments: True
         <span class="nav-number">1</span>
         <span class="nav-text">Login</span>
       </a>
-      <a href="/rpg/mode" class="nav-link" data-page="2">
+      <a href="/rpg/content" class="nav-link" data-page="2">
         <span class="nav-number">2</span>
         <span class="nav-text">Game Mode</span>
         <span class="nav-check">✓</span>
@@ -45,7 +45,7 @@ comments: True
       <a href="/rpg/review" class="nav-link" data-page="6" id="review-link">
         <span class="nav-number">6</span>
         <span class="nav-text">Review</span>
-        <span class="nav-lock">🔒</span>
+        <span class="nav-lock">✓</span>
         <span class="nav-check">✓</span>
       </a>
     </nav>
