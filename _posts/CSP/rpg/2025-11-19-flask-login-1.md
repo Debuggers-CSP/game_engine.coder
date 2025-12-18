@@ -523,7 +523,7 @@ const API_URL = (location.hostname === "localhost")
       setSession(githubId, { name: data?.user?.name });
 
       showMessage(`✅ Logged in as ${githubId}. Redirecting...`, 'success');
-      setTimeout(() => window.location.href = '/rpg/content', 900);
+      setTimeout(() => window.location.href = '/rpg/dashboard', 900);
 
     } catch (error) {
       hideLoading();
@@ -545,7 +545,7 @@ const API_URL = (location.hostname === "localhost")
   });
 
   function continueToGame() {
-    window.location.href = '/rpg/content';
+    window.location.href = '/rpg/dashboard';
   }
 
   async function signOut() {

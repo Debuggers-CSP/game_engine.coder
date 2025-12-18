@@ -9,7 +9,7 @@ comments: True
 <!-- RPG Navigation Sidebar -->
 <div id="rpg-nav-sidebar" class="rpg-nav-sidebar">
   <button id="nav-toggle" class="nav-toggle">☰</button>
-  <div class="nav-content">
+  <div class="nav-dashboard">
     <h3 class="nav-title">🎮 RPG Creator</h3>
     <div class="nav-divider"></div>
     <nav class="nav-links">
@@ -17,9 +17,9 @@ comments: True
         <span class="nav-number">1</span>
         <span class="nav-text">Login</span>
       </a>
-      <a href="/rpg/content" class="nav-link" data-page="2">
+      <a href="/rpg/dashboard" class="nav-link" data-page="2">
         <span class="nav-number">2</span>
-        <span class="nav-text">Content</span>
+        <span class="nav-text">Dashboard</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/story" class="nav-link" data-page="3">
@@ -378,7 +378,7 @@ comments: True
     transition: all 0.3s ease;
   }
   .nav-toggle:hover{ background: rgba(255,215,0,0.1); box-shadow: 0 0 15px rgba(255,215,0,0.25); }
-  .nav-content{ padding:30px 20px; height:100%; overflow-y:auto; }
+  .nav-dashboard{ padding:30px 20px; height:100%; overflow-y:auto; }
   .nav-title{
     color:#ffd700; font-size:1.5em; text-align:center; margin-bottom:10px;
     text-shadow:0 0 10px rgba(255,215,0,0.5);
