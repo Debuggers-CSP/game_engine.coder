@@ -222,18 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-/* Override theme width restrictions */
-.page-content .wrapper {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
-}
 
+
+<style>
+/* Reset and Base Styles */
+.page-content .wrapper,
 .page-content {
-    width: 100% !important;
     max-width: 100% !important;
+    width: 100% !important;
     padding: 0 !important;
     margin: 0 auto !important;
 }
@@ -242,1011 +238,783 @@ body {
     font-family: 'Cinzel', 'Georgia', serif;
     background: #1a1a2e;
     min-height: 100vh;
-    height: auto;
-    position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 0;
     margin: 0;
-}
-
-/* Main container */
-.main-container {
-    position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: 1800px;
-    margin: 0 auto;
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 30px;
 }
 
-/* Dashboard header */
+/* Main Container */
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header - Minimal */
 .dashboard-header {
-    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.7),
-        inset 0 0 20px rgba(255, 215, 0, 0.1),
-        0 0 40px rgba(255, 215, 0, 0.2);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    backdrop-filter: blur(10px);
     text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
 }
 
 .header-icon {
-    font-size: 4em;
-    margin-bottom: 20px;
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
-}
-
-.main-title {
-    color: #ffd700;
-    font-size: 3em;
+    font-size: 5em;
     margin-bottom: 15px;
-    text-shadow: 
-        0 0 10px rgba(255, 215, 0, 0.5),
-        0 0 20px rgba(255, 215, 0, 0.3),
-        2px 2px 4px rgba(0, 0, 0, 0.8);
-    letter-spacing: 3px;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+    animation: float 6s ease-in-out infinite;
 }
 
-.subtitle {
-    color: #c0c0c0;
-    font-size: 1.2em;
-    font-style: italic;
-    opacity: 0.9;
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
 }
 
-/* Progress tracker */
-.progress-tracker {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.4);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 15px;
-    padding: 20px 30px;
-    margin-top: 20px;
-}
-
-.progress-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.step-number {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffd700;
-    font-weight: bold;
-    font-size: 1.2em;
-    transition: all 0.3s ease;
-}
-
-.step-number.active {
-    background: rgba(255, 215, 0, 0.3);
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-}
-
-.step-number.completed {
-    background: rgba(76, 201, 240, 0.3);
-    border-color: #4cc9f0;
-}
-
-.step-label {
-    color: #c0c0c0;
-    font-size: 0.9em;
-    text-align: center;
-    max-width: 120px;
-}
-
-.step-label.active {
-    color: #ffd700;
-    font-weight: bold;
-}
-
-/* Content sections grid */
-.content-sections {
+/* Visual Grid */
+.visual-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
     margin-bottom: 40px;
 }
 
-/* Section card */
-.section-card {
-    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
+/* Visual Card - 90% visual, 10% text */
+.visual-card {
+    height: 350px;
     border-radius: 20px;
-    padding: 30px;
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.7),
-        inset 0 0 20px rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
     overflow: hidden;
-}
-
-.section-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 
-        0 12px 40px 0 rgba(0, 0, 0, 0.8),
-        inset 0 0 30px rgba(255, 215, 0, 0.2),
-        0 0 60px rgba(255, 215, 0, 0.3);
-    border-color: #ffd700;
-}
-
-.section-card.completed {
-    border-color: #4cc9f0;
-}
-
-.section-card.completed::before {
-    content: '✓ Completed';
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(76, 201, 240, 0.2);
-    color: #4cc9f0;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8em;
-    font-weight: bold;
-}
-
-.section-card.locked {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-.section-card.locked::before {
-    content: '🔒 Locked';
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255, 107, 107, 0.2);
-    color: #ff6b6b;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8em;
-    font-weight: bold;
-}
-
-.section-icon {
-    font-size: 3em;
-    margin-bottom: 20px;
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-}
-
-.section-title {
-    color: #ffd700;
-    font-size: 1.8em;
-    margin-bottom: 15px;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.section-description {
-    color: #c0c0c0;
-    line-height: 1.6;
-    margin-bottom: 20px;
-    font-size: 1em;
-}
-
-.section-features {
-    list-style: none;
-    padding-left: 0;
-    margin-top: 20px;
-}
-
-.section-features li {
-    padding: 8px 0 8px 25px;
     position: relative;
-    color: #c0c0c0;
-    margin-bottom: 8px;
-    font-size: 0.95em;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
-}
-
-.section-features li::before {
-    content: '✨';
-    position: absolute;
-    left: 0;
-    color: #ffd700;
-}
-
-/* Action buttons */
-.section-actions {
-    display: flex;
-    gap: 15px;
-    margin-top: 25px;
-}
-
-.action-btn {
-    flex: 1;
-    padding: 12px 20px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 10px;
-    color: #ffd700;
-    font-family: 'Cinzel', 'Georgia', serif;
-    font-size: 1em;
     cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, rgba(30, 30, 60, 0.9), rgba(20, 20, 40, 0.9));
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.visual-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: rgba(255, 215, 0, 0.5);
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(255, 215, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Visual Content Area - 90% */
+.card-visual {
+    height: 315px; /* 90% of 350px */
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    overflow: hidden;
 }
 
-.action-btn:hover {
-    background: rgba(255, 215, 0, 0.2);
-    border-color: #ffd700;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+/* Main Icon */
+.main-icon {
+    font-size: 8em;
+    filter: drop-shadow(0 0 20px currentColor);
+    opacity: 0.9;
+    z-index: 2;
+    position: relative;
 }
 
-.action-btn.primary {
-    background: linear-gradient(135deg, #ffd700, #ffed4e);
-    color: #1a1a2e;
+/* Particle Effects */
+.particle-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.6;
+    filter: blur(1px);
+}
+
+/* Color Themes for Sections */
+.visual-card[data-section="story"] .main-icon { color: #9B59B6; }
+.visual-card[data-section="game-creator"] .main-icon { color: #3498DB; }
+.visual-card[data-section="controls"] .main-icon { color: #2ECC71; }
+.visual-card[data-section="systems"] .main-icon { color: #E67E22; }
+.visual-card[data-section="review"] .main-icon { color: #E74C3C; }
+.visual-card[data-section="tools"] .main-icon { color: #95A5A6; }
+
+/* Title Area - 10% */
+.card-title {
+    height: 35px; /* 10% of 350px */
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.section-name {
+    color: #ffd700;
+    font-size: 1em;
     font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
 }
 
-.action-btn.secondary {
-    background: rgba(76, 201, 240, 0.1);
-    border-color: rgba(76, 201, 240, 0.3);
-    color: #4cc9f0;
-}
-
-.action-btn.secondary:hover {
-    background: rgba(76, 201, 240, 0.2);
-    border-color: #4cc9f0;
-}
-
-/* Status indicator */
+/* Status Indicator */
 .status-indicator {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 15px;
+    right: 15px;
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: rgba(255, 107, 107, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    z-index: 3;
 }
 
-.status-indicator.active {
-    background: rgba(34, 197, 94, 0.8);
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+.status-active {
+    background: #22c55e;
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
     animation: pulse 2s infinite;
+}
+
+.status-completed {
+    background: #4cc9f0;
+    box-shadow: 0 0 15px rgba(76, 201, 240, 0.5);
+}
+
+.status-locked {
+    background: #ff6b6b;
+    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
 }
 
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
     100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
-/* Completion status */
-.completion-status {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(0, 0, 0, 0.4);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 15px;
-    padding: 25px;
-    margin-bottom: 30px;
-}
-
-.completion-text {
-    color: #c0c0c0;
-    font-size: 1.1em;
-}
-
-.completion-text strong {
-    color: #ffd700;
-}
-
-.progress-bar {
-    flex: 1;
-    max-width: 400px;
-    height: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 0 20px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #ffd700, #ffed4e);
-    border-radius: 10px;
-    transition: width 0.5s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.progress-fill::after {
-    content: '';
+/* Completion Badge */
+.completion-badge {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255, 255, 255, 0.3), 
-        transparent);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.completion-percentage {
-    color: #ffd700;
-    font-size: 1.3em;
-    font-weight: bold;
-    min-width: 60px;
-    text-align: center;
-}
-
-/* Preview panel */
-.preview-panel {
-    background: linear-gradient(145deg, rgba(30, 30, 60, 0.95), rgba(20, 20, 40, 0.95));
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 
-        0 8px 32px 0 rgba(0, 0, 0, 0.7),
-        inset 0 0 20px rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    backdrop-filter: blur(10px);
-    margin-top: 30px;
-}
-
-.preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.preview-title {
-    color: #ffd700;
-    font-size: 1.8em;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.preview-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
-    min-height: 300px;
-}
-
-.preview-main {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.2);
+    bottom: 15px;
+    left: 15px;
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 15px;
-    padding: 25px;
+    padding: 4px 10px;
+    color: #ffd700;
+    font-size: 0.8em;
+    z-index: 3;
+    backdrop-filter: blur(5px);
 }
 
-.preview-sidebar {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    border-radius: 15px;
-    padding: 25px;
-}
-
-.preview-label {
-    color: #4cc9f0;
-    font-size: 1.1em;
-    margin-bottom: 15px;
-    display: block;
-}
-
-.preview-text {
-    color: #c0c0c0;
-    line-height: 1.6;
-}
-
-/* Quick actions */
-.quick-actions {
+/* Progress Overview - Visual Only */
+.progress-overview {
     display: flex;
-    gap: 15px;
     justify-content: center;
-    margin-top: 40px;
+    gap: 20px;
+    margin-bottom: 30px;
     flex-wrap: wrap;
 }
 
-.quick-action-btn {
-    padding: 12px 25px;
-    background: rgba(255, 215, 0, 0.1);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    border-radius: 10px;
-    color: #ffd700;
-    font-family: 'Cinzel', 'Georgia', serif;
-    font-size: 1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.progress-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    font-size: 1.5em;
+    color: #ffd700;
+    font-weight: bold;
 }
 
-.quick-action-btn:hover {
+/* Actions Bar - Icon Only */
+.actions-bar {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    color: #ffd700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.action-icon:hover {
     background: rgba(255, 215, 0, 0.2);
     border-color: #ffd700;
-    transform: translateY(-2px);
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
-/* Responsive adjustments */
+/* Tooltip on Hover */
+.visual-card::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 20, 40, 0.9);
+    color: #ffd700;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    z-index: 4;
+}
+
+.visual-card:hover::after {
+    opacity: 1;
+}
+
+/* Responsive */
 @media (max-width: 1200px) {
-    .content-sections {
+    .visual-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 768px) {
-    .content-sections {
+    .visual-grid {
         grid-template-columns: 1fr;
     }
     
-    .main-title {
-        font-size: 2.2em;
+    .visual-card {
+        height: 300px;
     }
     
-    .subtitle {
-        font-size: 1em;
+    .card-visual {
+        height: 270px; /* 90% of 300px */
     }
     
-    .dashboard-header {
-        padding: 30px 20px;
+    .card-title {
+        height: 30px; /* 10% of 300px */
     }
     
-    .progress-tracker {
-        flex-direction: column;
-        gap: 20px;
+    .main-icon {
+        font-size: 6em;
+    }
+}
+
+@media (max-width: 480px) {
+    .visual-card {
+        height: 250px;
     }
     
-    .completion-status {
-        flex-direction: column;
-        gap: 20px;
-        text-align: center;
+    .card-visual {
+        height: 225px; /* 90% of 250px */
     }
     
-    .progress-bar {
-        width: 100%;
-        max-width: none;
-        margin: 10px 0;
+    .card-title {
+        height: 25px; /* 10% of 250px */
     }
     
-    .preview-content {
-        grid-template-columns: 1fr;
+    .main-icon {
+        font-size: 4em;
     }
     
-    .section-actions {
-        flex-direction: column;
+    .progress-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2em;
+    }
+    
+    .action-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
     }
 }
 </style>
 
 <div class="main-container">
-    <!-- Dashboard Header -->
+    <!-- Minimal Header -->
     <div class="dashboard-header">
         <div class="header-icon">⚔️</div>
-        <h1 class="main-title">RPG Creator Dashboard</h1>
-        <p class="subtitle">
-            Complete your RPG creation journey. Each section builds upon the previous one to create your perfect adventure.
-        </p>
-        
-        <!-- Progress Tracker -->
-        <div class="progress-tracker">
-            <div class="progress-step">
-                <div class="step-number completed">1</div>
-                <div class="step-label">Login</div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="progress-overview">
+        <div class="progress-circle" data-tooltip="Active Sections">2</div>
+        <div class="progress-circle" data-tooltip="Completed">3</div>
+        <div class="progress-circle" data-tooltip="Locked">1</div>
+        <div class="progress-circle" data-tooltip="Overall Progress">43%</div>
+    </div>
+
+    <!-- Visual Grid -->
+    <div class="visual-grid">
+        <!-- Story -->
+        <div class="visual-card" 
+             data-section="story" 
+             data-tooltip="Craft your epic tale"
+             onclick="navigateTo('story')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-story"></div>
+                <div class="main-icon">📖</div>
+                <div class="completion-badge">85%</div>
+                <div class="status-indicator status-active"></div>
             </div>
-            <div class="progress-step">
-                <div class="step-number active">2</div>
-                <div class="step-label active">Content</div>
+            <div class="card-title">
+                <span class="section-name">Story</span>
             </div>
-            <div class="progress-step">
-                <div class="step-number">3</div>
-                <div class="step-label">Story & Narrative</div>
+        </div>
+
+        <!-- Game Creator -->
+        <div class="visual-card" 
+             data-section="game-creator" 
+             data-tooltip="Build gameplay mechanics"
+             onclick="navigateTo('game-creator')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-game"></div>
+                <div class="main-icon">🎮</div>
+                <div class="completion-badge">30%</div>
+                <div class="status-indicator status-active"></div>
             </div>
-            <div class="progress-step">
-                <div class="step-number">4</div>
-                <div class="step-label">Game Creator</div>
+            <div class="card-title">
+                <span class="section-name">Game</span>
             </div>
-            <div class="progress-step">
-                <div class="step-number">5</div>
-                <div class="step-label">Controls</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="visual-card" 
+             data-section="controls" 
+             data-tooltip="Design controls & UI"
+             onclick="navigateTo('controls')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-controls"></div>
+                <div class="main-icon">🎯</div>
+                <div class="completion-badge">100%</div>
+                <div class="status-indicator status-completed"></div>
             </div>
-            <div class="progress-step">
-                <div class="step-number">6</div>
-                <div class="step-label">Game Systems</div>
+            <div class="card-title">
+                <span class="section-name">Controls</span>
             </div>
-            <div class="progress-step">
-                <div class="step-number">7</div>
-                <div class="step-label">Review</div>
+        </div>
+
+        <!-- Systems -->
+        <div class="visual-card" 
+             data-section="systems" 
+             data-tooltip="Implement game systems"
+             onclick="navigateTo('systems')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-systems"></div>
+                <div class="main-icon">⚙️</div>
+                <div class="completion-badge">100%</div>
+                <div class="status-indicator status-completed"></div>
+            </div>
+            <div class="card-title">
+                <span class="section-name">Systems</span>
+            </div>
+        </div>
+
+        <!-- Review -->
+        <div class="visual-card locked" 
+             data-section="review" 
+             data-tooltip="Complete previous sections"
+             onclick="showLockedMessage('review')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-review"></div>
+                <div class="main-icon">📋</div>
+                <div class="completion-badge">0%</div>
+                <div class="status-indicator status-locked"></div>
+            </div>
+            <div class="card-title">
+                <span class="section-name">Review</span>
+            </div>
+        </div>
+
+        <!-- Tools -->
+        <div class="visual-card" 
+             data-section="tools" 
+             data-tooltip="Additional utilities"
+             onclick="navigateTo('tools')">
+            <div class="card-visual">
+                <div class="particle-layer" id="particles-tools"></div>
+                <div class="main-icon">🧰</div>
+                <div class="completion-badge">40%</div>
+                <div class="status-indicator status-active"></div>
+            </div>
+            <div class="card-title">
+                <span class="section-name">Tools</span>
             </div>
         </div>
     </div>
 
-    <!-- Completion Status -->
-    <div class="completion-status">
-        <div class="completion-text">
-            <strong>Creation Progress:</strong> Complete all sections to finalize your RPG
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill" style="width: 30%"></div>
-        </div>
-        <div class="completion-percentage" id="completion-percentage">30%</div>
-    </div>
-
-    <!-- Content Sections Grid -->
-    <div class="content-sections">
-        <!-- Story & Narrative Section -->
-        <div class="section-card" id="story-section">
-            <div class="section-icon">📖</div>
-            <h2 class="section-title">Story & Narrative</h2>
-            <p class="section-description">
-                Craft the epic tale that drives your RPG. Create compelling characters, intricate plots, and immersive world lore.
-            </p>
-            <ul class="section-features">
-                <li>Character backstories and development</li>
-                <li>Main quest and side storylines</li>
-                <li>Dialogue system and branching narratives</li>
-                <li>World lore and mythology</li>
-                <li>Plot twists and emotional arcs</li>
-            </ul>
-            <div class="status-indicator active"></div>
-            <div class="section-actions">
-                <a href="/rpg/story" class="action-btn primary">
-                    <span>Continue Editing</span>
-                    <span>→</span>
-                </a>
-                <button class="action-btn secondary" onclick="previewSection('story')">
-                    <span>Preview</span>
-                    <span>👁️</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Game Creator Section -->
-        <div class="section-card" id="game-creator-section">
-            <div class="section-icon">🎮</div>
-            <h2 class="section-title">Game Creator</h2>
-            <p class="section-description">
-                Build the core gameplay mechanics, level design, and interactive elements that make your RPG come alive.
-            </p>
-            <ul class="section-features">
-                <li>Character creation and progression</li>
-                <li>Combat system design</li>
-                <li>Level and world map creation</li>
-                <li>Item and equipment system</li>
-                <li>Quest and mission design</li>
-            </ul>
-            <div class="status-indicator"></div>
-            <div class="section-actions">
-                <button class="action-btn primary" onclick="startGameCreator()">
-                    <span>Start Creating</span>
-                    <span>⚡</span>
-                </button>
-                <button class="action-btn secondary" onclick="showTutorial('game-creator')">
-                    <span>Tutorial</span>
-                    <span>📚</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Controls Section -->
-        <div class="section-card completed" id="controls-section">
-            <div class="section-icon">🎯</div>
-            <h2 class="section-title">Controls</h2>
-            <p class="section-description">
-                Design the control scheme and user interface that provides smooth and intuitive gameplay experience.
-            </p>
-            <ul class="section-features">
-                <li>Keyboard and controller mapping</li>
-                <li>UI/UX design and layout</li>
-                <li>Accessibility options</li>
-                <li>Camera controls and perspectives</li>
-                <li>Quick action menus and shortcuts</li>
-            </ul>
-            <div class="section-actions">
-                <a href="/rpg/keybindings" class="action-btn primary">
-                    <span>Customize Controls</span>
-                    <span>⚙️</span>
-                </a>
-                <button class="action-btn secondary" onclick="testControls()">
-                    <span>Test Layout</span>
-                    <span>🎮</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Game Systems Section -->
-        <div class="section-card completed" id="systems-section">
-            <div class="section-icon">⚙️</div>
-            <h2 class="section-title">Game Systems</h2>
-            <p class="section-description">
-                Implement and balance the complex systems that govern gameplay, including economy, AI, and progression.
-            </p>
-            <ul class="section-features">
-                <li>Economy and trading systems</li>
-                <li>AI behavior and NPC routines</li>
-                <li>Skill trees and abilities</li>
-                <li>Weather and time systems</li>
-                <li>Multiplayer integration</li>
-            </ul>
-            <div class="section-actions">
-                <a href="/rpg/systems" class="action-btn primary">
-                    <span>Configure Systems</span>
-                    <span>🔧</span>
-                </a>
-                <button class="action-btn secondary" onclick="runSystemTest()">
-                    <span>System Test</span>
-                    <span>🧪</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Review Section -->
-        <div class="section-card locked" id="review-section">
-            <div class="section-icon">📋</div>
-            <h2 class="section-title">Review & Publish</h2>
-            <p class="section-description">
-                Final review, testing, and publishing of your completed RPG. Get feedback and prepare for launch.
-            </p>
-            <ul class="section-features">
-                <li>Comprehensive testing suite</li>
-                <li>Bug reporting and fixes</li>
-                <li>Performance optimization</li>
-                <li>Launch checklist</li>
-                <li>Marketing and distribution</li>
-            </ul>
-            <div class="section-actions">
-                <button class="action-btn" disabled>
-                    <span>Complete Previous Sections</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- Additional Tools Section -->
-        <div class="section-card" id="tools-section">
-            <div class="section-icon">🧰</div>
-            <h2 class="section-title">Additional Tools</h2>
-            <p class="section-description">
-                Extra utilities and resources to enhance your RPG creation process.
-            </p>
-            <ul class="section-features">
-                <li>Asset importer and manager</li>
-                <li>Sound and music library</li>
-                <li>Visual effects generator</li>
-                <li>Export and sharing tools</li>
-                <li>Community templates</li>
-            </ul>
-            <div class="section-actions">
-                <button class="action-btn primary" onclick="openTools()">
-                    <span>Open Tools</span>
-                    <span>🔧</span>
-                </button>
-                <button class="action-btn secondary" onclick="browseAssets()">
-                    <span>Browse Assets</span>
-                    <span>🎨</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Preview Panel -->
-    <div class="preview-panel" id="preview-panel" style="display: none;">
-        <div class="preview-header">
-            <h3 class="preview-title" id="preview-title">Section Preview</h3>
-            <button class="action-btn secondary" onclick="closePreview()">
-                <span>Close</span>
-                <span>✕</span>
-            </button>
-        </div>
-        <div class="preview-content">
-            <div class="preview-main">
-                <span class="preview-label">Current Content:</span>
-                <p class="preview-text" id="preview-content">
-                    Select a section to see its preview here. You'll be able to view your progress and make quick edits.
-                </p>
-            </div>
-            <div class="preview-sidebar">
-                <span class="preview-label">Quick Stats:</span>
-                <p class="preview-text" id="preview-stats">
-                    No section selected
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <button class="quick-action-btn" onclick="saveAllProgress()">
-            <span>💾</span>
-            <span>Save All Progress</span>
-        </button>
-        <button class="quick-action-btn" onclick="exportProject()">
-            <span>📤</span>
-            <span>Export Project</span>
-        </button>
-        <button class="quick-action-btn" onclick="showHelp()">
-            <span>❓</span>
-            <span>Get Help</span>
-        </button>
-        <button class="quick-action-btn" onclick="resetProgress()">
-            <span>🔄</span>
-            <span>Reset Progress</span>
-        </button>
+    <!-- Actions Bar -->
+    <div class="actions-bar">
+        <div class="action-icon" onclick="saveAll()" data-tooltip="Save">💾</div>
+        <div class="action-icon" onclick="exportProject()" data-tooltip="Export">📤</div>
+        <div class="action-icon" onclick="showHelp()" data-tooltip="Help">❓</div>
+        <div class="action-icon" onclick="resetProgress()" data-tooltip="Reset">🔄</div>
     </div>
 </div>
 
 <script>
-// RPG Creator Dashboard Functionality
-class RPGDashboard {
+// Visual Dashboard Manager
+class VisualDashboard {
     constructor() {
         this.sections = {
-            'story': { completed: true, progress: 85 },
-            'game-creator': { completed: false, progress: 30 },
-            'controls': { completed: true, progress: 100 },
-            'systems': { completed: true, progress: 100 },
-            'review': { completed: false, progress: 0 },
-            'tools': { completed: false, progress: 40 }
+            'story': { 
+                status: 'active', 
+                progress: 85, 
+                path: '/rpg/story',
+                particles: 15 
+            },
+            'game-creator': { 
+                status: 'active', 
+                progress: 30, 
+                path: '/rpg/game-creator',
+                particles: 12 
+            },
+            'controls': { 
+                status: 'completed', 
+                progress: 100, 
+                path: '/rpg/controls',
+                particles: 8 
+            },
+            'systems': { 
+                status: 'completed', 
+                progress: 100, 
+                path: '/rpg/systems',
+                particles: 10 
+            },
+            'review': { 
+                status: 'locked', 
+                progress: 0, 
+                path: '/rpg/review',
+                particles: 5 
+            },
+            'tools': { 
+                status: 'active', 
+                progress: 40, 
+                path: '/rpg/tools',
+                particles: 18 
+            }
         };
         
-        this.currentPreview = null;
-        this.initializeDashboard();
+        this.initDashboard();
     }
     
-    initializeDashboard() {
-        this.updateProgressBar();
-        this.loadSavedProgress();
-        this.setupEventListeners();
-        this.updateStatusIndicators();
+    initDashboard() {
+        this.createParticles();
+        this.updateProgressOverview();
+        this.setupCardEffects();
+        this.setupTooltips();
     }
     
-    updateProgressBar() {
-        const totalSections = Object.keys(this.sections).length;
-        const completedSections = Object.values(this.sections).filter(s => s.completed).length;
-        const progressPercentage = Math.round((completedSections / totalSections) * 100);
-        
-        document.getElementById('progress-fill').style.width = `${progressPercentage}%`;
-        document.getElementById('completion-percentage').textContent = `${progressPercentage}%`;
-    }
-    
-    updateStatusIndicators() {
-        Object.keys(this.sections).forEach(sectionId => {
-            const section = this.sections[sectionId];
-            const indicator = document.querySelector(`#${sectionId}-section .status-indicator`);
-            if (indicator) {
-                if (section.completed) {
-                    indicator.classList.add('active');
-                } else {
-                    indicator.classList.remove('active');
-                }
-            }
+    createParticles() {
+        Object.keys(this.sections).forEach(section => {
+            const container = document.getElementById(`particles-${section}`);
+            if (!container) return;
             
-            // Update card completion status
-            const card = document.getElementById(`${sectionId}-section`);
-            if (card) {
-                if (section.completed) {
-                    card.classList.add('completed');
-                    card.classList.remove('locked');
-                } else if (section.progress === 0) {
-                    card.classList.add('locked');
-                } else {
-                    card.classList.remove('completed', 'locked');
-                }
+            const count = this.sections[section].particles;
+            
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random properties
+                const size = Math.random() * 20 + 5;
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const duration = Math.random() * 10 + 10;
+                const delay = Math.random() * 5;
+                
+                // Apply styles
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}%`;
+                particle.style.top = `${y}%`;
+                particle.style.background = `radial-gradient(circle, 
+                    rgba(255,215,0,0.3) 0%, 
+                    rgba(255,215,0,0.1) 50%, 
+                    transparent 100%)`;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                container.appendChild(particle);
             }
         });
     }
     
-    loadSavedProgress() {
-        try {
-            const saved = localStorage.getItem('rpgDashboardProgress');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                Object.assign(this.sections, parsed);
-                this.updateProgressBar();
-                this.updateStatusIndicators();
-            }
-        } catch (e) {
-            console.log('No saved progress found, starting fresh.');
+    updateProgressOverview() {
+        const total = Object.keys(this.sections).length;
+        const active = Object.values(this.sections).filter(s => s.status === 'active').length;
+        const completed = Object.values(this.sections).filter(s => s.status === 'completed').length;
+        const locked = Object.values(this.sections).filter(s => s.status === 'locked').length;
+        const overall = Math.round((completed / total) * 100);
+        
+        // Update progress circles
+        const circles = document.querySelectorAll('.progress-circle');
+        circles[0].textContent = active;
+        circles[1].textContent = completed;
+        circles[2].textContent = locked;
+        circles[3].textContent = `${overall}%`;
+    }
+    
+    setupCardEffects() {
+        const cards = document.querySelectorAll('.visual-card');
+        
+        cards.forEach(card => {
+            // Click effect
+            card.addEventListener('click', (e) => {
+                if (card.classList.contains('locked')) {
+                    this.showLockedEffect(card);
+                    return;
+                }
+                
+                this.animateClick(card);
+                
+                // Navigate after animation
+                setTimeout(() => {
+                    const section = card.dataset.section;
+                    this.navigateTo(section);
+                }, 300);
+            });
+            
+            // Hover sound effect simulation
+            card.addEventListener('mouseenter', () => {
+                this.animateHover(card);
+            });
+        });
+    }
+    
+    setupTooltips() {
+        // Add tooltip positioning
+        const tooltips = document.querySelectorAll('[data-tooltip]');
+        
+        tooltips.forEach(element => {
+            element.addEventListener('mouseenter', (e) => {
+                const tooltip = e.target.getAttribute('data-tooltip');
+                if (!tooltip) return;
+                
+                // Create tooltip element
+                const tooltipEl = document.createElement('div');
+                tooltipEl.className = 'tooltip';
+                tooltipEl.textContent = tooltip;
+                tooltipEl.style.cssText = `
+                    position: fixed;
+                    background: rgba(20, 20, 40, 0.95);
+                    color: #ffd700;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 215, 0, 0.3);
+                    font-size: 0.9em;
+                    pointer-events: none;
+                    z-index: 10000;
+                    white-space: nowrap;
+                    transform: translate(-50%, -100%);
+                    margin-top: -10px;
+                `;
+                
+                document.body.appendChild(tooltipEl);
+                
+                // Position tooltip
+                const rect = e.target.getBoundingClientRect();
+                tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
+                tooltipEl.style.top = `${rect.top}px`;
+                
+                // Store reference
+                e.target._tooltip = tooltipEl;
+            });
+            
+            element.addEventListener('mouseleave', (e) => {
+                if (e.target._tooltip) {
+                    e.target._tooltip.remove();
+                    delete e.target._tooltip;
+                }
+            });
+        });
+    }
+    
+    animateClick(card) {
+        card.style.transform = 'scale(0.95)';
+        card.style.filter = 'brightness(0.8)';
+        
+        setTimeout(() => {
+            card.style.transform = '';
+            card.style.filter = '';
+        }, 300);
+    }
+    
+    animateHover(card) {
+        const icon = card.querySelector('.main-icon');
+        if (icon) {
+            icon.style.transform = 'scale(1.1) rotate(5deg)';
+            
+            setTimeout(() => {
+                icon.style.transform = '';
+            }, 200);
         }
     }
     
-    saveProgress() {
-        try {
-            localStorage.setItem('rpgDashboardProgress', JSON.stringify(this.sections));
-            this.showNotification('Progress saved successfully!', 'success');
-        } catch (e) {
-            this.showNotification('Failed to save progress.', 'error');
-        }
-    }
-    
-    setupEventListeners() {
-        // Save progress on page unload
-        window.addEventListener('beforeunload', () => this.saveProgress());
+    showLockedEffect(card) {
+        card.style.animation = 'shake 0.5s ease';
         
-        // Auto-save every 2 minutes
-        setInterval(() => this.saveProgress(), 120000);
-    }
-    
-    previewSection(sectionId) {
-        const sectionData = this.sections[sectionId];
-        const panel = document.getElementById('preview-panel');
-        const title = document.getElementById('preview-title');
-        const content = document.getElementById('preview-content');
-        const stats = document.getElementById('preview-stats');
-        
-        this.currentPreview = sectionId;
-        panel.style.display = 'block';
-        
-        // Scroll to preview panel
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        
-        // Update content based on section
-        switch(sectionId) {
-            case 'story':
-                title.textContent = 'Story & Narrative Preview';
-                content.innerHTML = `
-                    <strong>Current Status:</strong> ${sectionData.progress}% complete<br><br>
-                    <strong>Main Quest:</strong> "The Eternal Crown" - Draft complete<br>
-                    <strong>Characters Created:</strong> 12/20 planned<br>
-                    <strong>Dialogue Lines:</strong> 450 written<br>
-                    <strong>World Locations:</strong> 8 designed<br><br>
-                    <em>Next step: Complete character backstories for the main party.</em>
-                `;
-                break;
-                
-            case 'game-creator':
-                title.textContent = 'Game Creator Preview';
-                content.innerHTML = `
-                    <strong>Current Status:</strong> ${sectionData.progress}% complete<br><br>
-                    <strong>Combat System:</strong> Turn-based (80% complete)<br>
-                    <strong>Character Classes:</strong> 4/6 implemented<br>
-                    <strong>Levels Designed:</strong> 3/10 complete<br>
-                    <strong>Items Created:</strong> 45 total<br><br>
-                    <em>Next step: Implement magic system and spell effects.</em>
-                `;
-                break;
-                
-            case 'controls':
-                title.textContent = 'Controls Preview';
-                content.innerHTML = `
-                    <strong>Current Status:</strong> ${sectionData.progress}% complete<br><br>
-                    <strong>Control Schemes:</strong> Keyboard/Mouse & Controller<br>
-                    <strong>Key Bindings:</strong> Fully customizable<br>
-                    <strong>UI Layout:</strong> Responsive design<br>
-                    <strong>Accessibility:</strong: Colorblind mode, subtitle options<br><br>
-                    <em>All control systems are fully implemented and tested.</em>
-                `;
-                break;
-                
-            case 'systems':
-                title.textContent = 'Game Systems Preview';
-                content.innerHTML = `
-                    <strong>Current Status:</strong> ${sectionData.progress}% complete<br><br>
-                    <strong>Economy:</strong> Dynamic pricing system<br>
-                    <strong>AI:</strong> Advanced NPC routines<br>
-                    <strong>Progression:</strong: 5-level skill trees<br>
-                    <strong>Time System:</strong: Day/night cycle with events<br><br>
-                    <em>All core systems are implemented and balanced.</em>
-                `;
-                break;
-                
-            default:
-                title.textContent = 'Section Preview';
-                content.textContent = 'Select a section to see detailed preview.';
-        }
-        
-        stats.innerHTML = `
-            <strong>Progress:</strong> ${sectionData.progress}%<br>
-            <strong>Status:</strong> ${sectionData.completed ? 'Completed' : 'In Progress'}<br>
-            <strong>Last Updated:</strong> Today<br>
-            <strong>Estimated Time:</strong> ${this.getEstimatedTime(sectionId)}
+        // Create lock icon effect
+        const lockEffect = document.createElement('div');
+        lockEffect.innerHTML = '🔒';
+        lockEffect.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            z-index: 10;
+            animation: fadeOut 1s ease forwards;
         `;
-    }
-    
-    getEstimatedTime(sectionId) {
-        const times = {
-            'story': '4-6 hours',
-            'game-creator': '8-12 hours',
-            'controls': '2-3 hours',
-            'systems': '6-8 hours',
-            'review': '3-4 hours',
-            'tools': '1-2 hours'
-        };
-        return times[sectionId] || 'Unknown';
-    }
-    
-    closePreview() {
-        document.getElementById('preview-panel').style.display = 'none';
-        this.currentPreview = null;
-    }
-    
-    startGameCreator() {
-        if (confirm('Start the Game Creator? This will open the creation interface.')) {
-            window.location.href = '/rpg/game-creator';
-        }
-    }
-    
-    showTutorial(section) {
-        const tutorials = {
-            'game-creator': 'https://docs.example.com/rpg/game-creator-tutorial',
-            'story': 'https://docs.example.com/rpg/story-tutorial',
-            'controls': 'https://docs.example.com/rpg/controls-tutorial'
-        };
         
-        if (tutorials[section]) {
-            window.open(tutorials[section], '_blank');
-        } else {
-            this.showNotification('Tutorial not available for this section.', 'info');
+        card.appendChild(lockEffect);
+        
+        setTimeout(() => {
+            card.style.animation = '';
+            lockEffect.remove();
+        }, 1000);
+        
+        // Add shake animation
+        if (!document.getElementById('shake-animation')) {
+            const style = document.createElement('style');
+            style.id = 'shake-animation';
+            style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+                @keyframes fadeOut {
+                    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
     
-    testControls() {
-        this.showNotification('Opening control testing interface...', 'info');
-        // In a real implementation, this would open a control testing modal
-        setTimeout(() => {
-            alert('Control test interface would open here. You can test keyboard, mouse, and controller inputs.');
-        }, 500);
+    navigateTo(section) {
+        const sectionData = this.sections[section];
+        if (sectionData && sectionData.status !== 'locked') {
+            this.showLoading();
+            setTimeout(() => {
+                window.location.href = sectionData.path;
+            }, 500);
+        }
     }
     
-    runSystemTest() {
-        this.showNotification('Running system tests...', 'info');
-        // Simulate system test
-        setTimeout(() => {
-            const results = {
-                'Economy System': '✓ PASS',
-                'AI Behavior': '✓ PASS',
-                'Progression': '✓ PASS',
-                'Time System': '✓ PASS',
-                'Multiplayer': '⚠ PARTIAL'
-            };
-            
-            let resultText = 'System Test Results:\n\n';
-            for (const [system, status] of Object.entries(results)) {
-                resultText += `${system}: ${status}\n`;
+    showLoading() {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(20, 20, 40, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+        
+        overlay.innerHTML = `
+            <div style="text-align: center;">
+                <div style="font-size: 4em; animation: spin 1s linear infinite;">⚔️</div>
+                <div style="color: #ffd700; margin-top: 20px; font-size: 1.2em;">LOADING</div>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        // Add spin animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
-            
-            alert(resultText);
-        }, 1000);
+        `;
+        document.head.appendChild(style);
     }
     
-    openTools() {
-        this.showNotification('Opening additional tools...', 'info');
-        // In a real implementation, this would open a tools panel
+    // Public methods
+    saveAll() {
+        alert('💾 Progress saved');
     }
     
-    browseAssets() {
-        this.showNotification('Opening asset library...', 'info');
-        // In a real implementation, this would open an asset browser
+    exportProject() {
+        alert('📤 Export started');
     }
     
-   
+    resetProgress() {
+        if (confirm('Reset all progress?')) {
+            location.reload();
+        }
+    }
+    
+    showHelp() {
+        alert('❓ Hover over icons for info\nClick to select\nColors show status\nSave frequently');
+    }
+}
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', () => {
+    window.dashboard = new VisualDashboard();
+});
+
+// Global functions
+function navigateTo(section) {
+    if (window.dashboard) {
+        window.dashboard.navigateTo(section);
+    }
+}
+
+function showLockedMessage(section) {
+    if (window.dashboard) {
+        window.dashboard.showLockedEffect(event.currentTarget);
+    }
+}
+
+function saveAll() {
+    if (window.dashboard) {
+        window.dashboard.saveAll();
+    }
+}
+
+function exportProject() {
+    if (window.dashboard) {
+        window.dashboard.exportProject();
+    }
+}
+
+function showHelp() {
+    if (window.dashboard) {
+        window.dashboard.showHelp();
+    }
+}
+
+function resetProgress() {
+    if (window.dashboard) {
+        window.dashboard.resetProgress();
+    }
+}
+</script>
