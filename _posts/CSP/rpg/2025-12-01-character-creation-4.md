@@ -2,7 +2,7 @@
 layout: post
 title: Game creator
 description: Let the user create a simple game
-permalink: /rpg/game-creater
+permalink: /rpg/game-creator
 comments: True
 ---
 
@@ -27,7 +27,7 @@ comments: True
         <span class="nav-text">Story & Narrative</span>
         <span class="nav-check">✓</span>
       </a>
-      <a href="/rpg/game-creater" class="nav-link active" data-page="4">
+      <a href="/rpg/game-creator" class="nav-link active" data-page="4">
         <span class="nav-number">4</span>
         <span class="nav-text">Game creator</span>
         <span class="nav-check">✓</span>
