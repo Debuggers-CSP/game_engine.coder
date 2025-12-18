@@ -19,7 +19,7 @@ comments: True
       </a>
       <a href="/rpg/content" class="nav-link" data-page="2">
         <span class="nav-number">2</span>
-        <span class="nav-text">Game Mode</span>
+        <span class="nav-text">Content</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/story" class="nav-link" data-page="3">

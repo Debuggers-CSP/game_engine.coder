@@ -19,7 +19,7 @@ comments: True
       </a>
       <a href="/rpg/content" class="nav-link" data-page="2">
         <span class="nav-number">2</span>
-        <span class="nav-text">Game Mode</span>
+        <span class="nav-text">Content</span>
         <span class="nav-check">✓</span>
       </a>
       <a href="/rpg/story" class="nav-link" data-page="3">
@@ -1579,7 +1579,7 @@ async function handleKeybindingSave(event) {
     const data = await response.json();
 
     if (response.ok) {
-      status.textContent = "✅ Key bindings saved for this game mode!";
+      status.textContent = "✅ Key bindings saved for this content!";
       status.style.color = "#7CFC00";
     } else {
       status.textContent = `❌ ${data.message || 'Failed to save key bindings.'}`;
