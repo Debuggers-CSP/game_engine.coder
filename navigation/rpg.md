@@ -5,6 +5,17 @@ permalink: /rpg/latest
 ---
 
 <style>
+.embedded .site-header,
+.embedded .post-header,
+.embedded .site-footer,
+.embedded .page-description { display: none !important; }
+.embedded body { margin: 0 !important; }
+.embedded .page-content .wrapper { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+html, body { height: 100%; }
+#gameContainer { width: 100%; height: 85vh; margin: 0; }
+#gameCanvas { width: 100%; height: 100%; display: block; }
+
 .custom-alert {
     display: none;
     position: fixed;
@@ -25,6 +36,20 @@ permalink: /rpg/latest
 }
 
 </style>
+
+<script>
+// Enable embed mode when inside an iframe or with ?embed=1
+(function() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('embed') === '1' || window.self !== window.top) {
+            document.documentElement.classList.add('embedded');
+        }
+    } catch (e) {
+        // no-op
+    }
+})();
+</script>
 
 <div id="gameContainer">
     <canvas id='gameCanvas'></canvas>
