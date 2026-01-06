@@ -11,9 +11,11 @@ permalink: /rpg/latest
 .embedded .page-description { display: none !important; }
 .embedded body { margin: 0 !important; }
 .embedded .page-content .wrapper { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+html.embedded, html.embedded body { overflow: hidden !important; }
 
 html, body { height: 100%; }
 #gameContainer { width: 100%; height: 85vh; margin: 0; }
+.embedded #gameContainer { height: 100vh; }
 #gameCanvas { width: 100%; height: 100%; display: block; }
 
 .custom-alert {
