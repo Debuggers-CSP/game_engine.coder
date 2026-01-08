@@ -683,7 +683,7 @@ class StatisticsManager {
         this.storageKey = 'rpgModeStatistics_fallback';
         this.stats = { chill: 0, action: 0, total: 0, history: [] };
         this.chart = null;
-        this.API_BASE = "http://localhost:8587/api";
+        this.API_BASE = "http://localhost:8304/api";
         this.ENDPOINTS = {
             getStats: `${this.API_BASE}/rpg_stats`,
             record: `${this.API_BASE}/rpg_stats/record`,
@@ -2118,7 +2118,7 @@ body::before {
 </div>
 
 <script>
-const API_URL = 'http://localhost:8587/api';
+const API_URL = 'http://localhost:8304/api';
 
 let gameMode = localStorage.getItem('rpgGameMode') || 'action';
 

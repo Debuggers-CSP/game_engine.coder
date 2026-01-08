@@ -402,7 +402,7 @@ body::after {
 
 <script>
 const API_URL = (location.hostname === "localhost")
-    ? "http://localhost:8587/api"
+    ? "http://localhost:8304/api"
     : `${window.location.origin}/api`;
 
   function switchTab(tab, ev) {

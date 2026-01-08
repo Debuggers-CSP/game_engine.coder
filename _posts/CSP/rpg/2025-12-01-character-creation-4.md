@@ -1502,7 +1502,7 @@ document.getElementById('confirmButton').addEventListener('click', function() {
             };
             
             try {
-                const response = await fetch('http://localhost:8587/api/rpg/character', {
+                const response = await fetch('http://localhost:8304/api/rpg/character', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1549,7 +1549,7 @@ document.getElementById('confirmButton').addEventListener('click', function() {
 
             try {
               const isLocal = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-              const pythonBase = isLocal ? 'http://localhost:8587' : 'https://flask.opencodingsociety.com';
+              const pythonBase = isLocal ? 'http://localhost:8304' : 'https://flask.opencodingsociety.com';
               const API_URL = `${pythonBase}/api`;
 
               const response = await fetch(`${API_URL}/rpg/quest`, {

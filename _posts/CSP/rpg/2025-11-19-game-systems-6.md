@@ -506,7 +506,7 @@ comments: True
   import { pythonURI } from '{{ site.baseurl }}/assets/js/api/config.js';
 
   // Use the same pattern as your other working page: pythonURI is imported, not global.
-  const API_BASE = pythonURI || 'http://localhost:8587'; // fallback only if needed
+  const API_BASE = pythonURI || 'http://localhost:8304'; // fallback only if needed
 
   const currentPage = 6;
 
