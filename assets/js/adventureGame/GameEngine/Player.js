@@ -76,37 +76,43 @@ class Player extends Character {
         this.velocity.x = 0;
         this.velocity.y = 0;
 
+        // Support both WASD and Arrow keys
+        const upKeys = [this.keypress.up, 38];    // W or Up Arrow
+        const leftKeys = [this.keypress.left, 37]; // A or Left Arrow
+        const downKeys = [this.keypress.down, 40]; // S or Down Arrow
+        const rightKeys = [this.keypress.right, 39]; // D or Right Arrow
+
         // Multi-key movements (diagonals: upLeft, upRight, downLeft, downRight)
-        if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.left]) {
+        if (upKeys.some(k => this.pressedKeys[k]) && leftKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y -= this.yVelocity;
             this.velocity.x -= this.xVelocity;
             this.direction = 'upLeft';
-        } else if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.right]) {
+        } else if (upKeys.some(k => this.pressedKeys[k]) && rightKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y -= this.yVelocity;
             this.velocity.x += this.xVelocity;
             this.direction = 'upRight';
-        } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.left]) {
+        } else if (downKeys.some(k => this.pressedKeys[k]) && leftKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y += this.yVelocity;
             this.velocity.x -= this.xVelocity;
             this.direction = 'downLeft';
-        } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.right]) {
+        } else if (downKeys.some(k => this.pressedKeys[k]) && rightKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y += this.yVelocity;
             this.velocity.x += this.xVelocity;
             this.direction = 'downRight';
         // Single key movements (left, right, up, down) 
-        } else if (this.pressedKeys[this.keypress.up]) {
+        } else if (upKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y -= this.yVelocity;
             this.direction = 'up';
             this.moved = true;
-        } else if (this.pressedKeys[this.keypress.left]) {
+        } else if (leftKeys.some(k => this.pressedKeys[k])) {
             this.velocity.x -= this.xVelocity;
             this.direction = 'left';
             this.moved = true;
-        } else if (this.pressedKeys[this.keypress.down]) {
+        } else if (downKeys.some(k => this.pressedKeys[k])) {
             this.velocity.y += this.yVelocity;
             this.direction = 'down';
             this.moved = true;
-        } else if (this.pressedKeys[this.keypress.right]) {
+        } else if (rightKeys.some(k => this.pressedKeys[k])) {
             this.velocity.x += this.xVelocity;
             this.direction = 'right';
             this.moved = true;
