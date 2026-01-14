@@ -18,8 +18,13 @@ class Wall extends Character {
     this.hitbox = this.data.hitbox || { widthPercentage: 0.0, heightPercentage: 0.0 };
   }
 
+  setDimensions(width, height) {
+    this.data.pixels.width = width;
+    this.data.pixels.height = height;
+  }
+
   update() {
-    // Draw static rectangle and run collision checks so movement is constrained
+    // Update dimensions dynamically if needed
     this.draw();
     this.collisionChecks();
   }
