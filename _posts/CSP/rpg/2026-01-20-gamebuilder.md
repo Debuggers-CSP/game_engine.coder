@@ -197,7 +197,15 @@ select, input {
     border-radius: 4px;
     font-size: 0.85em;
     margin-bottom: 10px;
+    color: #fff;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.2);
 }
+select { color: #fff; background: #000; }
+option { color: #fff; background: #000; }
+.asset-group select,
+.wall-fields select { color: #fff; }
+select:disabled, option[disabled] { color: #fff; }
 
 .btn {
     padding: 12px;
