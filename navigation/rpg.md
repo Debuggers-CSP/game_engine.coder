@@ -383,6 +383,8 @@ function closeCustomAlert() {
                 path,
                 gameContainer: document.getElementById('gameContainer'),
                 gameCanvas: document.getElementById('gameCanvas'),
+                container: document.getElementById('gameContainer'),
+                canvas: document.getElementById('gameCanvas'),
                 pythonURI: '',
                 javaURI: '',
                 fetchOptions: {}
