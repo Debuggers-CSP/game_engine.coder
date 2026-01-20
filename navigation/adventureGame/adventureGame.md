@@ -10,15 +10,18 @@ permalink: /gamify/adventureGame
 </div>
 
 <script type="module">
-    // Adnventure Game assets locations
-    import Game from "{{site.baseurl}}/assets/js/adventureGame/GameEngine/Game.js";
+
+    // Adventure Game assets locations (use central core + GameControl)
+    import Core from "{{site.baseurl}}/assets/js/BetterGameEngine/GameEngine/Game.js";
+    import GameControl from "{{site.baseurl}}/assets/js/adventureGame/GameEngine/GameControl.js";
     import GameLevelWater from "{{site.baseurl}}/assets/js/adventureGame/GameLevelWater.js";
     import GameLevelDesert from "{{site.baseurl}}/assets/js/adventureGame/GameLevelDesert.js";
     import GameLevelEnd from "{{site.baseurl}}/assets/js/adventureGame/GameLevelEnd.js";
     import GameLevelOverworld from "{{site.baseurl}}/assets/js/adventureGame/GameLevelOverworld.js";
     import { pythonURI, javaURI, fetchOptions } from '{{site.baseurl}}/assets/js/api/config.js';
+    import GameLevelAlienland from "/assets/js/adventureGame/GameLevelAlienland.js";
 
-    const gameLevelClasses = [GameLevelDesert, GameLevelWater, GameLevelEnd, GameLevelOverworld ];
+    const gameLevelClasses = [GameLevelDesert, GameLevelWater, GameLevelEnd, GameLevelOverworld, GameLevelAlienland ];
 
     // Web Server Environment data
     const environment = {
@@ -31,6 +34,8 @@ permalink: /gamify/adventureGame
         gameLevelClasses: gameLevelClasses
 
     }
-    // Launch Adventure Game
-    Game.main(environment);
+    // Launch Adventure Game using the central core and adventure GameControl
+    const game = Core.main(environment, GameControl);
+
+    // PauseMenu is auto-initialized by the game's Game module.
 </script>
