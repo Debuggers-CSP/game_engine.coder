@@ -1,6 +1,7 @@
 import Character from './Character.js';
 import TouchControls from './TouchControls.js';
 
+
 // Define non-mutable constants as defaults
 const SCALE_FACTOR = 25; // 1/nth of the height of the canvas
 const STEP_FACTOR = 100; // 1/nth, or N steps up and across the canvas
@@ -28,7 +29,7 @@ class Player extends Character {
         this.pressedKeys = {}; // active keys array
         this.bindMovementKeyListners();
         this.gravity = data.GRAVITY || false;
-        this.acceleration = 0.001;
+        this.acceleration = 1;
         this.time = 0;
         this.moved = false;
         // Initialize touch controls for mobile devices
@@ -50,7 +51,8 @@ class Player extends Character {
         // capture the pressed key in the active keys array
         this.pressedKeys[keyCode] = true;
         // set the velocity and direction based on the newly pressed key
-        this.updateVelocityAndDirection();
+        this.updateVelocity();
+        this.updateDirection();
     }
 
     /**
@@ -66,72 +68,84 @@ class Player extends Character {
             delete this.pressedKeys[keyCode];
         }
         // adjust the velocity and direction based on the remaining keys
-        this.updateVelocityAndDirection();
+        this.updateDirection();
     }
 
     /**
      * Update the player's velocity and direction based on the pressed keys.
      */
-    updateVelocityAndDirection() {
-        this.velocity.x = 0;
-        this.velocity.y = 0;
 
-        // Support both WASD and Arrow keys
-        const upKeys = [this.keypress.up, 38];    // W or Up Arrow
-        const leftKeys = [this.keypress.left, 37]; // A or Left Arrow
-        const downKeys = [this.keypress.down, 40]; // S or Down Arrow
-        const rightKeys = [this.keypress.right, 39]; // D or Right Arrow
+    updateVelocity() {
+        this.moved = false;
 
-        // Multi-key movements (diagonals: upLeft, upRight, downLeft, downRight)
-        if (upKeys.some(k => this.pressedKeys[k]) && leftKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y -= this.yVelocity;
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'upLeft';
-        } else if (upKeys.some(k => this.pressedKeys[k]) && rightKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y -= this.yVelocity;
-            this.velocity.x += this.xVelocity;
-            this.direction = 'upRight';
-        } else if (downKeys.some(k => this.pressedKeys[k]) && leftKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y += this.yVelocity;
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'downLeft';
-        } else if (downKeys.some(k => this.pressedKeys[k]) && rightKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y += this.yVelocity;
-            this.velocity.x += this.xVelocity;
-            this.direction = 'downRight';
-        // Single key movements (left, right, up, down) 
-        } else if (upKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y -= this.yVelocity;
-            this.direction = 'up';
+        if (this.pressedKeys[this.keypress.right] || this.pressedKeys[this.keypress.left]) {
             this.moved = true;
-        } else if (leftKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'left';
+
+            if (this.pressedKeys[this.keypress.right]) {
+                this.transform.xv += 0.6 * this.time;
+            }
+
+            else if (this.pressedKeys[this.keypress.left]) {
+                this.transform.xv -= 0.6 * this.time;
+            }
+        }
+
+        if (this.pressedKeys[this.keypress.up] || this.pressedKeys[this.keypress.down]) {
             this.moved = true;
-        } else if (downKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.y += this.yVelocity;
-            this.direction = 'down';
-            this.moved = true;
-        } else if (rightKeys.some(k => this.pressedKeys[k])) {
-            this.velocity.x += this.xVelocity;
-            this.direction = 'right';
-            this.moved = true;
-        } else{
-            this.moved = false;
+
+            if (this.pressedKeys[this.keypress.up]) {
+                this.transform.yv -= 0.6 * this.time;
+            }
+
+            else if (this.pressedKeys[this.keypress.down]) {
+                this.transform.yv += 0.6 * this.time;
+            }
+        }
+
+        this.transform.xv *= 0.7;
+        this.transform.yv *= 0.7;
+    }
+
+    updateDirection() {       
+        // Single-key movement
+        if (this.pressedKeys[this.keypress.up]) {
+            this.direction = "up";
+        } else if (this.pressedKeys[this.keypress.down]) {
+            this.direction = "down";
+        } else if (this.pressedKeys[this.keypress.right]) {
+            this.direction = "right";
+        } else if (this.pressedKeys[this.keypress.left]) {
+            this.direction = "left";
+        }
+
+        // Multi-key movement
+        if (this.pressedKeys[this.keypress.left] && this.pressedKeys[this.keypress.up]) {
+            this.direction = "upLeft";
+        } else if (this.pressedKeys[this.keypress.left] && this.pressedKeys[this.keypress.down]) {
+            this.direction = "downLeft";
+        } else if (this.pressedKeys[this.keypress.right] && this.pressedKeys[this.keypress.up]) {
+            this.direction = "upRight";
+        } else if (this.pressedKeys[this.keypress.right] && this.pressedKeys[this.keypress.down]) {
+            this.direction = "downRight";
         }
     }
+
     update() {
+        this.updateVelocity();
         super.update();
         if(!this.moved){
             if (this.gravity) {
                     this.time += 1;
-                    this.velocity.y += 0.5 + this.acceleration * this.time;
+                    this.transform.yv -= this.acceleration * -this.time;
                 }
             }
         else{
-            this.time = 0;
+            this.time = 1;
         }
-        }
+
+        this.transform.x += this.transform.xv * this.time;
+        this.transform.y += this.transform.yv * this.time;
+    }
         
     /**
      * Overrides the reaction to the collision to handle
@@ -142,7 +156,8 @@ class Player extends Character {
      */
     handleCollisionReaction(other) {    
         this.pressedKeys = {};
-        this.updateVelocityAndDirection();
+        this.updateVelocity();
+        this.updateDirection();
         super.handleCollisionReaction(other);
     }
 

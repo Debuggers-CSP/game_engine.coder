@@ -2,8 +2,9 @@
 import GamEnvBackground from './GameEngine/GameEnvBackground.js';
 import Player from './GameEngine/Player.js';
 import Npc from './GameEngine/Npc.js';
+import Coin from './GameEngine/Coin.js';
 import Quiz from './Quiz.js';
-import DialogueSystem from './DialogueSystem.js';
+import DialogueSystem from './GameEngine/DialogueSystem.js';
 import GameControl from './GameEngine/GameControl.js';
 import GameLevelStarWars from './GameLevelStarWars.js';
 import GameLevelMeteorBlaster from './GameLevelMeteorBlaster.js';
@@ -89,9 +90,10 @@ class GameLevelDesert {
         },
         interact: function() {
             // Show random dialogue message
-            if (this.dialogueSystem) {
-                this.showRandomDialogue();
+            if (!this.dialogueSystem) {
+                this.dialogueSystem = new DialogueSystem();
             }
+            this.showRandomDialogue();
         }
     };
 
@@ -131,9 +133,10 @@ class GameLevelDesert {
           },
           interact: function() {
               // Show random dialogue message
-              if (this.dialogueSystem) {
-                  this.showRandomDialogue();
+              if (!this.dialogueSystem) {
+                  this.dialogueSystem = new DialogueSystem();
               }
+              this.showRandomDialogue();
           }
       };
     
@@ -444,6 +447,10 @@ class GameLevelDesert {
               }
               
               // Show a dialogue with buttons immediately
+              if (!this.dialogueSystem) {
+                  this.dialogueSystem = new DialogueSystem();
+              }
+              
               if (this.dialogueSystem) {
                   // Get a random dialogue message if available
                   let message = "I need help analyzing some stocks. Want to check out the market with me?";
@@ -560,6 +567,10 @@ class GameLevelDesert {
             }
             
             // Show a dialogue with buttons immediately
+            if (!this.dialogueSystem) {
+                this.dialogueSystem = new DialogueSystem();
+            }
+            
             if (this.dialogueSystem) {
                 // Get a random dialogue message if available
                 let message = "Feeling lucky? The casino awaits with games of chance and fortune!";
@@ -859,7 +870,8 @@ class GameLevelDesert {
       { class: Npc, data: sprite_data_crypto },
       { class: Npc, data: sprite_data_minesweeper },
       { class: Npc, data: sprite_data_chickenj },
-      { class: Npc, data: sprite_data_endportal } 
+      { class: Npc, data: sprite_data_endportal },
+      { class: Coin, data: { INIT_POSITION: { x: Math.floor(width/2), y: Math.floor(height/2) }, size: 20, points: 5 } }
     ];
   }
 
