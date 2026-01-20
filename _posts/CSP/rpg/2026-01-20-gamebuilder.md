@@ -2,7 +2,7 @@
 layout: post
 title: Game Asset Creator
 description: Helping programmers understand how to creater a game
-permalink: /rpg/story
+permalink: /rpg/gamebuilder
 comments: True
 ---
 <style>
@@ -152,207 +152,11 @@ select, input {
 
 .game-frame { flex: 1; background: #000; }
 iframe { width: 100%; height: 100%; border: none; }
-
-/* RPG Navigation Sidebar Styles */
-        .rpg-nav-sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            width: 280px;
-            background: linear-gradient(145deg, rgba(20, 20, 40, 0.98), rgba(10, 10, 20, 0.98));
-            backdrop-filter: blur(10px);
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
-            transform: translateX(-280px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            border-right: 2px solid rgba(255, 215, 0, 0.3);
-        }
-
-        .rpg-nav-sidebar.open {
-            transform: translateX(0);
-        }
-
-        .nav-toggle {
-            position: absolute;
-            right: -50px;
-            top: 20px;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(145deg, rgba(20, 20, 40, 0.98), rgba(10, 10, 20, 0.98));
-            border: 2px solid rgba(255, 215, 0, 0.3);
-            border-left: none;
-            border-radius: 0 10px 10px 0;
-            color: #ffd700;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-toggle:hover {
-            background: rgba(255, 215, 0, 0.1);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .nav-dashboard {
-            padding: 30px 20px;
-            height: 100%;
-            overflow-y: auto;
-        }
-
-        .nav-title {
-            color: #ffd700;
-            font-size: 1.5em;
-            font-family: 'Cinzel', 'Georgia', serif;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .nav-divider {
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #ffd700, transparent);
-            margin-bottom: 20px;
-        }
-
-        .nav-links {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 215, 0, 0.2);
-            border-radius: 10px;
-            color: #c0c0c0;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-link:hover:not(.locked) {
-            background: rgba(255, 215, 0, 0.1);
-            border-color: #ffd700;
-            transform: translateX(5px);
-        }
-
-        .nav-link.active {
-            background: rgba(255, 215, 0, 0.15);
-            border-color: #ffd700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-        }
-
-        .nav-link.visited .nav-check {
-            display: inline;
-        }
-
-        .nav-link.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .nav-link.locked .nav-lock {
-            display: inline;
-        }
-
-        .nav-link:not(.locked) .nav-lock {
-            display: none;
-        }
-
-        .nav-number {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 215, 0, 0.2);
-            border-radius: 50%;
-            color: #ffd700;
-            font-weight: bold;
-            margin-right: 12px;
-            flex-shrink: 0;
-        }
-
-        .nav-text {
-            flex: 1;
-            font-size: 0.95em;
-        }
-
-        .nav-check {
-            color: #4cc9f0;
-            font-size: 1.2em;
-            display: none;
-            margin-left: 8px;
-        }
-
-        .nav-lock {
-            color: #ff6b6b;
-            font-size: 1em;
-            margin-left: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .rpg-nav-sidebar {
-                width: 240px;
-                transform: translateX(-240px);
-            }
-        }
+/* Sidebar component removed */
+.wall-slot { margin-top:8px; border: 1px solid #444; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.08); }
+.wall-fields label { display:block; }
 </style>
 
-<!-- RPG Navigation Sidebar -->
-<div id="rpg-nav-sidebar" class="rpg-nav-sidebar">
-  <button id="nav-toggle" class="nav-toggle">☰</button>
-  <div class="nav-dashboard">
-    <h3 class="nav-title">🎮 RPG Creator</h3>
-    <div class="nav-divider"></div>
-    <nav class="nav-links">
-      <a href="/rpg/login" class="nav-link" data-page="1">
-        <span class="nav-number">1</span>
-        <span class="nav-text">Login</span>
-      </a>
-      <a href="/rpg/dashboard" class="nav-link" data-page="2">
-        <span class="nav-number">2</span>
-        <span class="nav-text">Dashboard</span>
-        <span class="nav-check">✓</span>
-      </a>
-      <a href="/rpg/story" class="nav-link active" data-page="3">
-        <span class="nav-number">3</span>
-        <span class="nav-text">Story & Narrative</span>
-        <span class="nav-check">✓</span>
-      </a>
-      <a href="/rpg/game-creator" class="nav-link" data-page="4">
-        <span class="nav-number">4</span>
-        <span class="nav-text">Game creator</span>
-        <span class="nav-check">✓</span>
-      </a>
-      <a href="/rpg/keybindings" class="nav-link" data-page="5">
-        <span class="nav-number">5</span>
-        <span class="nav-text">Controls</span>
-        <span class="nav-check">✓</span>
-      </a>
-      <a href="/rpg/systems" class="nav-link" data-page="6">
-        <span class="nav-number">6</span>
-        <span class="nav-text">Game Systems</span>
-        <span class="nav-check">✓</span>
-      </a>
-      <a href="/rpg/review" class="nav-link" data-page="6" id="review-link">
-        <span class="nav-number">6</span>
-        <span class="nav-text">Review</span>
-        <span class="nav-lock">✓</span>
-        <span class="nav-check">✓</span>
-      </a>
-    </nav>
-  </div>
-  
-</div>
 
 <div class="creator-layout">
     <div class="col-tools">
@@ -372,6 +176,8 @@ iframe { width: 100%; height: 100%; border: none; }
                 
                 <div class="asset-group">
                     <div class="group-title">PLAYER</div>
+                    <label>Name</label>
+                    <input type="text" id="player-name" value="" placeholder="Player name">
                     <label>Sprite</label>
                     <select id="player-select">
                         <option value="" selected disabled>Select sprite…</option>
@@ -380,6 +186,8 @@ iframe { width: 100%; height: 100%; border: none; }
                     </select>
                     <label>X Position</label>
                     <input type="range" id="player-x" min="0" max="800" value="100">
+                    <label>Y Position</label>
+                    <input type="range" id="player-y" min="0" max="600" value="300">
                     <label>Movement Keys</label>
                     <select id="movement-keys">
                         <option value="" selected disabled>Select keys…</option>
@@ -507,22 +315,26 @@ iframe { width: 100%; height: 100%; border: none; }
                         </div>
                     </div>
                 </div>
+                
                 <div class="asset-group">
-                    <div class="group-title">COLLISION WALLS</div>
-                    <div style="margin-bottom:10px;">
-                        <button class="btn" id="add-wall">Add Wall</button>
+                    <div class="group-title">WALLS</div>
+                    <button class="btn" id="add-wall">Add Wall</button>
+                    <div id="walls-container" style="margin-top:8px;"></div>
+                    <div style="margin-top:6px; font-size:0.8em; color: var(--text-muted);">
+                        Walls are invisible in the game. <br>
+                        They briefly show when a slot is <br>
+                        opened for editing.
                     </div>
-                    <div id="wall-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 </div>
+                
             </div>
             <div class="button-footer">
                 <button id="btn-confirm" class="btn btn-confirm">Confirm Step</button>
                 <button id="btn-run" class="btn btn-run">Run Game</button>
-                <div id="progress-indicator" style="font-size: 0.8em; color: var(--text-muted);">Step: background → player → npc → freestyle</div>
+                <div id="progress-indicator" style="font-size: 0.8em; color: var(--text-muted);">Step: background → player → freestyle</div>
                 <ol class="steps-numbered" style="margin: 8px 0 0 18px; color: var(--text-muted); font-size: 0.85em;">
                     <li>Step 1: Background</li>
                     <li>Step 2: Player</li>
-                    <li>Step 3: Add NPC</li>
                 </ol>
                 <div id="freestyle-notice" style="display:none; margin-top: 4px; padding: 6px; border: 1px solid var(--neon-blue); border-radius: 6px; color: var(--neon-blue); background: rgba(0,243,255,0.08); font-size: 0.85em; line-height: 1.2;">
                     freestyle unlocked !<br>
@@ -555,8 +367,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const assets = {
         bg: {
             desert: { src: "/images/gamify/desert.png", h: 580, w: 1038 },
-            alien: { src: "/images/gamify/alien_planet.jpg", h: 600, w: 1000 },
-            clouds: { src: "/images/gamify/clouds.jpg", h: 720, w: 1280 }
+            alien: { src: "/images/gamebuilder/alien_planet.jpg", h: 600, w: 1000 },
+            clouds: { src: "/images/gamebuilder/clouds.jpg", h: 720, w: 1280 }
         },
         sprites: {
             tux: { src: "/images/gamify/tux.png", h:256, w:352, rows:8, cols:11 },
@@ -569,6 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bg: document.getElementById('bg-select'),
         pSprite: document.getElementById('player-select'),
         pX: document.getElementById('player-x'),
+        pY: document.getElementById('player-y'),
+        pName: document.getElementById('player-name'),
         npcs: [1,2,3,4,5].map(i => ({
             addBtn: document.getElementById(`add-npc-${i}`),
             fieldsContainer: document.getElementById(`npc-fields-${i}`),
@@ -582,22 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
             index: i,
             displayName: ''
         })),
-        walls: [1,2,3].map(i => ({
-            addBtn: document.getElementById(`add-wall-${i}`),
-            fieldsContainer: document.getElementById(`wall-fields-${i}`),
-            wId: document.getElementById(`wall${i}-id`),
-            wX: document.getElementById(`wall${i}-x`),
-            wY: document.getElementById(`wall${i}-y`),
-            wW: document.getElementById(`wall${i}-w`),
-            wH: document.getElementById(`wall${i}-h`),
-            deleteBtn: document.getElementById(`wall${i}-delete`),
-            locked: false,
-            index: i,
-            displayName: ''
-        })),
+        
+        // Walls UI (dynamic slots)
         addWallBtn: document.getElementById('add-wall'),
-        wallList: document.getElementById('wall-list'),
+        wallsContainer: document.getElementById('walls-container'),
         walls: [],
+
         editor: document.getElementById('code-editor'),
         hLayer: document.getElementById('highlight-layer'),
         iframe: document.getElementById('game-iframe'),
@@ -611,15 +415,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isVisible = slot.fieldsContainer.style.display !== 'none';
                 // Toggle dropdown visibility
                 slot.fieldsContainer.style.display = isVisible ? 'none' : '';
-                // Allow editing when open
-                if (!isVisible) slot.locked = false;
+                // When closing the dropdown, commit NPC and keep it present
+                if (isVisible) {
+                    // We are closing; lock the NPC and update header state
+                    const name = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC');
+                    slot.locked = true;
+                    slot.displayName = name;
+                    slot.addBtn.classList.add('btn-confirm');
+                    // Show delete when locked
+                    if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
+                }
                 // Update button label with caret and name
                 const labelBase = slot.displayName && slot.locked ? slot.displayName : 'Add NPC';
                 const caret = isVisible ? ' ▸' : ' ▾';
                 slot.addBtn.textContent = labelBase + caret;
-                // Added style if slot was confirmed
-                if (slot.locked && slot.displayName) slot.addBtn.classList.add('btn-confirm');
-                else slot.addBtn.classList.remove('btn-confirm');
                 updateStepUI();
                 syncFromControlsIfFreestyle();
             });
@@ -652,161 +461,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Dynamic Collision Walls: create on demand via single Add Wall button
-    let wallCounter = 0;
-
-    function hookWallSlotListeners(slot) {
-        if (slot.wId) slot.wId.addEventListener('input', syncFromControlsIfFreestyle);
-        // Toggle dropdown open/close
-        if (slot.addBtn && slot.fieldsContainer) {
-            slot.addBtn.addEventListener('click', () => {
-                const isVisible = slot.fieldsContainer.style.display !== 'none';
-                // Toggle visibility
-                slot.fieldsContainer.style.display = isVisible ? 'none' : '';
-                // Allow editing when open
-                if (!isVisible) slot.locked = false;
-                // Update button label with caret and name
-                const labelBase = slot.displayName && slot.locked ? slot.displayName : 'Add Wall';
-                const caret = isVisible ? ' ▸' : ' ▾';
-                slot.addBtn.textContent = labelBase + caret;
-                // Added style if slot was confirmed
-                if (slot.locked && slot.displayName) slot.addBtn.classList.add('btn-confirm');
-                else slot.addBtn.classList.remove('btn-confirm');
-                updateStepUI();
-                syncFromControlsIfFreestyle();
-            });
-        }
-        // Ensure delete starts hidden until wall is created/confirmed
-        if (slot.deleteBtn) slot.deleteBtn.style.display = 'none';
-        const getWallInstance = (id) => {
-            const win = ui.iframe?.contentWindow;
-            const reg = win && win.__adventureGameRegistry && win.__adventureGameRegistry.walls;
-            return reg ? reg[id] : null;
+    // Dynamic Walls feature
+    function makeWallSlot(index) {
+        const slot = {
+            index,
+            locked: false,
+            displayName: '',
+            container: document.createElement('div'),
+            fieldsOpen: false
         };
-        // X position slider: update wall's position.x only
-        if (slot.wX) slot.wX.addEventListener('input', () => {
-            const wall = ui.walls.find(w => w.index === slot.index);
-            if (wall) {
-                wall.wX.value = slot.wX.value;
-                const gameWall = getWallInstance(wall.wId.value);
-                if (gameWall) gameWall.position.x = parseInt(slot.wX.value, 10);
-                syncFromControlsIfFreestyle();
-                ui.editor.value = generateStepCode('player');
-            }
-        });
-        // Y position slider: update wall's position.y only
-        if (slot.wY) slot.wY.addEventListener('input', () => {
-            const wall = ui.walls.find(w => w.index === slot.index);
-            if (wall) {
-                wall.wY.value = slot.wY.value;
-                const gameWall = getWallInstance(wall.wId.value);
-                if (gameWall) gameWall.position.y = parseInt(slot.wY.value, 10);
-                syncFromControlsIfFreestyle();
-                ui.editor.value = generateStepCode('player');
-            }
-        });
-        // Width slider: adjust wall dimensions
-        if (slot.wW) slot.wW.addEventListener('input', () => {
-            const wall = ui.walls.find(w => w.index === slot.index);
-            if (wall) {
-                wall.wW.value = slot.wW.value;
-                const gameWall = getWallInstance(wall.wId.value);
-                if (gameWall && typeof gameWall.setDimensions === 'function') {
-                    gameWall.setDimensions(parseInt(slot.wW.value, 10), parseInt(slot.wH.value, 10));
-                }
-                syncFromControlsIfFreestyle();
-                ui.editor.value = generateStepCode('player');
-            }
-        });
-        // Height slider: adjust wall dimensions
-        if (slot.wH) slot.wH.addEventListener('input', () => {
-            const wall = ui.walls.find(w => w.index === slot.index);
-            if (wall) {
-                wall.wH.value = slot.wH.value;
-                const gameWall = getWallInstance(wall.wId.value);
-                if (gameWall && typeof gameWall.setDimensions === 'function') {
-                    gameWall.setDimensions(parseInt(slot.wW.value, 10), parseInt(slot.wH.value, 10));
-                }
-                syncFromControlsIfFreestyle();
-                ui.editor.value = generateStepCode('player');
-            }
-        });
-        if (slot.deleteBtn) {
-            slot.deleteBtn.addEventListener('click', () => {
-                // Remove from DOM and UI list
-                if (slot.root) slot.root.remove();
-                ui.walls = ui.walls.filter(w => w.index !== slot.index);
-                syncFromControlsIfFreestyle();
-            });
-        }
-    }
-
-    function createWallSlot() {
-        wallCounter += 1;
-        const idx = wallCounter;
-        const root = document.createElement('div');
-        root.className = 'wall-slot';
-        root.id = `wall-slot-${idx}`;
-        // Header with dropdown toggle
-        const header = document.createElement('div');
-        header.className = 'wall-header';
-        header.style.cssText = 'display:flex; align-items:center; gap:8px;';
-        header.innerHTML = `
-            <button class="btn" id="wall${idx}-toggle">Add Wall ▸</button>
-        `;
-
-        // Fields panel (collapsed by default)
+        slot.container.className = 'wall-slot';
+        const headerBtn = document.createElement('button');
+        headerBtn.className = 'btn';
+        headerBtn.textContent = 'Add Wall ▸';
         const fields = document.createElement('div');
         fields.className = 'wall-fields';
-        fields.style.cssText = 'margin-top:8px; border: 1px solid #444; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.08);';
         fields.style.display = 'none';
         fields.innerHTML = `
-            <label>ID</label>
-            <input type="text" id="wall${idx}-id" value="Wall${idx}" placeholder="Wall id">
             <label>X</label>
-            <input type="range" id="wall${idx}-x" min="0" max="800" value="100">
+            <input type="range" min="0" max="800" value="100" class="wall-x">
             <label>Y</label>
-            <input type="range" id="wall${idx}-y" min="0" max="600" value="100">
+            <input type="range" min="0" max="600" value="100" class="wall-y">
             <label>Width</label>
-            <input type="range" id="wall${idx}-w" min="10" max="800" value="200">
+            <input type="range" min="10" max="800" value="150" class="wall-w">
             <label>Height</label>
-            <input type="range" id="wall${idx}-h" min="10" max="600" value="20">
-            <div class="wall-actions" style="margin-top:8px; display:flex; gap:8px;">
-                <button class="btn btn-danger" id="wall${idx}-delete">Delete</button>
+            <input type="range" min="10" max="600" value="20" class="wall-h">
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <button class="btn btn-sm btn-danger wall-delete">Delete</button>
             </div>
         `;
+        slot.container.appendChild(headerBtn);
+        slot.container.appendChild(fields);
+        ui.wallsContainer.appendChild(slot.container);
 
-        root.appendChild(header);
-        root.appendChild(fields);
-        ui.wallList.appendChild(root);
+        // Bind DOM refs
+        slot.addBtn = headerBtn;
+        slot.fieldsContainer = fields;
+        slot.wX = fields.querySelector('.wall-x');
+        slot.wY = fields.querySelector('.wall-y');
+        slot.wW = fields.querySelector('.wall-w');
+        slot.wH = fields.querySelector('.wall-h');
+        slot.deleteBtn = fields.querySelector('.wall-delete');
 
-        const slot = {
-            root,
-            fieldsContainer: fields,
-            addBtn: header.querySelector(`#wall${idx}-toggle`),
-            wId: fields.querySelector(`#wall${idx}-id`),
-            wX: fields.querySelector(`#wall${idx}-x`),
-            wY: fields.querySelector(`#wall${idx}-y`),
-            wW: fields.querySelector(`#wall${idx}-w`),
-            wH: fields.querySelector(`#wall${idx}-h`),
-            deleteBtn: fields.querySelector(`#wall${idx}-delete`),
-            locked: true,
-            index: idx,
-            displayName: `Wall${idx}`
-        };
+        // Toggle open/close
+        headerBtn.addEventListener('click', () => {
+            const wasOpen = fields.style.display !== 'none';
+            fields.style.display = wasOpen ? 'none' : '';
+            slot.fieldsOpen = !wasOpen;
+            const labelBase = slot.displayName && slot.locked ? slot.displayName : 'Add Wall';
+            headerBtn.textContent = labelBase + (wasOpen ? ' ▸' : ' ▾');
+            if (slot.locked && slot.displayName) headerBtn.classList.add('btn-confirm'); else headerBtn.classList.remove('btn-confirm');
+            updateStepUI();
+            syncFromControlsIfFreestyle();
+        });
+
+        // Delete
+        slot.deleteBtn.addEventListener('click', () => {
+            slot.container.remove();
+            ui.walls = ui.walls.filter(w => w !== slot);
+            updateStepUI();
+            syncFromControlsIfFreestyle();
+        });
+
+        // Change listeners for freestyle sync
+        ['input','change'].forEach(evt => {
+            slot.wX.addEventListener(evt, syncFromControlsIfFreestyle);
+            slot.wY.addEventListener(evt, syncFromControlsIfFreestyle);
+            slot.wW.addEventListener(evt, syncFromControlsIfFreestyle);
+            slot.wH.addEventListener(evt, syncFromControlsIfFreestyle);
+        });
+
         ui.walls.push(slot);
-        hookWallSlotListeners(slot);
-        updateStepUI();
-        syncFromControlsIfFreestyle();
+        return slot;
     }
 
     if (ui.addWallBtn) {
-        ui.addWallBtn.addEventListener('click', createWallSlot);
+        ui.addWallBtn.addEventListener('click', () => {
+            const slot = makeWallSlot(ui.walls.length + 1);
+            // Auto-open newly added slot for easy editing
+            if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
+            slot.fieldsOpen = true;
+            slot.addBtn.textContent = 'Add Wall ▾';
+            updateStepUI();
+            syncFromControlsIfFreestyle();
+        });
     }
 
     const LINE_HEIGHT = 20;
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false };
-    const steps = ['background','player','npc','freestyle'];
+    const steps = ['background','player','freestyle'];
     let stepIndex = 0; // start at 'background'
     const indicator = document.getElementById('progress-indicator');
 
@@ -822,27 +565,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const current = steps[stepIndex];
         const mv = document.getElementById('movement-keys');
         // Default: disable all inputs/buttons
-        [ui.bg, ui.pSprite, ui.pX, mv].forEach(el => { if (el) el.disabled = true; });
+        [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = true; });
         ui.npcs.forEach(slot => {
             if (slot.addBtn) slot.addBtn.disabled = true;
             [slot.nId, slot.nMsg, slot.nSprite, slot.nX, slot.nY, slot.deleteBtn].forEach(el => { if (el) el.disabled = true; });
         });
+        if (ui.addWallBtn) ui.addWallBtn.disabled = true;
         ui.walls.forEach(slot => {
-            [slot.wId, slot.wX, slot.wY, slot.wW, slot.wH, slot.deleteBtn].forEach(el => { if (el) el.disabled = true; });
+            const fields = [slot.wX, slot.wY, slot.wW, slot.wH, slot.deleteBtn];
+            if (slot.addBtn) slot.addBtn.disabled = true;
+            fields.forEach(el => { if (el) el.disabled = true; });
         });
+        
         if (current === 'background') {
             unlockField(ui.bg);
         } else if (current === 'player') {
             unlockField(ui.pSprite);
             unlockField(ui.pX);
+            unlockField(ui.pY);
+            unlockField(ui.pName);
             unlockField(mv);
-            ui.walls.forEach(slot => {
-                if (slot.deleteBtn) {
-                    slot.deleteBtn.disabled = false;
-                    slot.deleteBtn.style.display = '';
-                }
-                [slot.wId, slot.wX, slot.wY, slot.wW, slot.wH].forEach(el => unlockField(el));
-            });
+            
         } else if (current === 'npc') {
             // Enable add buttons and manage NPC fields based on locked state
             ui.npcs.forEach(slot => {
@@ -860,24 +603,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     unlockField(slot.nY);
                 }
             });
+            
+        } else if (current === 'walls') {
+            if (ui.addWallBtn) ui.addWallBtn.disabled = false;
             ui.walls.forEach(slot => {
-                if (slot.deleteBtn) {
-                    slot.deleteBtn.disabled = false;
-                    slot.deleteBtn.style.display = '';
+                if (slot.addBtn) slot.addBtn.disabled = false;
+                // Editable only when open
+                if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
+                    [slot.wX, slot.wY, slot.wW, slot.wH].forEach(el => unlockField(el));
+                    if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
+                } else {
+                    if (slot.deleteBtn) { slot.deleteBtn.disabled = !slot.locked; slot.deleteBtn.style.display = slot.locked ? '' : 'none'; }
                 }
-                [slot.wId, slot.wX, slot.wY, slot.wW, slot.wH].forEach(el => unlockField(el));
             });
+
         } else if (current === 'freestyle') {
             ui.editor.readOnly = false;
-            [ui.bg, ui.pSprite, ui.pX, mv].forEach(el => { if (el) el.disabled = false; });
+            [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = false; });
             ui.npcs.forEach(slot => {
                 if (slot.addBtn) slot.addBtn.disabled = false;
                 [slot.nId, slot.nMsg, slot.nSprite, slot.nX, slot.nY].forEach(el => { if (el) el.disabled = false; });
             });
+            if (ui.addWallBtn) ui.addWallBtn.disabled = false;
             ui.walls.forEach(slot => {
-                [slot.wId, slot.wX, slot.wY, slot.wW, slot.wH].forEach(el => { if (el) el.disabled = false; });
+                if (slot.addBtn) slot.addBtn.disabled = false;
+                [slot.wX, slot.wY, slot.wW, slot.wH].forEach(el => unlockField(el));
                 if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
             });
+            
         }
         // Show or hide freestyle unlocked notice
         if (ui.notice) {
@@ -891,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
 import GameEnvBackground from '/assets/js/adventureGame/GameEngine/GameEnvBackground.js';
 import Player from '/assets/js/adventureGame/GameEngine/Player.js';
 import Npc from '/assets/js/adventureGame/GameEngine/Npc.js';
+    import Barrier from '/assets/js/adventureGame/GameEngine/Barrier.js';
 
 class CustomLevel {
     constructor(gameEnv) {
@@ -926,7 +680,8 @@ export const gameLevelClasses = [CustomLevel];`;
 import GameEnvBackground from '/assets/js/adventureGame/GameEngine/GameEnvBackground.js';
 import Player from '/assets/js/adventureGame/GameEngine/Player.js';
 import Npc from '/assets/js/adventureGame/GameEngine/Npc.js';
-        import Wall from '/assets/js/adventureGame/GameEngine/Wall.js';
+import Barrier from '/assets/js/adventureGame/GameEngine/Barrier.js';
+        
 
 class CustomLevel {
     constructor(gameEnv) {
@@ -963,6 +718,7 @@ export const gameLevelClasses = [CustomLevel];`;
 
                 if (currentStep === 'player') {
                         if (!ui.bg.value || !ui.pSprite.value) return null;
+                        const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
                         const defs = `
         const bgData = {
             name: 'custom_bg',
@@ -970,12 +726,12 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };
         const playerData = {
-            id: 'Hero',
+            id: '${name}',
             src: path + "${p.src}",
             SCALE_FACTOR: 5,
             STEP_FACTOR: 1000,
             ANIMATION_RATE: 50,
-            INIT_POSITION: { x: ${ui.pX.value}, y: height - Math.floor(height/5) },
+            INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${p.rows}, columns: ${p.cols} },
             down: { row: 0, start: 0, columns: 3 },
@@ -989,30 +745,11 @@ export const gameLevelClasses = [CustomLevel];`;
             hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: ${keypress}
         };`;
-                        const wallDefs = [];
                         const classes = [
             "      { class: GameEnvBackground, data: bgData }",
             "      { class: Player, data: playerData }"
                         ];
-                        ui.walls.forEach(slot => {
-                            const name = (slot.wId && slot.wId.value ? slot.wId.value.trim() : `Wall${slot.index}`).replace(/'/g, "\\'");
-                            const x = parseInt(slot.wX?.value || '100', 10);
-                            const y = parseInt(slot.wY?.value || '100', 10);
-                            const w = parseInt(slot.wW?.value || '200', 10);
-                            const h = parseInt(slot.wH?.value || '20', 10);
-                            wallDefs.push(`
-        const wallData${slot.index} = {
-            id: '${name}',
-            INIT_POSITION: { x: ${x}, y: ${y} },
-            pixels: { width: ${w}, height: ${h} },
-            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
-            zIndex: 9,
-            fillStyle: 'rgba(255, 215, 0, 0.35)'
-        };`);
-                            classes.push(`      { class: Wall, data: wallData${slot.index} }`);
-                        });
-                        const defsWithWalls = defs + (wallDefs.length ? ('\n' + wallDefs.join('\n')) : '');
-                        return header() + defsWithWalls + footer(classes);
+                        return header() + defs + footer(classes);
                 }
 
                 if (currentStep === 'npc') {
@@ -1020,6 +757,7 @@ export const gameLevelClasses = [CustomLevel];`;
                     const includedSlots = ui.npcs.filter(s => s.locked || (s.fieldsContainer && s.fieldsContainer.style.display !== 'none'));
                     if (includedSlots.length === 0) return null;
 
+                        const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
                         const defsStart = `
         const bgData = {
             name: 'custom_bg',
@@ -1027,12 +765,12 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };
         const playerData = {
-            id: 'Hero',
+            id: '${name}',
             src: path + "${p.src}",
             SCALE_FACTOR: 5,
             STEP_FACTOR: 1000,
             ANIMATION_RATE: 50,
-            INIT_POSITION: { x: ${ui.pX.value}, y: height - Math.floor(height/5) },
+            INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${p.rows}, columns: ${p.cols} },
             down: { row: 0, start: 0, columns: 3 },
@@ -1047,28 +785,10 @@ export const gameLevelClasses = [CustomLevel];`;
             keypress: ${keypress}
         };`;
                         const npcDefs = [];
-                        const wallDefs = [];
                         const classes = [
             "      { class: GameEnvBackground, data: bgData }",
             "      { class: Player, data: playerData }"
                         ];
-                        ui.walls.forEach(slot => {
-                            const name = (slot.wId && slot.wId.value ? slot.wId.value.trim() : `Wall${slot.index}`).replace(/'/g, "\\'");
-                            const x = parseInt(slot.wX?.value || '100', 10);
-                            const y = parseInt(slot.wY?.value || '100', 10);
-                            const w = parseInt(slot.wW?.value || '200', 10);
-                            const h = parseInt(slot.wH?.value || '20', 10);
-                            wallDefs.push(`
-        const wallData${slot.index} = {
-            id: '${name}',
-            INIT_POSITION: { x: ${x}, y: ${y} },
-            pixels: { width: ${w}, height: ${h} },
-            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
-            zIndex: 9,
-            fillStyle: 'rgba(255, 215, 0, 0.35)'
-        };`);
-                            classes.push(`      { class: Wall, data: wallData${slot.index} }`);
-                        });
                         includedSlots.forEach((slot) => {
                             const index = slot.index;
                             const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
@@ -1095,8 +815,93 @@ export const gameLevelClasses = [CustomLevel];`;
         };`);
                             classes.push(`      { class: Npc, data: npcData${index} }`);
                         });
-                        const defs = defsStart + (wallDefs.length ? ('\n' + wallDefs.join('\n')) : '') + npcDefs.join('\n');
+                        const defs = defsStart + npcDefs.join('\n');
                         return header() + defs + footer(classes);
+                }
+
+                if (currentStep === 'walls') {
+                    if (!ui.bg.value || !ui.pSprite.value) return null;
+                    const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
+                    const defsStart = `
+        const bgData = {
+            name: 'custom_bg',
+            src: path + "${bg.src}",
+            pixels: { height: ${bg.h}, width: ${bg.w} }
+        };
+        const playerData = {
+            id: '${name}',
+            src: path + "${p.src}",
+            SCALE_FACTOR: 5,
+            STEP_FACTOR: 1000,
+            ANIMATION_RATE: 50,
+            INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
+            pixels: { height: ${p.h}, width: ${p.w} },
+            orientation: { rows: ${p.rows}, columns: ${p.cols} },
+            down: { row: 0, start: 0, columns: 3 },
+            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
+            downLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
+            right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
+            left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
+            up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
+            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
+            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            keypress: ${keypress}
+        };`;
+                    const classes = [
+                        "      { class: GameEnvBackground, data: bgData }",
+                        "      { class: Player, data: playerData }"
+                    ];
+                    // Add any locked/visible NPCs
+                    const includedNPCs = ui.npcs.filter(s => s.locked || (s.fieldsContainer && s.fieldsContainer.style.display !== 'none'));
+                    const npcDefs = [];
+                    includedNPCs.forEach((slot) => {
+                        const index = slot.index;
+                        const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
+                        const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+                        const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
+                        const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
+                        const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
+                        const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+                        npcDefs.push(`
+        const npcData${index} = {
+            id: '${nId}',
+            greeting: '${nMsg}',
+            src: path + "${nSprite.src}",
+            SCALE_FACTOR: 8,
+            ANIMATION_RATE: 50,
+            INIT_POSITION: { x: ${nX}, y: ${nY} },
+            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
+            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },
+            down: { row: 0, start: 0, columns: 3 },
+            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
+            dialogues: ['${nMsg}'],
+            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
+            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }
+        };`);
+                        classes.push(`      { class: Npc, data: npcData${index} }`);
+                    });
+
+                    // Add walls
+                    const barrierDefs = [];
+                    const includedWalls = ui.walls.filter(w => w.locked || w.fieldsOpen);
+                    includedWalls.forEach((w, idx) => {
+                        const x = parseInt(w.wX?.value || 100, 10);
+                        const y = parseInt(w.wY?.value || 100, 10);
+                        const wWidth = parseInt(w.wW?.value || 150, 10);
+                        const wHeight = parseInt(w.wH?.value || 20, 10);
+                        const visible = !!(w.fieldsContainer && w.fieldsContainer.style.display !== 'none');
+                        const id = `wall_${idx+1}`;
+                        barrierDefs.push(`
+        const barrierData${idx+1} = {
+            id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
+        };`);
+                        classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+                    });
+
+                    const defs = defsStart + (npcDefs.length ? ('\n' + npcDefs.join('\n')) : '') + (barrierDefs.length ? ('\n' + barrierDefs.join('\n')) : '');
+                    return header() + defs + footer(classes);
                 }
 
                 // Freestyle: keep last generated, allow edits; return current editor code
@@ -1144,9 +949,10 @@ export const gameLevelClasses = [CustomLevel];`;
         if (current !== 'freestyle') return;
         if (state.userEdited) return; // don't overwrite user's manual edits
         const hasNPCs = ui.npcs.some(s => s.locked || (s.fieldsContainer && s.fieldsContainer.style.display !== 'none'));
+        const hasWalls = ui.walls.some(w => w.locked || w.fieldsOpen);
         const hasPlayer = !!ui.pSprite.value;
         const hasBackground = !!ui.bg.value;
-        const stepToCompose = hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null));
+        const stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
         const newCode = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
         if (newCode) {
             const oldCode = ui.editor.value;
@@ -1195,21 +1001,27 @@ export const gameLevelClasses = [CustomLevel];`;
     if (ui.bg) ui.bg.addEventListener('change', syncFromControlsIfFreestyle);
     if (ui.pSprite) ui.pSprite.addEventListener('change', syncFromControlsIfFreestyle);
     if (ui.pX) ui.pX.addEventListener('input', syncFromControlsIfFreestyle);
+    if (ui.pY) ui.pY.addEventListener('input', syncFromControlsIfFreestyle);
+    if (ui.pName) ui.pName.addEventListener('input', syncFromControlsIfFreestyle);
     if (mvEl) mvEl.addEventListener('change', syncFromControlsIfFreestyle);
     ui.npcs.forEach(slot => {
         if (slot.nId) slot.nId.addEventListener('input', syncFromControlsIfFreestyle);
+        // Reflect name changes in the dropdown header when editing
+        if (slot.nId) slot.nId.addEventListener('input', () => {
+            const name = slot.nId.value.trim();
+            if (name.length) {
+                slot.displayName = name;
+                const isVisible = slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none';
+                const caret = isVisible ? ' ▾' : ' ▸';
+                slot.addBtn.textContent = (slot.locked ? name : 'Add NPC') + caret;
+            }
+        });
         if (slot.nMsg) slot.nMsg.addEventListener('input', syncFromControlsIfFreestyle);
         if (slot.nSprite) slot.nSprite.addEventListener('change', syncFromControlsIfFreestyle);
         if (slot.nX) slot.nX.addEventListener('input', syncFromControlsIfFreestyle);
         if (slot.nY) slot.nY.addEventListener('input', syncFromControlsIfFreestyle);
     });
-    ui.walls.forEach(slot => {
-        if (slot.wId) slot.wId.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.wX) slot.wX.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.wY) slot.wY.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.wW) slot.wW.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.wH) slot.wH.addEventListener('input', syncFromControlsIfFreestyle);
-    });
+    
 
     document.getElementById('btn-confirm').addEventListener('click', () => {
         const oldCode = ui.editor.value;
@@ -1224,7 +1036,7 @@ export const gameLevelClasses = [CustomLevel];`;
         animateTypingDiff(oldCode, newCode, () => {
             // Lock fields for completed step and (optionally) advance
             if (current === 'background') { lockField(ui.bg); }
-            if (current === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(document.getElementById('movement-keys')); }
+            if (current === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
             if (current === 'npc') {
                 ui.npcs.forEach(slot => {
                     if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
@@ -1244,26 +1056,25 @@ export const gameLevelClasses = [CustomLevel];`;
                         }
                     }
                 });
-                // Lock any visible walls
-                ui.walls.forEach(slot => {
-                    if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
-                        slot.locked = true;
-                        const name = (slot.wId && slot.wId.value ? slot.wId.value.trim() : 'Wall');
-                        slot.displayName = name;
-                        if (slot.addBtn) {
-                            const open = slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none';
-                            slot.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
-                            slot.addBtn.classList.add('btn-confirm');
-                        }
-                        if (slot.deleteBtn) {
-                            slot.deleteBtn.disabled = false;
-                            slot.deleteBtn.style.display = '';
-                        }
-                    }
-                });
-                // Move to freestyle after first NPC is added so users can edit anything
+                
+                // After NPC confirmation, go to freestyle
                 stepIndex = steps.indexOf('freestyle');
             } else {
+                if (current === 'walls') {
+                    ui.walls.forEach(w => {
+                        if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                            w.locked = true;
+                            const name = w.displayName || `Wall ${w.index}`;
+                            w.displayName = name;
+                            if (w.addBtn) {
+                                const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                w.addBtn.classList.add('btn-confirm');
+                            }
+                            if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                        }
+                    });
+                }
                 stepIndex = Math.min(stepIndex + 1, steps.length - 1);
             }
             setIndicator();
@@ -1272,9 +1083,15 @@ export const gameLevelClasses = [CustomLevel];`;
         });
     });
 
+    function safeCodeToRun() {
+        const code = ui.editor.value || '';
+        const hasLevels = /export\s+const\s+gameLevelClasses/.test(code);
+        return hasLevels ? code : generateBaselineCode();
+    }
+
     function runInEmbed() {
         renderOverlay();
-        const code = ui.editor.value;
+        const code = safeCodeToRun();
         ui.iframe.src = ui.iframe.src;
         ui.iframe.onload = () => {
             setTimeout(() => {
@@ -1306,12 +1123,4 @@ window.addEventListener('keydown', function(e) {
         }
     }
 }, { passive: false });
-</script>
-
-<script>
-    const navToggle = document.getElementById('nav-toggle');
-    const sidebar = document.getElementById('rpg-nav-sidebar');
-    if (navToggle && sidebar) {
-        navToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-    }
 </script>

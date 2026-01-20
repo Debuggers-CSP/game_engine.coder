@@ -31,6 +31,9 @@ html, body { height: 100%; }
     display: none; /* shown when engine is stopped */
 }
 
+/* Hide BetterGameEngine leaderboard when running inside Game Builder iframe */
+.embedded .leaderboard-widget { display: none !important; visibility: hidden !important; }
+
 .custom-alert {
     display: none;
     position: fixed;
@@ -64,6 +67,13 @@ html, body { height: 100%; }
         // no-op
     }
 })();
+
+function closeCustomAlert() {
+    try {
+        const el = document.getElementById('custom-alert');
+        if (el) el.style.display = 'none';
+    } catch (_) {}
+}
 </script>
 
 <div id="gameContainer">
@@ -73,14 +83,143 @@ html, body { height: 100%; }
 
 <div id="custom-alert" class="custom-alert">
     <button onclick="closeCustomAlert()" id="custom-alert-message"></button>
-</div>
+    </div>
 
 <script type="module">
-    import GameControl from '{{site.baseurl}}/assets/js/rpg/latest/GameControl.js';
-    import AdventureGame from '{{site.baseurl}}/assets/js/adventureGame/GameEngine/Game.js';
-
     const path = "{{site.baseurl}}";
-    
+    const origin = window.location.origin;
+
+    // Dynamically resolve a working base prefix for assets (handles empty or mismatched baseurl)
+    let basePrefix = null;
+    async function ensureBasePrefix() {
+        if (basePrefix) return basePrefix;
+        const candidates = [];
+        const siteBase = path || '';
+        if (siteBase) candidates.push(`${origin}${siteBase}`);
+        candidates.push(`${origin}`);
+        // Derive first path segment (e.g., '/gamebuilder') if siteBase is empty
+        try {
+            const seg = '/' + (window.location.pathname.split('/').filter(Boolean)[0] || '');
+            if (seg && seg !== '/') candidates.push(`${origin}${seg}`);
+        } catch (_) {}
+        // Deduplicate
+        const uniq = [...new Set(candidates)];
+        let lastErr = null;
+        for (const cand of uniq) {
+            try {
+                const testUrl = `${cand}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
+                const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                if (res && res.ok) {
+                    const ctype = (res.headers.get('content-type') || '').toLowerCase();
+                    // Prefer JS MIME types; if ambiguous, inspect body
+                    if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
+                        basePrefix = cand; return basePrefix;
+                    }
+                    const text = await res.text();
+                    // Reject HTML responses (which cause "Unexpected token '<'")
+                    if (text.trim().startsWith('<')) {
+                        lastErr = new Error(`Probe returned HTML @ ${testUrl}`);
+                    } else {
+                        basePrefix = cand; return basePrefix;
+                    }
+                } else {
+                    lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
+                }
+            } catch (e) {
+                lastErr = e;
+            }
+        }
+        // Fallback to origin + siteBase even if probe failed
+        basePrefix = `${origin}${siteBase}`;
+        console.warn('[RPG] Falling back to basePrefix:', basePrefix, 'Last probe error:', lastErr);
+        return basePrefix;
+    }
+
+    // Proactively unregister any service workers to avoid stale/cached HTML
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            for (const r of regs) { try { await r.unregister(); } catch (_) {} }
+        } catch (_) {}
+    }
+
+    // Lazy-load engine (Prefer BetterGameEngine, fallback to Adventure)
+    let EngineModule = null;
+    let engineType = null; // 'adventure' | 'better'
+    async function loadEngine() {
+        if (EngineModule) return EngineModule;
+        // Prefer Adventure engine first (present in this workspace), fallback to Better
+        try {
+            const prefix = await ensureBasePrefix();
+            const advUrl = `${prefix}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
+            // Prefetch to validate MIME/content to avoid HTML imports
+            try {
+                const r = await fetch(advUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                const body = r.ok ? await r.text() : '';
+                if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
+                    throw new Error(`Adventure engine not served as JS (status ${r.status || 'unknown'})`);
+                }
+            } catch (prefetchErr) {
+                throw prefetchErr;
+            }
+            const advMod = await import(advUrl);
+            EngineModule = advMod?.default ?? advMod;
+            engineType = 'adventure';
+            return EngineModule;
+        } catch (eAdv) {
+            console.warn('Adventure engine load failed, trying BetterGameEngine:', eAdv);
+            try {
+                const prefix = await ensureBasePrefix();
+                const betterUrl = `${prefix}/assets/js/BetterGameEngine/GameEngine/Game.js?v=${Date.now()}`;
+                // Prefetch and validate Better engine too
+                try {
+                    const r = await fetch(betterUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                    const ct = (r.headers.get('content-type') || '').toLowerCase();
+                    const body = r.ok ? await r.text() : '';
+                    if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
+                        throw new Error(`Better engine not served as JS (status ${r.status || 'unknown'})`);
+                    }
+                } catch (prefetchErr2) {
+                    throw prefetchErr2;
+                }
+                const betterMod = await import(betterUrl);
+                EngineModule = betterMod?.default ?? betterMod;
+                engineType = 'better';
+                return EngineModule;
+            } catch (eBetter) {
+                console.error('Both engine loads failed:', { adventureError: eAdv, betterError: eBetter });
+                throw eBetter;
+            }
+        }
+    }
+
+    // Explicit loader for Adventure engine for runtime fallback from Better
+    async function loadAdventureEngine() {
+        try {
+            const prefix = await ensureBasePrefix();
+            const url = `${prefix}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
+            // Prefetch and validate response isn't HTML
+            try {
+                const r = await fetch(url, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                const body = r.ok ? await r.text() : '';
+                if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
+                    throw new Error(`Adventure fallback not served as JS (status ${r.status || 'unknown'})`);
+                }
+            } catch (prefetchErr) {
+                throw prefetchErr;
+            }
+            const mod = await import(url);
+            EngineModule = mod?.default ?? mod;
+            engineType = 'adventure';
+            return EngineModule;
+        } catch (e) {
+            console.error('Failed to load Adventure engine fallback:', e);
+            throw e;
+        }
+    }
+
     // Respect autostart query parameter (default: true)
     const params = new URLSearchParams(window.location.search);
     const autostartParam = (params.get('autostart') || '').toLowerCase();
@@ -115,12 +254,33 @@ html, body { height: 100%; }
         handlers.clear();
     }
 
+    // Try to import RPG GameControl dynamically (may not exist in this repo)
+    async function tryStartDefault() {
+        try {
+            const mod = await import(`${origin}${path || ''}/assets/js/rpg/latest/GameControl.js?v=${Date.now()}`);
+            const GameControl = mod?.default ?? mod?.GameControl ?? null;
+            if (GameControl && typeof GameControl.start === 'function') {
+                GameControl.start(path);
+                return true;
+            }
+        } catch (e) {
+            // GameControl not available; continue without autostart
+            console.warn('RPG GameControl not found; running without default start.', e);
+        }
+        return false;
+    }
+
     if (!engineActive) {
         enableBlockers();
     } else {
-        // Start game engine by default
-        GameControl.start(path);
-        disableBlockers();
+        // Start game engine by default, if RPG GameControl exists
+        tryStartDefault().then((started) => {
+            if (started) {
+                disableBlockers();
+            } else {
+                enableBlockers();
+            }
+        });
     }
 
     // Track live Adventure engine instance (from code runner)
@@ -142,30 +302,22 @@ html, body { height: 100%; }
                         enableBlockers();
                         isPaused = false;
                     } else {
-                        if (typeof GameControl.stop === 'function') {
-                            try { GameControl.stop(); } catch (e) {}
-                        }
-                        GameControl.start(path);
-                        engineActive = true;
-                        disableBlockers();
-                        isPaused = false;
+                        tryStartDefault().then((started) => {
+                            engineActive = !!started;
+                            if (started) disableBlockers(); else enableBlockers();
+                            isPaused = false;
+                        });
                     }
                     break;
                 case 'pause':
                     if (liveAdventure && liveAdventure.gameControl && typeof liveAdventure.gameControl.pause === 'function') {
                         liveAdventure.gameControl.pause();
                         isPaused = true;
-                    } else if (typeof GameControl.pause === 'function') {
-                        GameControl.pause();
-                        isPaused = true;
                     }
                     break;
                 case 'resume':
                     if (liveAdventure && liveAdventure.gameControl && typeof liveAdventure.gameControl.resume === 'function') {
                         liveAdventure.gameControl.resume();
-                        isPaused = false;
-                    } else if (typeof GameControl.resume === 'function') {
-                        GameControl.resume();
                         isPaused = false;
                     }
                     break;
@@ -197,18 +349,24 @@ html, body { height: 100%; }
             enableBlockers();
             engineActive = false;
 
-            // Rewrite absolute import specifiers (e.g., '/assets/...') to fully-qualified URLs
+            // Rewrite import specifiers to fully-qualified URLs
             const origin = window.location.origin;
-            const basePrefix = `${origin}${path || ''}`;
+            await ensureBasePrefix();
+            const basePrefixLocal = basePrefix;
             const fromAbsRe = /(from\s*["'])(\/[^"']+)(["'])/g; // import ... from '/x/y'
-            const dynImpRe = /(import\(\s*["'])(\/[^"']+)(["']\s*\))/g; // import('/x/y')
+            const dynImpAbsRe = /(import\(\s*["'])(\/[^"']+)(["']\s*\))/g; // import('/x/y')
+            const fromRelRe = /(from\s*["'])(?!https?:)(\.?\.?[^"']+)(["'])/g; // import ... from './x' or 'x'
+            const dynImpRelRe = /(import\(\s*["'])(?!https?:)(\.?\.?[^"']+)(["']\s*\))/g; // import('./x') or import('x')
             code = code
-                .replace(fromAbsRe, (m, p1, p2, p3) => {
-                    return `${p1}${basePrefix}${p2}${p3}`;
-                })
-                .replace(dynImpRe, (m, p1, p2, p3) => {
-                    return `${p1}${basePrefix}${p2}${p3}`;
-                });
+                // Absolute root paths
+                .replace(fromAbsRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}${p2}${p3}`)
+                .replace(dynImpAbsRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}${p2}${p3}`)
+                // Relative paths -> prefix with base
+                .replace(fromRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`)
+                .replace(dynImpRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`);
+
+            // Ensure engine is loaded before running
+            const Engine = await loadEngine();
 
             // Create module blob and import
             const blob = new Blob([code], { type: 'application/javascript' });
@@ -230,34 +388,110 @@ html, body { height: 100%; }
                 fetchOptions: {}
             };
 
-            const levelClasses = Array.isArray(mod.gameLevelClasses) ? mod.gameLevelClasses : [];
-
-            let started = false;
-            // Preferred: Use Adventure Game engine entrypoint with provided levels
-            if (levelClasses.length > 0 && AdventureGame && typeof AdventureGame.main === 'function') {
+            // Accept both named and default exports for gameLevelClasses
+            let levelClasses = Array.isArray(mod.gameLevelClasses)
+                ? mod.gameLevelClasses
+                : Array.isArray(mod?.default?.gameLevelClasses)
+                ? mod.default.gameLevelClasses
+                : [];
+            // Fallback: single exported level class
+            if (!levelClasses.length) {
+                const candidates = [];
+                if (typeof mod?.default === 'function') candidates.push(mod.default);
+                if (typeof mod.CustomLevel === 'function') candidates.push(mod.CustomLevel);
+                // Heuristic: any named export ending with 'Level' and is a function
                 try {
-                    liveAdventure = AdventureGame.main({
-                        path: env.path,
-                        gameContainer: env.gameContainer,
-                        gameCanvas: env.gameCanvas,
-                        pythonURI: env.pythonURI,
-                        javaURI: env.javaURI,
-                        fetchOptions: env.fetchOptions,
-                        gameLevelClasses: levelClasses
+                    Object.keys(mod || {}).forEach(k => {
+                        if (k !== 'default' && /Level$/i.test(k) && typeof mod[k] === 'function') {
+                            candidates.push(mod[k]);
+                        }
                     });
-                    started = true;
-                } catch (e) {
-                    console.warn('Adventure Game main failed, trying fallbacks:', e);
-                }
+                } catch (_) {}
+                if (candidates.length) levelClasses = [candidates[0]];
             }
 
-            // Fallback: object-literal GameControl with start(path) from the module
-            if (!started && mod.GameControl && typeof mod.GameControl.start === 'function') {
+            // Diagnostics: surface what we detected from the module
+            try {
+                console.debug('[Runner] Module export diagnostics', {
+                    hasNamedGameLevelClasses: Array.isArray(mod?.gameLevelClasses),
+                    hasDefaultGameLevelClasses: Array.isArray(mod?.default?.gameLevelClasses),
+                    detectedLevelCount: levelClasses.length,
+                    hasDefaultFunction: typeof mod?.default === 'function',
+                    hasCustomLevel: typeof mod?.CustomLevel === 'function',
+                    engineType
+                });
+            } catch (_) {}
+
+            let started = false;
+            let lastStartError = null;
+            // Preferred: Use Adventure Game engine entrypoint with provided levels
+            if (levelClasses.length > 0 && Engine && typeof Engine.main === 'function') {
                 try {
-                    mod.GameControl.start(path);
+                    if (engineType === 'better') {
+                        // BetterGameEngine expects (environment, GameControlClass)
+                        // Accept both named and default exports
+                        const GameControlClass = mod.GameControl || mod?.default?.GameControl; // from user module
+                        if (!GameControlClass) throw new Error('GameControl export required for BetterGameEngine');
+                        // Prepare explicit dimensions similar to game-runner
+                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
+                        const containerHeight = Math.min(580, window.innerHeight);
+                        env.innerWidth = containerWidth;
+                        env.innerHeight = containerHeight;
+                        env.gameLevelClasses = levelClasses;
+                        try {
+                            liveAdventure = Engine.main(env, GameControlClass);
+                        } catch (startErrBetter) {
+                            lastStartError = startErrBetter;
+                            throw startErrBetter;
+                        }
+                    } else {
+                        // Adventure engine expects environment with level classes
+                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
+                        const containerHeight = Math.min(580, window.innerHeight);
+                        try {
+                            liveAdventure = Engine.main({
+                            path: env.path,
+                            gameContainer: env.gameContainer,
+                            gameCanvas: env.gameCanvas,
+                            pythonURI: env.pythonURI,
+                            javaURI: env.javaURI,
+                            fetchOptions: env.fetchOptions,
+                            innerWidth: containerWidth,
+                            innerHeight: containerHeight,
+                            gameLevelClasses: levelClasses
+                            });
+                        } catch (startErrAdv) {
+                            lastStartError = startErrAdv;
+                            throw startErrAdv;
+                        }
+                    }
                     started = true;
                 } catch (e) {
-                    console.warn('Fallback start failed:', e);
+                    console.warn('Engine start failed, attempting Adventure fallback:', e);
+                    try {
+                        const Engine2 = await loadAdventureEngine();
+                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
+                        const containerHeight = Math.min(580, window.innerHeight);
+                        try {
+                            liveAdventure = Engine2.main({
+                            path: env.path,
+                            gameContainer: env.gameContainer,
+                            gameCanvas: env.gameCanvas,
+                            pythonURI: env.pythonURI,
+                            javaURI: env.javaURI,
+                            fetchOptions: env.fetchOptions,
+                            innerWidth: containerWidth,
+                            innerHeight: containerHeight,
+                            gameLevelClasses: levelClasses
+                            });
+                        } catch (startErrFB) {
+                            lastStartError = startErrFB;
+                            throw startErrFB;
+                        }
+                        started = true;
+                    } catch (ef) {
+                        console.error('Adventure fallback failed:', ef);
+                    }
                 }
             }
 
@@ -265,19 +499,31 @@ html, body { height: 100%; }
                 engineActive = true;
                 disableBlockers();
             } else {
-                throw new Error('Could not start game from provided code. Ensure it exports GameControl and gameLevelClasses.');
+                // Provide clearer error message based on detected conditions
+                const noLevels = !levelClasses || levelClasses.length === 0;
+                const msg = noLevels
+                    ? 'No levels detected. Export array `gameLevelClasses` or a default/named level class (e.g., `CustomLevel`).'
+                    : `Engine start failed. ${lastStartError?.message ? 'Reason: ' + lastStartError.message : 'Check import paths and ensure assets exist under base.'} Base: ${basePrefix || (origin + (path || ''))}`;
+                // Show message without throwing to keep the app responsive
+                try {
+                    const el = document.getElementById('custom-alert');
+                    const msgBtn = document.getElementById('custom-alert-message');
+                    if (el && msgBtn) {
+                        msgBtn.textContent = msg;
+                        el.style.display = 'block';
+                        enableBlockers();
+                    }
+                } catch (_) {}
+                return;
             }
-            }
-        catch (err) {
+        } catch (err) {
             console.error('Live code run error:', err);
-            // Show error via custom alert overlay if available
             try {
                 const el = document.getElementById('custom-alert');
                 const msgBtn = document.getElementById('custom-alert-message');
                 if (el && msgBtn) {
                     msgBtn.textContent = `Error: ${err.message || err}`;
                     el.style.display = 'block';
-                    // also keep blockers on to ensure black screen
                     enableBlockers();
                 }
             } catch (_) {}
