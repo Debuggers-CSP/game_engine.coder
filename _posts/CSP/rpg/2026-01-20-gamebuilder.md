@@ -305,6 +305,49 @@ iframe { width: 100%; height: 100%; border: none; }
 .wall-slot { margin-top:8px; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.08); }
 .wall-fields label { display:block; }
 
+/* Drawing overlay for walls/pass zones */
+.game-frame {
+    position: relative;
+}
+.draw-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none; /* only active in draw mode */
+    z-index: 50;
+}
+.draw-overlay.active { pointer-events: auto; }
+.draw-overlay.mode-barrier { cursor: crosshair; }
+.draw-overlay.mode-pass { cursor: crosshair; }
+.draw-rect {
+    position: absolute;
+    box-sizing: border-box;
+}
+.draw-rect.barrier {
+    border: 2px solid #ff2d2d; /* red */
+    background: rgba(255,0,0,0.05);
+}
+.draw-rect.pass {
+    border: 2px dashed #2e7bf7; /* blue */
+    background: rgba(46,123,247,0.15);
+}
+.draw-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+.draw-btn {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(0,0,0,0.3);
+    cursor: pointer;
+    font-size: 0.8em;
+}
+.draw-btn.active {
+    border-color: var(--pref-accent-color);
+    background: rgba(255,255,255,0.08);
+}
+
 @media (max-width: 768px) {
     .creator-layout {
         flex-direction: column;
@@ -372,7 +415,7 @@ iframe { width: 100%; height: 100%; border: none; }
                 1. Background - Select environment<br>
                 2. Player - Configure character<br>
                 3. Freestyle - Add NPCs, Walls, etc<br><br>
-                <strong>Tips:</strong> Walls are invisible in-game. They show briefly when editing.
+                <strong>Tips:</strong> Draw red barriers and blue pass-through areas directly on the game view. Barriers collide; pass areas allow passage. Walls are invisible in-game and show briefly when editing.
             </div>
             <div class="scroll-form">
                 <div class="asset-group">
@@ -418,6 +461,11 @@ iframe { width: 100%; height: 100%; border: none; }
                         <span>WALLS</span>
                         <button class="add-item-btn" id="add-wall">+</button>
                     </div>
+                    <div class="draw-toolbar">
+                        <button id="draw-barrier" class="draw-btn">Draw Barrier (Red)</button>
+                        <button id="draw-pass" class="draw-btn">Draw Pass Area (Blue)</button>
+                        <button id="draw-clear" class="draw-btn">Clear Shapes</button>
+                    </div>
                     <div id="walls-container"></div>
                 </div>
             </div>
@@ -434,6 +482,7 @@ iframe { width: 100%; height: 100%; border: none; }
                 <div class="panel-header">Game View</div>
                 <div class="game-frame">
                     <iframe id="game-iframe" src="{{ site.baseurl }}/rpg/latest?embed=1&autostart=0"></iframe>
+                    <div id="draw-overlay" class="draw-overlay"></div>
                 </div>
             </div>
             <div class="glass-panel code-panel panel-code">
@@ -478,6 +527,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addWallBtn: document.getElementById('add-wall'),
         wallsContainer: document.getElementById('walls-container'),
         walls: [],
+        drawOverlay: document.getElementById('draw-overlay'),
+        drawBarrierBtn: document.getElementById('draw-barrier'),
+        drawPassBtn: document.getElementById('draw-pass'),
+        drawClearBtn: document.getElementById('draw-clear'),
+        drawState: { mode: null, isDrawing: false, startX: 0, startY: 0 },
+        drawShapes: [] /* { type: 'barrier'|'pass', x, y, width, height } */,
 
         editor: document.getElementById('code-editor'),
         hLayer: document.getElementById('highlight-layer'),
@@ -495,6 +550,128 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.viewBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         });
+    });
+
+    // Drawing overlay: enable drag-to-create rectangles for barriers and pass zones
+    function removePreview() {
+        if (!ui.drawOverlay) return;
+        const preview = ui.drawOverlay.querySelector('.draw-rect.preview');
+        if (preview) preview.remove();
+    }
+
+    function setDrawMode(mode) {
+        // Toggle off if same mode is clicked
+        if (ui.drawState.mode === mode) {
+            mode = null;
+        }
+        ui.drawState.mode = mode;
+        // Button UI
+        if (ui.drawBarrierBtn) ui.drawBarrierBtn.classList.toggle('active', mode === 'barrier');
+        if (ui.drawPassBtn) ui.drawPassBtn.classList.toggle('active', mode === 'pass');
+        // Overlay activation + cursor
+        if (ui.drawOverlay) {
+            ui.drawOverlay.classList.toggle('active', !!mode);
+            ui.drawOverlay.classList.toggle('mode-barrier', mode === 'barrier');
+            ui.drawOverlay.classList.toggle('mode-pass', mode === 'pass');
+        }
+        // Clean up preview if leaving mode
+        if (!mode) removePreview();
+    }
+    if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
+    if (ui.drawPassBtn) ui.drawPassBtn.addEventListener('click', () => setDrawMode('pass'));
+    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); });
+
+    function renderDrawShapes() {
+        if (!ui.drawOverlay) return;
+        ui.drawOverlay.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        ui.drawShapes.forEach(shape => {
+            const el = document.createElement('div');
+            el.className = `draw-rect ${shape.type}`;
+            el.style.left = shape.x + 'px';
+            el.style.top = shape.y + 'px';
+            el.style.width = Math.max(0, shape.width) + 'px';
+            el.style.height = Math.max(0, shape.height) + 'px';
+            frag.appendChild(el);
+        });
+        ui.drawOverlay.appendChild(frag);
+    }
+
+    function currentPreviewEl() {
+        if (!ui.drawOverlay) return null;
+        let el = ui.drawOverlay.querySelector('.draw-rect.preview');
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'draw-rect preview';
+            ui.drawOverlay.appendChild(el);
+        }
+        return el;
+    }
+
+    function updatePreview(clientX, clientY) {
+        const mode = ui.drawState.mode;
+        if (!mode) return;
+        const bounds = ui.drawOverlay.getBoundingClientRect();
+        const x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
+        const y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
+        const cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
+        const cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        const left = Math.min(x, cx);
+        const top = Math.min(y, cy);
+        const width = Math.abs(cx - x);
+        const height = Math.abs(cy - y);
+        const el = currentPreviewEl();
+        el.className = `draw-rect ${mode} preview`;
+        el.style.left = left + 'px';
+        el.style.top = top + 'px';
+        el.style.width = width + 'px';
+        el.style.height = height + 'px';
+    }
+
+    function finalizeShape(clientX, clientY) {
+        const mode = ui.drawState.mode;
+        if (!mode) return;
+        const bounds = ui.drawOverlay.getBoundingClientRect();
+        const x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
+        const y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
+        const cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
+        const cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        const left = Math.min(x, cx);
+        const top = Math.min(y, cy);
+        const width = Math.abs(cx - x);
+        const height = Math.abs(cy - y);
+        removePreview();
+        if (width >= 4 && height >= 4) {
+            ui.drawShapes.push({ type: mode, x: Math.round(left), y: Math.round(top), width: Math.round(width), height: Math.round(height) });
+            renderDrawShapes();
+            syncFromControlsIfFreestyle();
+        }
+    }
+
+    if (ui.drawOverlay) {
+        ui.drawOverlay.addEventListener('mousedown', (e) => {
+            if (!ui.drawState.mode) return;
+            const bounds = ui.drawOverlay.getBoundingClientRect();
+            ui.drawState.isDrawing = true;
+            ui.drawState.startX = e.clientX - bounds.left;
+            ui.drawState.startY = e.clientY - bounds.top;
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!ui.drawState.isDrawing) return;
+            updatePreview(e.clientX, e.clientY);
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (!ui.drawState.isDrawing) return;
+            ui.drawState.isDrawing = false;
+            finalizeShape(e.clientX, e.clientY);
+        });
+    }
+
+    // Exit draw mode on Escape key
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            setDrawMode(null);
+        }
     });
 
     // npcs
@@ -1007,8 +1184,10 @@ export const gameLevelClasses = [CustomLevel];`;
                         classes.push(`      { class: Npc, data: npcData${index} }`);
                     });
 
-                    // add walls
+                    // add walls from sliders AND drawing overlay
                     const barrierDefs = [];
+
+                    // Slider-based walls (legacy)
                     const includedWalls = ui.walls.slice();
                     includedWalls.forEach((w, idx) => {
                         const x = parseInt(w.wX?.value || 100, 10);
@@ -1020,9 +1199,30 @@ export const gameLevelClasses = [CustomLevel];`;
                         barrierDefs.push(`
         const barrierData${idx+1} = {
             id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
-            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+            passZones: []
         };`);
                         classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+                    });
+
+                    // Overlay-drawn shapes
+                    const drawnBarriers = ui.drawShapes.filter(s => s.type === 'barrier');
+                    const drawnPasses = ui.drawShapes.filter(s => s.type === 'pass');
+                    drawnBarriers.forEach((b, bIdx) => {
+                        const id = `dbarrier_${bIdx+1}`;
+                        // Find pass zones contained within this barrier
+                        const zones = drawnPasses.filter(p => {
+                            const within = (p.x >= b.x && p.y >= b.y && (p.x + p.width) <= (b.x + b.width) && (p.y + p.height) <= (b.y + b.height));
+                            return within;
+                        }).map(p => ({ x: Math.round(p.x - b.x), y: Math.round(p.y - b.y), width: Math.round(p.width), height: Math.round(p.height) }));
+                        barrierDefs.push(`
+        const ${id} = {
+            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.round(b.y)}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true,
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+            passZones: ${JSON.stringify(zones)},
+            fromOverlay: true
+        };`);
+                        classes.push(`      { class: Barrier, data: ${id} }`);
                     });
 
                     const defs = defsStart + (npcDefs.length ? ('\n' + npcDefs.join('\n')) : '') + (barrierDefs.length ? ('\n' + barrierDefs.join('\n')) : '');
@@ -1069,7 +1269,7 @@ export const gameLevelClasses = [CustomLevel];`;
         if (current !== 'freestyle') return;
         if (state.userEdited) return; 
         const hasNPCs = ui.npcs.length > 0;
-        const hasWalls = ui.walls.length > 0;
+        const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
         const hasPlayer = !!ui.pSprite.value;
         const hasBackground = !!ui.bg.value;
         const stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));

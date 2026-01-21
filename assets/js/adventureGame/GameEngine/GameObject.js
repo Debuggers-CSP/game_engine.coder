@@ -118,12 +118,41 @@ class GameObject {
         const otherBottom = otherRect.bottom;
 
         // Determine hit and touch points of hit
-        const hit = (
+        let hit = (
             thisLeft < otherRight &&
             thisRight > otherLeft &&
             thisTop < otherBottom &&
             thisBottom > otherTop
         );
+
+        // If colliding with a barrier that defines pass-through zones, suppress collision
+        // when the center of the intersection area lies inside any pass-through rectangle.
+        // Pass-through rectangles are defined relative to the barrier's own origin (x,y).
+        if (hit && other && other.spriteData && Array.isArray(other.spriteData.passZones) && other.spriteData.passZones.length > 0) {
+            // Compute intersection rectangle between this and other
+            const interLeft = Math.max(thisLeft, otherLeft);
+            const interRight = Math.min(thisRight, otherRight);
+            const interTop = Math.max(thisTop, otherTop);
+            const interBottom = Math.min(thisBottom, otherBottom);
+            if (interRight > interLeft && interBottom > interTop) {
+                const icx = (interLeft + interRight) / 2;
+                const icy = (interTop + interBottom) / 2;
+                // Barrier absolute origin (top-left of usable collision rect)
+                const barrierOriginX = otherLeft;
+                const barrierOriginY = otherTop;
+                for (const zone of other.spriteData.passZones) {
+                    const zx = barrierOriginX + (Number(zone.x) || 0);
+                    const zy = barrierOriginY + (Number(zone.y) || 0);
+                    const zw = Number(zone.width) || 0;
+                    const zh = Number(zone.height) || 0;
+                    const inside = (icx >= zx && icx <= zx + zw && icy >= zy && icy <= zy + zh);
+                    if (inside) {
+                        hit = false;
+                        break;
+                    }
+                }
+            }
+        }
 
         const touchPoints = {
             this: {
