@@ -407,6 +407,8 @@ iframe { width: 100%; height: 100%; border: none; }
                     <span class="step-indicator" id="step-indicator-mini">Step 1/2</span>
                     <button id="btn-confirm" class="icon-btn" data-tooltip="Confirm Step">✓</button>
                     <button id="btn-run" class="icon-btn" data-tooltip="Run Game">▶</button>
+                    <button id="btn-toggle-walls" class="icon-btn" data-tooltip="Toggle Walls">👁</button>
+                    <button id="btn-export" class="icon-btn" data-tooltip="Export Code">⤓</button>
                     <button id="btn-help" class="icon-btn" data-tooltip="Help">?</button>
                 </div>
             </div>
@@ -533,6 +535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawClearBtn: document.getElementById('draw-clear'),
         drawState: { mode: null, isDrawing: false, startX: 0, startY: 0, activeBarrier: null },
         drawShapes: [] /* { type: 'barrier'|'pass', x, y, width, height } */,
+        wallsVisible: true,
 
         editor: document.getElementById('code-editor'),
         hLayer: document.getElementById('highlight-layer'),
@@ -587,6 +590,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
     if (ui.drawPassBtn) ui.drawPassBtn.addEventListener('click', () => setDrawMode('pass'));
     if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); });
+
+    function applyWallsVisibility() {
+        if (!ui.drawOverlay) return;
+        ui.drawOverlay.style.display = ui.wallsVisible ? '' : 'none';
+        // If hiding walls, also exit draw mode to avoid stray interactions
+        if (!ui.wallsVisible) setDrawMode(null);
+    }
 
     function renderDrawShapes() {
         if (!ui.drawOverlay) return;
@@ -1452,12 +1462,38 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     document.getElementById('btn-run').addEventListener('click', runInEmbed);
+    const toggleWallsBtn = document.getElementById('btn-toggle-walls');
+    if (toggleWallsBtn) {
+        toggleWallsBtn.addEventListener('click', () => {
+            ui.wallsVisible = !ui.wallsVisible;
+            applyWallsVisibility();
+        });
+    }
+
+    function exportCode() {
+        const code = safeCodeToRun();
+        const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
+        const a = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        a.href = url;
+        a.download = 'CustomLevel.js';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 0);
+    }
+
+    const exportBtn = document.getElementById('btn-export');
+    if (exportBtn) exportBtn.addEventListener('click', exportCode);
 
 
     ui.editor.value = generateBaselineCode();
     setIndicator();
     updateStepUI();
     renderOverlay();
+    applyWallsVisibility();
 });
 </script>
 
