@@ -407,7 +407,6 @@ iframe { width: 100%; height: 100%; border: none; }
                     <span class="step-indicator" id="step-indicator-mini">Step 1/2</span>
                     <button id="btn-confirm" class="icon-btn" data-tooltip="Confirm Step">✓</button>
                     <button id="btn-run" class="icon-btn" data-tooltip="Run Game">▶</button>
-                    <button id="btn-toggle-walls" class="icon-btn" data-tooltip="Toggle Walls">👁</button>
                     <button id="btn-export" class="icon-btn" data-tooltip="Export Code">⤓</button>
                     <button id="btn-help" class="icon-btn" data-tooltip="Help">?</button>
                 </div>
@@ -417,7 +416,7 @@ iframe { width: 100%; height: 100%; border: none; }
                 1. Background - Select environment<br>
                 2. Player - Configure character<br>
                 3. Freestyle - Add NPCs, Walls, etc<br><br>
-                <strong>Tips:</strong> Draw red barriers and blue pass-through areas directly on the game view. Barriers collide; pass areas allow passage. Walls are invisible in-game and show briefly when editing.
+                <strong>Tips:</strong> Draw red barriers directly on the game view. Barriers collide. Walls are visible in-game by default; use the Walls toggle to hide them while testing.
             </div>
             <div class="scroll-form">
                 <div class="asset-group">
@@ -464,8 +463,8 @@ iframe { width: 100%; height: 100%; border: none; }
                         <button class="add-item-btn" id="add-wall">+</button>
                     </div>
                     <div class="draw-toolbar">
+                        <button id="toggle-walls-game" class="draw-btn">Show Walls (Game)</button>
                         <button id="draw-barrier" class="draw-btn">Draw Barrier (Red)</button>
-                        <button id="draw-pass" class="draw-btn">Draw Pass Area (Blue)</button>
                         <button id="draw-clear" class="draw-btn">Clear Shapes</button>
                     </div>
                     <div id="walls-container"></div>
@@ -531,11 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
         walls: [],
         drawOverlay: document.getElementById('draw-overlay'),
         drawBarrierBtn: document.getElementById('draw-barrier'),
-        drawPassBtn: document.getElementById('draw-pass'),
         drawClearBtn: document.getElementById('draw-clear'),
         drawState: { mode: null, isDrawing: false, startX: 0, startY: 0, activeBarrier: null },
-        drawShapes: [] /* { type: 'barrier'|'pass', x, y, width, height } */,
-        wallsVisible: true,
+        drawShapes: [] /* { type: 'barrier', x, y, width, height } */,
+        toggleWallsGameBtn: document.getElementById('toggle-walls-game'),
+        gameWallsVisible: true,
 
         editor: document.getElementById('code-editor'),
         hLayer: document.getElementById('highlight-layer'),
@@ -567,35 +566,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ui.drawState.mode === mode) {
             mode = null;
         }
-        // Prevent entering pass mode if no barrier exists
-        if (mode === 'pass') {
-            const hasBarrier = ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier');
-            if (!hasBarrier) {
-                mode = null;
-            }
-        }
         ui.drawState.mode = mode;
         // Button UI
         if (ui.drawBarrierBtn) ui.drawBarrierBtn.classList.toggle('active', mode === 'barrier');
-        if (ui.drawPassBtn) ui.drawPassBtn.classList.toggle('active', mode === 'pass');
         // Overlay activation + cursor
         if (ui.drawOverlay) {
             ui.drawOverlay.classList.toggle('active', !!mode);
             ui.drawOverlay.classList.toggle('mode-barrier', mode === 'barrier');
-            ui.drawOverlay.classList.toggle('mode-pass', mode === 'pass');
         }
         // Clean up preview if leaving mode
         if (!mode) removePreview();
     }
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
-    if (ui.drawPassBtn) ui.drawPassBtn.addEventListener('click', () => setDrawMode('pass'));
     if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); });
 
-    function applyWallsVisibility() {
+    // Keep overlay visibility in sync with gameWallsVisible
+    function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
-        ui.drawOverlay.style.display = ui.wallsVisible ? '' : 'none';
-        // If hiding walls, also exit draw mode to avoid stray interactions
-        if (!ui.wallsVisible) setDrawMode(null);
+        ui.drawOverlay.style.display = ui.gameWallsVisible ? '' : 'none';
+        if (!ui.gameWallsVisible) setDrawMode(null);
     }
 
     function renderDrawShapes() {
@@ -633,16 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
         let cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
         let cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
-        // If drawing pass zones, constrain to active barrier bounds
-        if (mode === 'pass' && ui.drawState.activeBarrier) {
-            const b = ui.drawState.activeBarrier;
-            const minX = b.x, maxX = b.x + b.width;
-            const minY = b.y, maxY = b.y + b.height;
-            x = Math.min(Math.max(x, minX), maxX);
-            y = Math.min(Math.max(y, minY), maxY);
-            cx = Math.min(Math.max(cx, minX), maxX);
-            cy = Math.min(Math.max(cy, minY), maxY);
-        }
         const left = Math.min(x, cx);
         const top = Math.min(y, cy);
         const width = Math.abs(cx - x);
@@ -663,16 +642,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
         let cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
         let cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
-        // Constrain pass zones to active barrier
-        if (mode === 'pass' && ui.drawState.activeBarrier) {
-            const b = ui.drawState.activeBarrier;
-            const minX = b.x, maxX = b.x + b.width;
-            const minY = b.y, maxY = b.y + b.height;
-            x = Math.min(Math.max(x, minX), maxX);
-            y = Math.min(Math.max(y, minY), maxY);
-            cx = Math.min(Math.max(cx, minX), maxX);
-            cy = Math.min(Math.max(cy, minY), maxY);
-        }
         const left = Math.min(x, cx);
         const top = Math.min(y, cy);
         const width = Math.abs(cx - x);
@@ -691,14 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const bounds = ui.drawOverlay.getBoundingClientRect();
             const localX = e.clientX - bounds.left;
             const localY = e.clientY - bounds.top;
-            // If drawing pass zones, require starting inside a barrier
-            if (ui.drawState.mode === 'pass') {
-                const b = (ui.drawShapes || []).filter(s => s.type === 'barrier').find(s => localX >= s.x && localY >= s.y && localX <= s.x + s.width && localY <= s.y + s.height);
-                if (!b) return; // ignore if not inside a barrier
-                ui.drawState.activeBarrier = b;
-            } else {
-                ui.drawState.activeBarrier = null;
-            }
+            ui.drawState.activeBarrier = null;
             ui.drawState.isDrawing = true;
             ui.drawState.startX = localX;
             ui.drawState.startY = localY;
@@ -1047,6 +1009,22 @@ class CustomLevel {
         this.classes = [
             ${classesArray.join(',\n')}
         ];
+        // Listen for in-game wall visibility toggles from builder
+        try {
+            window.addEventListener('message', (e) => {
+                if (!e || !e.data) return;
+                if (e.data.type === 'rpg:toggle-walls') {
+                    const show = !!e.data.visible;
+                    if (Array.isArray(gameEnv?.gameObjects)) {
+                        for (const obj of gameEnv.gameObjects) {
+                            if (obj instanceof Barrier) {
+                                obj.visible = show;
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (_) {}
     }
 }
 
@@ -1242,32 +1220,24 @@ export const gameLevelClasses = [CustomLevel];`;
                         const y = parseInt(w.wY?.value || 100, 10);
                         const wWidth = parseInt(w.wW?.value || 150, 10);
                         const wHeight = parseInt(w.wH?.value || 20, 10);
-                        const visible = !!(w.fieldsContainer && w.fieldsContainer.style.display !== 'none');
+                        const visible = true;
                         const id = `wall_${idx+1}`;
                         barrierDefs.push(`
         const barrierData${idx+1} = {
             id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
-            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
-            passZones: []
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
         };`);
                         classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
                     });
 
-                    // Overlay-drawn shapes
+                    // Overlay-drawn barrier shapes only (no pass zones)
                     const drawnBarriers = ui.drawShapes.filter(s => s.type === 'barrier');
-                    const drawnPasses = ui.drawShapes.filter(s => s.type === 'pass');
                     drawnBarriers.forEach((b, bIdx) => {
                         const id = `dbarrier_${bIdx+1}`;
-                        // Find pass zones contained within this barrier
-                        const zones = drawnPasses.filter(p => {
-                            const within = (p.x >= b.x && p.y >= b.y && (p.x + p.width) <= (b.x + b.width) && (p.y + p.height) <= (b.y + b.height));
-                            return within;
-                        }).map(p => ({ x: Math.round(p.x - b.x), y: Math.round(p.y - b.y), width: Math.round(p.width), height: Math.round(p.height) }));
                         barrierDefs.push(`
         const ${id} = {
             id: '${id}', x: ${Math.round(b.x)}, y: ${Math.round(b.y)}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
-            passZones: ${JSON.stringify(zones)},
             fromOverlay: true
         };`);
                         classes.push(`      { class: Barrier, data: ${id} }`);
@@ -1457,16 +1427,29 @@ export const gameLevelClasses = [CustomLevel];`;
         ui.iframe.onload = () => {
             setTimeout(() => {
                 ui.iframe.contentWindow.postMessage({ type: 'rpg:run-code', code: code }, '*');
+                // After code loads, enforce current in-game walls visibility
+                setTimeout(() => {
+                    try {
+                        ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
+                    } catch (e) { /* ignore */ }
+                }, 150);
             }, 100);
         };
     }
 
     document.getElementById('btn-run').addEventListener('click', runInEmbed);
-    const toggleWallsBtn = document.getElementById('btn-toggle-walls');
-    if (toggleWallsBtn) {
-        toggleWallsBtn.addEventListener('click', () => {
-            ui.wallsVisible = !ui.wallsVisible;
-            applyWallsVisibility();
+    if (ui.toggleWallsGameBtn) {
+        const refreshToggleLabel = () => {
+            ui.toggleWallsGameBtn.textContent = ui.gameWallsVisible ? 'Hide Walls (Game)' : 'Show Walls (Game)';
+        };
+        refreshToggleLabel();
+        ui.toggleWallsGameBtn.addEventListener('click', () => {
+            ui.gameWallsVisible = !ui.gameWallsVisible;
+            refreshToggleLabel();
+            updateOverlayVisibility();
+            try {
+                ui.iframe?.contentWindow?.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
+            } catch (e) { /* ignore */ }
         });
     }
 
@@ -1493,7 +1476,7 @@ export const gameLevelClasses = [CustomLevel];`;
     setIndicator();
     updateStepUI();
     renderOverlay();
-    applyWallsVisibility();
+    updateOverlayVisibility();
 });
 </script>
 

@@ -33,6 +33,7 @@ class Barrier extends GameObject {
         // Position the collision canvas; draw only if editing/visible
         this.canvas.style.position = 'absolute';
         this.canvas.style.left = `${this.transform.x}px`;
+        this.canvas.style.pointerEvents = 'none';
         // If created from builder overlay, treat coordinates as screen-space within game area
         if (this.spriteData.fromOverlay) {
             this.canvas.style.top = `${this.transform.y}px`;

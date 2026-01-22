@@ -125,101 +125,6 @@ class GameObject {
             thisBottom > otherTop
         );
 
-        // Clamp suggestion used by pass-zone logic; must be function-scoped
-        let clamp = null;
-
-        // Pass-zone logic: treat union of blue rectangles as walkable area inside the red barrier
-        if (hit && other && other.spriteData && Array.isArray(other.spriteData.passZones) && other.spriteData.passZones.length > 0) {
-            const playerCenterX = (thisLeft + thisRight) / 2;
-            const playerCenterY = (thisTop + thisBottom) / 2;
-            const barrierOriginX = otherLeft;
-            const barrierOriginY = otherTop;
-
-            // Movement intent: prefer keypress; fallback to velocity sign
-            const movingLeft = (this.pressedKeys && this.keypress) ? !!this.pressedKeys[this.keypress.left] : this.transform.xv < 0;
-            const movingRight = (this.pressedKeys && this.keypress) ? !!this.pressedKeys[this.keypress.right] : this.transform.xv > 0;
-            const movingUp = (this.pressedKeys && this.keypress) ? !!this.pressedKeys[this.keypress.up] : this.transform.yv < 0;
-            const movingDown = (this.pressedKeys && this.keypress) ? !!this.pressedKeys[this.keypress.down] : this.transform.yv > 0;
-
-            // Project a small step in the intended direction and evaluate zones
-            const epsStep = 2;
-            const dx = movingRight ? epsStep : (movingLeft ? -epsStep : 0);
-            const dy = movingDown ? epsStep : (movingUp ? -epsStep : 0);
-            const targetCX = playerCenterX + dx;
-            const targetCY = playerCenterY + dy;
-
-            const pointInZone = (z, x, y) => {
-                const zx = barrierOriginX + (Number(z.x) || 0);
-                const zy = barrierOriginY + (Number(z.y) || 0);
-                const zw = Number(z.width) || 0;
-                const zh = Number(z.height) || 0;
-                return x >= zx && x <= zx + zw && y >= zy && y <= zy + zh;
-            };
-
-            const rectsIntersect = (ax, ay, aw, ah, bx, by, bw, bh) => (
-                ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by
-            );
-
-            // Intersection rectangle between player and barrier hitboxes
-            const interLeft = Math.max(thisLeft, otherLeft);
-            const interTop = Math.max(thisTop, otherTop);
-            const interRight = Math.min(thisRight, otherRight);
-            const interBottom = Math.min(thisBottom, otherBottom);
-            const interW = Math.max(0, interRight - interLeft);
-            const interH = Math.max(0, interBottom - interTop);
-
-            const zones = other.spriteData.passZones;
-            const currentZone = zones.find(z => pointInZone(z, playerCenterX, playerCenterY));
-            const nextZone = zones.find(z => pointInZone(z, targetCX, targetCY));
-            // Also allow entry when the intersection region overlaps any zone (helps on edges)
-            const interOverlapsZone = interW > 0 && interH > 0 && zones.some(z => {
-                const zx = barrierOriginX + (Number(z.x) || 0);
-                const zy = barrierOriginY + (Number(z.y) || 0);
-                const zw = Number(z.width) || 0;
-                const zh = Number(z.height) || 0;
-                return rectsIntersect(interLeft, interTop, interW, interH, zx, zy, zw, zh);
-            });
-
-            let suppressCollision = false;
-
-            if (currentZone) {
-                if (nextZone) {
-                    // Moving within blue or into adjacent blue: allow
-                    suppressCollision = true;
-                } else {
-                    // Clamp to stay within currentZone bounds
-                    const zx = barrierOriginX + (Number(currentZone.x) || 0);
-                    const zy = barrierOriginY + (Number(currentZone.y) || 0);
-                    const zw = Number(currentZone.width) || 0;
-                    const zh = Number(currentZone.height) || 0;
-                    const eps = 0.5;
-                    let clampX = null;
-                    let clampY = null;
-                    if (movingLeft && thisLeft < zx) {
-                        clampX = this.transform.x + (zx - thisLeft) + eps;
-                    } else if (movingRight && thisRight > zx + zw) {
-                        clampX = this.transform.x + ((zx + zw) - thisRight) - eps;
-                    }
-                    if (movingUp && thisTop < zy) {
-                        clampY = this.transform.y + (zy - thisTop) + eps;
-                    } else if (movingDown && thisBottom > zy + zh) {
-                        clampY = this.transform.y + ((zy + zh) - thisBottom) - eps;
-                    }
-                    clamp = { x: clampX, y: clampY };
-                }
-            } else {
-                // Outside any blue zone center; allow entry if next center is inside a zone
-                // OR if the current intersection overlaps a pass zone (edge entry)
-                if (nextZone || interOverlapsZone) {
-                    suppressCollision = true;
-                }
-            }
-
-            if (suppressCollision) {
-                hit = false;
-            }
-        }
-
         const touchPoints = {
             this: {
                 id: this.canvas.id,
@@ -241,9 +146,6 @@ class GameObject {
         };
 
         this.collisionData = { hit, touchPoints };
-        if (clamp) {
-            this.collisionData.clamp = clamp;
-        }
     }
 
     /**
@@ -297,7 +199,6 @@ class GameObject {
         // handle player reaction based on collision type
         if (this.state.collisionEvents.length > 0) {
             const touchPoints = this.collisionData.touchPoints.this;
-            const clamp = this.collisionData.clamp;
 
             // Reset movement to allow all directions initially
             this.state.movement = { up: true, down: true, left: true, right: true };
@@ -330,17 +231,6 @@ class GameObject {
                 }
             }
 
-            // If a clamp position is provided (from pass-zone boundaries), apply it
-            if (clamp) {
-                if (clamp.x !== null && clamp.x !== undefined && Number.isFinite(clamp.x)) {
-                    this.transform.x = clamp.x;
-                    this.transform.xv = 0;
-                }
-                if (clamp.y !== null && clamp.y !== undefined && Number.isFinite(clamp.y)) {
-                    this.transform.y = clamp.y;
-                    this.transform.yv = 0;
-                }
-            }
         }
     }
 }
