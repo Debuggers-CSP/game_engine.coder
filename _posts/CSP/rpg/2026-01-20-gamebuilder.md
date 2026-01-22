@@ -531,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawBarrierBtn: document.getElementById('draw-barrier'),
         drawPassBtn: document.getElementById('draw-pass'),
         drawClearBtn: document.getElementById('draw-clear'),
-        drawState: { mode: null, isDrawing: false, startX: 0, startY: 0 },
+        drawState: { mode: null, isDrawing: false, startX: 0, startY: 0, activeBarrier: null },
         drawShapes: [] /* { type: 'barrier'|'pass', x, y, width, height } */,
 
         editor: document.getElementById('code-editor'),
@@ -563,6 +563,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Toggle off if same mode is clicked
         if (ui.drawState.mode === mode) {
             mode = null;
+        }
+        // Prevent entering pass mode if no barrier exists
+        if (mode === 'pass') {
+            const hasBarrier = ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier');
+            if (!hasBarrier) {
+                mode = null;
+            }
         }
         ui.drawState.mode = mode;
         // Button UI
@@ -612,10 +619,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const mode = ui.drawState.mode;
         if (!mode) return;
         const bounds = ui.drawOverlay.getBoundingClientRect();
-        const x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
-        const y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
-        const cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
-        const cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        let x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
+        let y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
+        let cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
+        let cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        // If drawing pass zones, constrain to active barrier bounds
+        if (mode === 'pass' && ui.drawState.activeBarrier) {
+            const b = ui.drawState.activeBarrier;
+            const minX = b.x, maxX = b.x + b.width;
+            const minY = b.y, maxY = b.y + b.height;
+            x = Math.min(Math.max(x, minX), maxX);
+            y = Math.min(Math.max(y, minY), maxY);
+            cx = Math.min(Math.max(cx, minX), maxX);
+            cy = Math.min(Math.max(cy, minY), maxY);
+        }
         const left = Math.min(x, cx);
         const top = Math.min(y, cy);
         const width = Math.abs(cx - x);
@@ -632,10 +649,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const mode = ui.drawState.mode;
         if (!mode) return;
         const bounds = ui.drawOverlay.getBoundingClientRect();
-        const x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
-        const y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
-        const cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
-        const cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        let x = Math.min(Math.max(0, ui.drawState.startX), bounds.width);
+        let y = Math.min(Math.max(0, ui.drawState.startY), bounds.height);
+        let cx = Math.min(Math.max(0, clientX - bounds.left), bounds.width);
+        let cy = Math.min(Math.max(0, clientY - bounds.top), bounds.height);
+        // Constrain pass zones to active barrier
+        if (mode === 'pass' && ui.drawState.activeBarrier) {
+            const b = ui.drawState.activeBarrier;
+            const minX = b.x, maxX = b.x + b.width;
+            const minY = b.y, maxY = b.y + b.height;
+            x = Math.min(Math.max(x, minX), maxX);
+            y = Math.min(Math.max(y, minY), maxY);
+            cx = Math.min(Math.max(cx, minX), maxX);
+            cy = Math.min(Math.max(cy, minY), maxY);
+        }
         const left = Math.min(x, cx);
         const top = Math.min(y, cy);
         const width = Math.abs(cx - x);
@@ -652,9 +679,19 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.drawOverlay.addEventListener('mousedown', (e) => {
             if (!ui.drawState.mode) return;
             const bounds = ui.drawOverlay.getBoundingClientRect();
+            const localX = e.clientX - bounds.left;
+            const localY = e.clientY - bounds.top;
+            // If drawing pass zones, require starting inside a barrier
+            if (ui.drawState.mode === 'pass') {
+                const b = (ui.drawShapes || []).filter(s => s.type === 'barrier').find(s => localX >= s.x && localY >= s.y && localX <= s.x + s.width && localY <= s.y + s.height);
+                if (!b) return; // ignore if not inside a barrier
+                ui.drawState.activeBarrier = b;
+            } else {
+                ui.drawState.activeBarrier = null;
+            }
             ui.drawState.isDrawing = true;
-            ui.drawState.startX = e.clientX - bounds.left;
-            ui.drawState.startY = e.clientY - bounds.top;
+            ui.drawState.startX = localX;
+            ui.drawState.startY = localY;
         });
         window.addEventListener('mousemove', (e) => {
             if (!ui.drawState.isDrawing) return;
@@ -664,6 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!ui.drawState.isDrawing) return;
             ui.drawState.isDrawing = false;
             finalizeShape(e.clientX, e.clientY);
+            ui.drawState.activeBarrier = null;
         });
     }
 
