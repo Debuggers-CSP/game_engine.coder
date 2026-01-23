@@ -217,6 +217,11 @@ select:disabled, option[disabled] { color: #fff; }
     text-transform: uppercase;
     font-size: 0.85em;
 }
+.btn-sm {
+    padding: 6px;
+    border-radius: 4px;
+    font-size: 0.7em;
+}
 .btn-confirm { }
 .btn-run { }
 .btn-danger { }
@@ -432,7 +437,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div class="upload-instructions" style="margin-top:6px;">
                         <button id="bg-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
                         <div id="bg-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
-                            To add your own backgrounds, place files under <code>images/gamebuilder/bg</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/docs/gamebuilder-upload-instructions">upload instructions</a>.
+                            To add your own backgrounds, place files under <code>images/gamebuilder/bg</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
                             <div style="margin-top:4px;">Backgrounds manifest: <a href="{{ site.baseurl }}/images/gamebuilder/bg/index.json">images/gamebuilder/bg/index.json</a></div>
                         </div>
                     </div>
@@ -450,7 +455,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div class="upload-instructions" style="margin-top:6px;">
                         <button id="sprite-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
                         <div id="sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
-                            To add your own spritesheets, place files under <code>images/gamebuilder/sprites</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/docs/gamebuilder-upload-instructions">upload instructions</a>.
+                            To add your own spritesheets, place files under <code>images/gamebuilder/sprites</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
                             <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
                         </div>
                     </div>
@@ -526,11 +531,10 @@ document.addEventListener('DOMContentLoaded', () => {
             r2d2: { src: "/images/gamify/r2_idle.png", h:223, w:505, rows:1, cols:3 }
         }
     };
-    // User uploads via file-based workflow (see docs); localStorage upload is disabled
-    const GB_BG_DIRS = ['/images/gamebuilder/bg', '/images/gamebuilder/bg', '/images/gamebuilder'];
-    const GB_SPR_DIRS = ['/images/gamebuilder/sprites', '/images/gamebuilder/sprites', '/images/gamebuilder'];
+    // user uploads via file-based workflow
+    const GB_BG_DIRS = ['/images/gamebuilder/bg'];
+    const GB_SPR_DIRS = ['/images/gamebuilder/sprites'];
     const IMG_EXT_RE = /\.(png|jpg|jpeg|gif|webp|bmp)$/i;
-    // Note: previously supported localStorage-based uploads have been removed.
 
     async function fetchJson(url) {
         try {
@@ -596,7 +600,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function scanServerAssets() {
-        // Backgrounds: try JSON manifests first, then directory listing fallback
         for (const dir of GB_BG_DIRS) {
             const manifestUrls = [dir + '/index.json', dir + '/manifest.json'];
             let data = null;
@@ -611,7 +614,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
                 }
             } else {
-                // Fallback: parse directory listing
                 const imgs = await scanDirForImages(dir);
                 for (const src of imgs) {
                     const base = src.split('/').pop();
@@ -625,10 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Remove duplicate background entries by label
         dedupSelectOptions(ui.bg);
 
-        // Sprites: similar approach
         for (const dir of GB_SPR_DIRS) {
             const manifestUrls = [dir + '/index.json', dir + '/manifest.json'];
             let data = null;
@@ -642,7 +642,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rows = item.rows || 4; const cols = item.cols || 3;
                     if (!assets.sprites[key]) assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.pSprite.appendChild(opt);
-                    // Add to existing NPC sprite selects
                     document.querySelectorAll('.npc-sprite').forEach(sel => {
                         const o = document.createElement('option'); o.value = key; o.textContent = name; sel.appendChild(o);
                     });
@@ -665,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Remove duplicate sprite entries by label on player and NPC selects
         dedupSelectOptions(ui.pSprite);
         document.querySelectorAll('.npc-sprite').forEach(sel => dedupSelectOptions(sel));
     }
@@ -694,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawBarrierBtn: document.getElementById('draw-barrier'),
         drawClearBtn: document.getElementById('draw-clear'),
         drawState: { mode: null, isDrawing: false, startX: 0, startY: 0, activeBarrier: null },
-        drawShapes: [] /* { type: 'barrier', x, y, width, height } */,
+        drawShapes: [],
         toggleWallsGameBtn: document.getElementById('toggle-walls-game'),
         gameWallsVisible: true,
 
@@ -716,7 +714,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Info buttons: toggle dropdown panels with instructions and manifest links
+    // Capture environment metrics from the iframe (e.g., top offset)
+    let envTopOffset = 0;
+    window.addEventListener('message', (e) => {
+        try {
+            if (e && e.data && e.data.type === 'rpg:env-metrics') {
+                envTopOffset = Number(e.data.top) || 0;
+            }
+        } catch (_) { /* ignore */ }
+    });
+
     function toggle(el) {
         if (!el) return;
         const show = el.style.display === 'none' || !el.style.display;
@@ -725,7 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.bgInstructionsBtn) ui.bgInstructionsBtn.addEventListener('click', () => toggle(ui.bgInstructionsPanel));
     if (ui.spriteInstructionsBtn) ui.spriteInstructionsBtn.addEventListener('click', () => toggle(ui.spriteInstructionsPanel));
 
-    // Drawing overlay: enable drag-to-create rectangles for barriers
     function removePreview() {
         if (!ui.drawOverlay) return;
         const preview = ui.drawOverlay.querySelector('.draw-rect.preview');
@@ -733,29 +739,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setDrawMode(mode) {
-        // Toggle off if same mode is clicked
         if (ui.drawState.mode === mode) {
             mode = null;
         }
         ui.drawState.mode = mode;
-        // Button UI
         if (ui.drawBarrierBtn) ui.drawBarrierBtn.classList.toggle('active', mode === 'barrier');
-        // Overlay activation + cursor
         if (ui.drawOverlay) {
             ui.drawOverlay.classList.toggle('active', !!mode);
             ui.drawOverlay.classList.toggle('mode-barrier', mode === 'barrier');
         }
-        // Clean up preview if leaving mode
         if (!mode) removePreview();
     }
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
     if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); });
 
-    // Keep overlay visibility in sync with gameWallsVisible
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
-        ui.drawOverlay.style.display = ui.gameWallsVisible ? '' : 'none';
-        if (!ui.gameWallsVisible) setDrawMode(null);
+        // Always keep overlay visible; enable drawing only via mode
+        ui.drawOverlay.style.display = '';
     }
 
     function renderDrawShapes() {
@@ -848,7 +849,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Exit draw mode on Escape key
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             setDrawMode(null);
@@ -895,7 +895,6 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.nId = fields.querySelector('.npc-id');
         slot.nMsg = fields.querySelector('.npc-msg');
         slot.nSprite = fields.querySelector('.npc-sprite');
-        // Populate sprite options dynamically
         if (slot.nSprite) {
             const none = document.createElement('option'); none.value = ''; none.disabled = true; none.selected = true; none.textContent = 'Select sprite…'; slot.nSprite.appendChild(none);
             Object.keys(assets.sprites).forEach((key) => {
@@ -927,11 +926,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ['input','change'].forEach(evt => {
-            slot.nId.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.nMsg.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.nSprite.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.nX.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.nY.addEventListener(evt, syncFromControlsIfFreestyle);
+            const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
+            slot.nId.addEventListener(evt, rerun);
+            slot.nMsg.addEventListener(evt, rerun);
+            slot.nSprite.addEventListener(evt, rerun);
+            slot.nX.addEventListener(evt, rerun);
+            slot.nY.addEventListener(evt, rerun);
         });
 
         ui.npcs.push(slot);
@@ -1048,7 +1048,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Persisted uploads are disabled; use server-side assets scan instead
 
     function setIndicator() {
         const current = steps[stepIndex];
@@ -1186,6 +1185,12 @@ class CustomLevel {
         this.classes = [
             ${classesArray.join(',\n')}
         ];
+        // Report environment metrics (like top offset) to builder
+        try {
+            if (window && window.parent) {
+                window.parent.postMessage({ type: 'rpg:env-metrics', top: gameEnv.top }, '*');
+            }
+        } catch (_) {}
         // Listen for in-game wall visibility toggles from builder
         try {
             window.addEventListener('message', (e) => {
@@ -1255,7 +1260,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
             upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
                         const classes = [
@@ -1297,7 +1302,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
             upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
                         const npcDefs = [];
@@ -1367,7 +1372,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
             upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
                     const classes = [
@@ -1415,7 +1420,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const y = parseInt(w.wY?.value || 100, 10);
                         const wWidth = parseInt(w.wW?.value || 150, 10);
                         const wHeight = parseInt(w.wH?.value || 20, 10);
-                        const visible = true;
+                        const visible = false; // invisible by default; collision still active
                         const id = `wall_${idx+1}`;
                         barrierDefs.push(`
         const barrierData${idx+1} = {
@@ -1431,7 +1436,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const id = `dbarrier_${bIdx+1}`;
                         barrierDefs.push(`
         const ${id} = {
-            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.round(b.y)}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true,
+            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: false,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
             fromOverlay: true
         };`);
@@ -1530,12 +1535,30 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     const mvEl = document.getElementById('movement-keys');
-    if (ui.bg) ui.bg.addEventListener('change', syncFromControlsIfFreestyle);
-    if (ui.pSprite) ui.pSprite.addEventListener('change', syncFromControlsIfFreestyle);
-    if (ui.pX) ui.pX.addEventListener('input', syncFromControlsIfFreestyle);
-    if (ui.pY) ui.pY.addEventListener('input', syncFromControlsIfFreestyle);
-    if (ui.pName) ui.pName.addEventListener('input', syncFromControlsIfFreestyle);
-    if (mvEl) mvEl.addEventListener('change', syncFromControlsIfFreestyle);
+    const rerunPlayer = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
+    // Targeted in-editor update of Player INIT_POSITION to work even in freestyle
+    function updatePlayerPositionInEditor() {
+        const code = ui.editor.value || '';
+        const x = parseInt(ui.pX?.value || '0', 10);
+        const y = parseInt(ui.pY?.value || '0', 10);
+        const re = /(INIT_POSITION:\s*\{\s*x:\s*)(\d+)(\s*,\s*y:\s*)(\d+)(\s*\})/;
+        const updated = code.replace(re, `$1${x}$3${y}$5`);
+        if (updated !== code) {
+            state.programmaticEdit = true;
+            ui.editor.value = updated;
+            state.programmaticEdit = false;
+            runInEmbed();
+        } else {
+            // Fallback to full rerun if pattern not found
+            rerunPlayer();
+        }
+    }
+    if (ui.bg) ui.bg.addEventListener('change', rerunPlayer);
+    if (ui.pSprite) ui.pSprite.addEventListener('change', rerunPlayer);
+    if (ui.pX) ui.pX.addEventListener('input', updatePlayerPositionInEditor);
+    if (ui.pY) ui.pY.addEventListener('input', updatePlayerPositionInEditor);
+    if (ui.pName) ui.pName.addEventListener('input', rerunPlayer);
+    if (mvEl) mvEl.addEventListener('change', rerunPlayer);
     ui.npcs.forEach(slot => {
         if (slot.nId) slot.nId.addEventListener('input', syncFromControlsIfFreestyle);
         if (slot.nId) slot.nId.addEventListener('input', () => {
@@ -1675,7 +1698,6 @@ export const gameLevelClasses = [CustomLevel];`;
     updateStepUI();
     renderOverlay();
     updateOverlayVisibility();
-    // Scan server-side assets if available
     scanServerAssets();
 });
 </script>

@@ -1,1 +1,4 @@
-[]
+[
+    { "name": "Astronaut", "src": "astro.png", "rows": 4, "cols": 4 }
+
+]

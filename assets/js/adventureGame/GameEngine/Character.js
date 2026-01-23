@@ -334,6 +334,11 @@ class Character extends GameObject {
             this.transform.x = 0;
             this.transform.xv = 0;
         }
+
+        // Final overlap guard: ensure we are not penetrating any colliders
+        if (typeof this.resolvePenetrations === 'function') {
+            this.resolvePenetrations();
+        }
     }
     
 

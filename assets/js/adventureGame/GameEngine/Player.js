@@ -81,24 +81,42 @@ class Player extends Character {
         if (this.pressedKeys[this.keypress.right] || this.pressedKeys[this.keypress.left]) {
             this.moved = true;
 
+            // Respect movement block flags from collision state
             if (this.pressedKeys[this.keypress.right]) {
-                this.transform.xv += 0.6 * this.time;
-            }
-
-            else if (this.pressedKeys[this.keypress.left]) {
-                this.transform.xv -= 0.6 * this.time;
+                if (this.state?.movement?.right !== false) {
+                    this.transform.xv += 0.6 * this.time;
+                } else {
+                    // Block adding positive velocity into a right-side collision
+                    if (this.transform.xv > 0) this.transform.xv = 0;
+                }
+            } else if (this.pressedKeys[this.keypress.left]) {
+                if (this.state?.movement?.left !== false) {
+                    this.transform.xv -= 0.6 * this.time;
+                } else {
+                    // Block adding negative velocity into a left-side collision
+                    if (this.transform.xv < 0) this.transform.xv = 0;
+                }
             }
         }
 
         if (this.pressedKeys[this.keypress.up] || this.pressedKeys[this.keypress.down]) {
             this.moved = true;
 
+            // Respect movement block flags from collision state
             if (this.pressedKeys[this.keypress.up]) {
-                this.transform.yv -= 0.6 * this.time;
-            }
-
-            else if (this.pressedKeys[this.keypress.down]) {
-                this.transform.yv += 0.6 * this.time;
+                if (this.state?.movement?.up !== false) {
+                    this.transform.yv -= 0.6 * this.time;
+                } else {
+                    // Block adding negative velocity into a top collision
+                    if (this.transform.yv < 0) this.transform.yv = 0;
+                }
+            } else if (this.pressedKeys[this.keypress.down]) {
+                if (this.state?.movement?.down !== false) {
+                    this.transform.yv += 0.6 * this.time;
+                } else {
+                    // Block adding positive velocity into a bottom collision
+                    if (this.transform.yv > 0) this.transform.yv = 0;
+                }
             }
         }
 
@@ -131,20 +149,23 @@ class Player extends Character {
     }
 
     update() {
+        // Update velocity first so collision checks (in super.update) can block movement
         this.updateVelocity();
+
+        // Run Character update: draw, collisionChecks (sets movement flags), and move()
         super.update();
-        if(!this.moved){
+
+        // Optional gravity: adjust vertical velocity only; actual position updates happen in move()
+        if (!this.moved) {
             if (this.gravity) {
-                    this.time += 1;
-                    this.transform.yv -= this.acceleration * -this.time;
-                }
+                this.time += 1;
+                this.transform.yv -= this.acceleration * -this.time;
             }
-        else{
+        } else {
             this.time = 1;
         }
 
-        this.transform.x += this.transform.xv * this.time;
-        this.transform.y += this.transform.yv * this.time;
+        // Do NOT re-apply position changes here; Character.move() already applied velocity.
     }
         
     /**

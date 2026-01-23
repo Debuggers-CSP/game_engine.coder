@@ -1,7 +1,7 @@
 ---
 layout: page
 title: GameBuilder Assets
-permalink: /docs/gamebuilder-upload-intructions
+permalink: /gamebuilder-upload-instructions
 ---
 
 ## Add Your Own Images
@@ -36,7 +36,11 @@ Spritesheets (`index.json`):
 Notes:
 - `src` can be a filename (relative to the manifest folder) or an absolute path.
 - `rows` and `cols` define the spritesheet grid; if omitted, defaults to 4x3.
-- `h`/`w` fields are optional; if omitted, the builder auto-detects dimensions.
+- `rows` and `cols` might be a little confusing. Use this as a guide; Chillguy's spritesheet has 3 rows and 4 columns.
+
+Example (Chillguy spritesheet):
+
+![Chillguy Spritesheet](/images/gamify/chillguy.png)
 - Supported image extensions: png, jpg, jpeg, gif, webp, bmp.
 
 ### Using Your Assets in GameBuilder
@@ -48,3 +52,54 @@ Notes:
 - If assets don’t appear, ensure manifests exist and paths are correct.
 - For GitHub Pages, directory listing is disabled; manifests are required.
 - After renaming or removing files, click "Refresh Assets" to update the lists.
+
+## Sprite Direction Mapping (down/left/up/right)
+
+Not all spritesheets use the same row order for movement directions. The mapping shown in GameBuilder’s generated code is an example that works for the Chillguy sheet, but you should adjust it for your own sheet.
+
+### What to check
+- Rows: the number of horizontal strips (top to bottom). Index starts at 0.
+- Columns: frames per row (left to right). Index for `start` also starts at 0.
+- Directions: which row corresponds to `down`, `right`, `left`, `up` (and optionally diagonals).
+
+### Steps to configure
+1. In your sprites manifest entry, set `rows` and `cols` to match your sheet (e.g., `{"rows": 3, "cols": 4}`).
+2. In GameBuilder, select your sprite and press Confirm Step; then switch to Freestyle to edit code.
+3. Locate the `playerData` (or `npcData`) direction block and update the `row`, `start`, and `columns` per your sheet.
+4. Press Run to preview and iterate until animations look correct.
+
+### Example: Chillguy (3 rows x 4 cols)
+This mapping is specific to Chillguy and should not be hard-coded for other sheets:
+
+```
+down:      { row: 0, start: 0, columns: 3 },
+right:     { row: 1, start: 0, columns: 3 },
+left:      { row: 2, start: 0, columns: 3 },
+up:        { row: 2, start: 0, columns: 3 },
+downRight: { row: 1, start: 0, columns: 3, rotate: Math.PI/16 },
+downLeft:  { row: 2, start: 0, columns: 3, rotate: -Math.PI/16 },
+upRight:   { row: 1, start: 0, columns: 3, rotate: -Math.PI/16 },
+upLeft:    { row: 2, start: 0, columns: 3, rotate: Math.PI/16 },
+```
+
+### Typical 4-row sheets (rows = 4, cols varies)
+Many sheets use rows: 0=down, 1=right, 2=left, 3=up:
+
+```
+down:  { row: 0, start: 0, columns: 3 },
+right: { row: 1, start: 0, columns: 3 },
+left:  { row: 2, start: 0, columns: 3 },
+up:    { row: 3, start: 0, columns: 3 }
+```
+
+### Single-row idle sheets
+For single-row sprites (e.g., idle only), use the same row and frame counts for all directions, or keep only `down`:
+
+```
+down:  { row: 0, start: 0, columns: 1 }
+```
+
+### Tips
+- If your animation plays too fast or slow, adjust `ANIMATION_RATE`.
+- If frames clip, verify `pixels.height` and `pixels.width` match the image dimensions.
+- If diagonal movement looks odd, remove `rotate` or tweak the angles.

@@ -32,6 +32,85 @@ class GameObject {
     }
 
     /**
+     * Final safeguard: resolve any residual overlaps after movement.
+     * Uses engine-space AABB minimal-overlap separation independent of velocity.
+     */
+    resolvePenetrations() {
+        if (!this.gameEnv || !this.gameEnv.gameObjects) return;
+        const selfW = (this.width ?? this.canvas?.width ?? 0);
+        const selfH = (this.height ?? this.canvas?.height ?? 0);
+        for (const other of this.gameEnv.gameObjects) {
+            if (!other || other === this || !other.canvas) continue;
+            // Compute current bounds
+            const thisW = selfW;
+            const thisH = selfH;
+            const otherW = (other.width ?? other.canvas?.width ?? 0);
+            const otherH = (other.height ?? other.canvas?.height ?? 0);
+            const thisX = this.transform?.x ?? 0;
+            const thisY = this.transform?.y ?? 0;
+            const otherX = other.transform?.x ?? 0;
+            const otherY = other.transform?.y ?? 0;
+
+            const thisWidthReduction = thisW * (this.hitbox?.widthPercentage || 0.0);
+            const thisHeightReduction = thisH * (this.hitbox?.heightPercentage || 0.0);
+            const otherWidthReduction = otherW * (other.hitbox?.widthPercentage || 0.0);
+            const otherHeightReduction = otherH * (other.hitbox?.heightPercentage || 0.0);
+
+            const thisLeft = thisX + thisWidthReduction;
+            const thisTop = thisY + thisHeightReduction;
+            const thisRight = thisX + thisW - thisWidthReduction;
+            const thisBottom = thisY + thisH;
+            const otherLeft = otherX + otherWidthReduction;
+            const otherTop = otherY + otherHeightReduction;
+            const otherRight = otherX + otherW - otherWidthReduction;
+            const otherBottom = otherY + otherH;
+
+            const hit = (
+                thisLeft < otherRight &&
+                thisRight > otherLeft &&
+                thisTop < otherBottom &&
+                thisBottom > otherTop
+            );
+            if (!hit) continue;
+
+            const SEP_EPS = 1;
+            const dxRight = Math.max(0, thisRight - otherLeft);
+            const dxLeft = Math.max(0, otherRight - thisLeft);
+            const dyBottom = Math.max(0, thisBottom - otherTop);
+            const dyTop = Math.max(0, otherBottom - thisTop);
+            const overlapX = Math.min(dxRight, dxLeft);
+            const overlapY = Math.min(dyBottom, dyTop);
+
+            if (overlapX <= overlapY) {
+                if (dxRight <= dxLeft) {
+                    this.transform.x -= (dxRight + SEP_EPS);
+                    this.state.movement.right = false;
+                    if (this.transform.xv > 0) this.transform.xv = 0;
+                } else {
+                    this.transform.x += (dxLeft + SEP_EPS);
+                    this.state.movement.left = false;
+                    if (this.transform.xv < 0) this.transform.xv = 0;
+                }
+            } else {
+                if (dyBottom <= dyTop) {
+                    this.transform.y -= (dyBottom + SEP_EPS);
+                    this.state.movement.down = false;
+                    if (this.transform.yv > 0) this.transform.yv = 0;
+                } else {
+                    this.transform.y += (dyTop + SEP_EPS);
+                    this.state.movement.up = false;
+                    if (this.transform.yv < 0) this.transform.yv = 0;
+                }
+            }
+        }
+        // Bounds clamp at the end
+        const w = (this.width ?? this.canvas?.width ?? 0);
+        const h = (this.height ?? this.canvas?.height ?? 0);
+        this.transform.x = Math.max(0, Math.min(this.transform.x, this.gameEnv.innerWidth - w));
+        this.transform.y = Math.max(0, Math.min(this.transform.y, this.gameEnv.innerHeight - h));
+    }
+
+    /**
      * Updates the object's state.
      * This method must be implemented by subclasses.
      * @abstract
@@ -73,6 +152,8 @@ class GameObject {
      */
     collisionChecks() {
         let collisionDetected = false;
+        // Reset movement each frame; collisions will selectively block
+        this.state.movement = { up: true, down: true, left: true, right: true };
 
         for (var gameObj of this.gameEnv.gameObjects) {
             if (gameObj.canvas && this != gameObj) {
@@ -84,9 +165,10 @@ class GameObject {
             }
         }
 
-        // Reset collision events if no collisions detected
+        // Reset collision events and ensure movement remains unblocked when clear
         if (!collisionDetected) {
             this.state.collisionEvents = [];
+            this.state.movement = { up: true, down: true, left: true, right: true };
         }
     }
 
@@ -94,31 +176,34 @@ class GameObject {
      * usage: if (object.isCollision(platform)) { // action }
      */
     isCollision(other) {
-        // Bounding rectangles from Canvas
-        const thisRect = this.canvas.getBoundingClientRect();
-        const otherRect = other.canvas.getBoundingClientRect();
+        // Prefer engine-space bounds (faster, scale-agnostic)
+        const thisW = (this.width ?? this.canvas?.width ?? 0);
+        const thisH = (this.height ?? this.canvas?.height ?? 0);
+        const otherW = (other.width ?? other.canvas?.width ?? 0);
+        const otherH = (other.height ?? other.canvas?.height ?? 0);
 
-        // Calculate hitbox constants for this object
-        const thisWidthReduction = thisRect.width * (this.hitbox?.widthPercentage || 0.0);
-        const thisHeightReduction = thisRect.height * (this.hitbox?.heightPercentage || 0.0);
+        const thisX = this.transform?.x ?? 0;
+        const thisY = this.transform?.y ?? 0;
+        const otherX = other.transform?.x ?? 0;
+        const otherY = other.transform?.y ?? 0;
 
-        // Calculate hitbox constants for other object
-        const otherWidthReduction = otherRect.width * (other.hitbox?.widthPercentage || 0.0);
-        const otherHeightReduction = otherRect.height * (other.hitbox?.heightPercentage || 0.0);
+        const thisWidthReduction = thisW * (this.hitbox?.widthPercentage || 0.0);
+        const thisHeightReduction = thisH * (this.hitbox?.heightPercentage || 0.0);
+        const otherWidthReduction = otherW * (other.hitbox?.widthPercentage || 0.0);
+        const otherHeightReduction = otherH * (other.hitbox?.heightPercentage || 0.0);
 
-        // Build hitbox by subtracting reductions from the left, right, and top
-        const thisLeft = thisRect.left + thisWidthReduction;
-        const thisTop = thisRect.top + thisHeightReduction;
-        const thisRight = thisRect.right - thisWidthReduction;
-        const thisBottom = thisRect.bottom;
+        const thisLeft = thisX + thisWidthReduction;
+        const thisTop = thisY + thisHeightReduction;
+        const thisRight = thisX + thisW - thisWidthReduction;
+        const thisBottom = thisY + thisH; // preserve original bottom behavior
 
-        const otherLeft = otherRect.left + otherWidthReduction;
-        const otherTop = otherRect.top + otherHeightReduction;
-        const otherRight = otherRect.right - otherWidthReduction;
-        const otherBottom = otherRect.bottom;
+        const otherLeft = otherX + otherWidthReduction;
+        const otherTop = otherY + otherHeightReduction;
+        const otherRight = otherX + otherW - otherWidthReduction;
+        const otherBottom = otherY + otherH;
 
-        // Determine hit and touch points of hit
-        let hit = (
+        // Hit test in engine coordinates
+        const hit = (
             thisLeft < otherRight &&
             thisRight > otherLeft &&
             thisTop < otherBottom &&
@@ -145,7 +230,14 @@ class GameObject {
             },
         };
 
-        this.collisionData = { hit, touchPoints };
+        this.collisionData = {
+            hit,
+            touchPoints,
+            bounds: {
+                this: { left: thisLeft, top: thisTop, right: thisRight, bottom: thisBottom, w: thisW, h: thisH },
+                other: { left: otherLeft, top: otherTop, right: otherRight, bottom: otherBottom, w: otherW, h: otherH }
+            }
+        };
     }
 
     /**
@@ -198,36 +290,63 @@ class GameObject {
     handleCollisionState() {
         // handle player reaction based on collision type
         if (this.state.collisionEvents.length > 0) {
-            const touchPoints = this.collisionData.touchPoints.this;
-
             // Reset movement to allow all directions initially
             this.state.movement = { up: true, down: true, left: true, right: true };
 
-            if (touchPoints.top) {
-                this.state.movement.down = false;
-                if (this.transform.yv > 0) {
-                    this.transform.yv = 0;
-                }
-            }
+            // Robust separation: resolve minimal overlap on primary axis using engine-space bounds
+            const b2 = this.collisionData?.bounds;
+            if (b2 && b2.this && b2.other) {
+                const SEP_EPS = 1; // separation epsilon to avoid sticky re-collisions
+                const dxRight = Math.max(0, b2.this.right - b2.other.left);
+                const dxLeft = Math.max(0, b2.other.right - b2.this.left);
+                const dyBottom = Math.max(0, b2.this.bottom - b2.other.top);
+                const dyTop = Math.max(0, b2.other.bottom - b2.this.top);
+                const overlapX = Math.min(dxRight, dxLeft);
+                const overlapY = Math.min(dyBottom, dyTop);
 
-            if (touchPoints.bottom) {
-                this.state.movement.up = false;
-                if (this.transform.yv < 0) {
-                    this.transform.yv = 0;
-                }
-            }
+                // Proactively block adding velocity into the collided sides
+                if (dxRight > 0 && this.transform.xv > 0) { this.state.movement.right = false; this.transform.xv = 0; }
+                if (dxLeft > 0 && this.transform.xv < 0) { this.state.movement.left = false; this.transform.xv = 0; }
+                if (dyBottom > 0 && this.transform.yv > 0) { this.state.movement.down = false; this.transform.yv = 0; }
+                if (dyTop > 0 && this.transform.yv < 0) { this.state.movement.up = false; this.transform.yv = 0; }
 
-            if (touchPoints.right) {
-                this.state.movement.left = false;
-                if (this.transform.xv < 0) {
-                    this.transform.xv = 0;
-                }
-            }
-
-            if (touchPoints.left) {
-                this.state.movement.right = false;
-                if (this.transform.xv > 0) {
-                    this.transform.xv = 0;
+                if (overlapX > 0 || overlapY > 0) {
+                    if (overlapX <= overlapY) {
+                        // Separate horizontally
+                        if (this.transform.xv > 0) {
+                            this.transform.x -= (dxRight + SEP_EPS); // moving right, push left
+                            this.state.movement.right = false;
+                        } else if (this.transform.xv < 0) {
+                            this.transform.x += (dxLeft + SEP_EPS); // moving left, push right
+                            this.state.movement.left = false;
+                        } else {
+                            // No velocity: choose nearest side
+                            if (dxRight <= dxLeft) { this.transform.x -= (dxRight + SEP_EPS); this.state.movement.right = false; }
+                            else { this.transform.x += (dxLeft + SEP_EPS); this.state.movement.left = false; }
+                        }
+                        // Stop horizontal motion
+                        this.transform.xv = 0;
+                    } else {
+                        // Separate vertically
+                        if (this.transform.yv > 0) {
+                            this.transform.y -= (dyBottom + SEP_EPS); // moving down, push up
+                            this.state.movement.down = false;
+                        } else if (this.transform.yv < 0) {
+                            this.transform.y += (dyTop + SEP_EPS); // moving up, push down
+                            this.state.movement.up = false;
+                        } else {
+                            // No velocity: choose nearest side
+                            if (dyBottom <= dyTop) { this.transform.y -= (dyBottom + SEP_EPS); this.state.movement.down = false; }
+                            else { this.transform.y += (dyTop + SEP_EPS); this.state.movement.up = false; }
+                        }
+                        // Stop vertical motion
+                        this.transform.yv = 0;
+                    }
+                    // Clamp final position within bounds
+                    const w = (this.width ?? this.canvas?.width ?? 0);
+                    const h = (this.height ?? this.canvas?.height ?? 0);
+                    this.transform.x = Math.max(0, Math.min(this.transform.x, this.gameEnv.innerWidth - w));
+                    this.transform.y = Math.max(0, Math.min(this.transform.y, this.gameEnv.innerHeight - h));
                 }
             }
 

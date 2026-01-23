@@ -17,12 +17,25 @@ class Barrier extends GameObject {
         this.canvas.width = width;
         this.canvas.height = height;
         this.ctx = this.canvas.getContext('2d');
+        // Explicit engine-space dimensions for collision math
+        this.width = width;
+        this.height = height;
         this.gameEnv.container.appendChild(this.canvas);
         // Place using transform to align with existing engine conventions
         this.transform = { x: Number(this.spriteData.x || 0), y: Number(this.spriteData.y || 0), xv: 0, yv: 0 };
         // Full-rect collisions by default
         this.hitbox = this.spriteData.hitbox || { widthPercentage: 0.0, heightPercentage: 0.0 };
+        // Initialize CSS positioning immediately to ensure correct collision rects
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.left = `${this.transform.x}px`;
+        this.canvas.style.top = `${this.gameEnv.top + this.transform.y}px`;
+        this.canvas.style.width = `${this.canvas.width}px`;
+        this.canvas.style.height = `${this.canvas.height}px`;
+        this.canvas.style.pointerEvents = 'none';
+        this.canvas.style.zIndex = this.spriteData.zIndex !== undefined ? String(this.spriteData.zIndex) : '5';
         this.resize();
+        // Ensure initial draw establishes canvas state
+        this.draw();
     }
 
     update() {
@@ -34,12 +47,8 @@ class Barrier extends GameObject {
         this.canvas.style.position = 'absolute';
         this.canvas.style.left = `${this.transform.x}px`;
         this.canvas.style.pointerEvents = 'none';
-        // If created from builder overlay, treat coordinates as screen-space within game area
-        if (this.spriteData.fromOverlay) {
-            this.canvas.style.top = `${this.transform.y}px`;
-        } else {
-            this.canvas.style.top = `${this.gameEnv.top + this.transform.y}px`;
-        }
+        // Align barrier canvas with game area offset consistently
+        this.canvas.style.top = `${this.gameEnv.top + this.transform.y}px`;
         this.canvas.style.width = `${this.canvas.width}px`;
         this.canvas.style.height = `${this.canvas.height}px`;
         this.canvas.style.zIndex = this.spriteData.zIndex !== undefined ? String(this.spriteData.zIndex) : '5';
