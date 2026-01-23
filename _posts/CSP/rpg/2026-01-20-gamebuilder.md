@@ -409,6 +409,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <button id="btn-run" class="icon-btn" data-tooltip="Run Game">▶</button>
                     <button id="btn-export" class="icon-btn" data-tooltip="Export Code">⤓</button>
                     <button id="btn-help" class="icon-btn" data-tooltip="Help">?</button>
+                    <button id="btn-refresh-assets" class="icon-btn" data-tooltip="Refresh Assets">⟳</button>
                 </div>
             </div>
             <div class="help-panel" id="help-panel">
@@ -428,6 +429,10 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="alien">Alien Planet</option>
                         <option value="clouds">Sky Kingdom</option>
                     </select>
+                    <div style="display:flex; gap:8px;">
+                        <button id="bg-upload-btn" class="btn">Upload Background</button>
+                        <input id="bg-upload-input" type="file" accept="image/*" style="display:none;" />
+                    </div>
                 </div>
                 <div class="asset-group">
                     <div class="group-title">PLAYER</div>
@@ -439,6 +444,10 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="chillguy">Chill Guy</option>
                         <option value="tux">Tux</option>
                     </select>
+                    <div style="display:flex; gap:8px;">
+                        <button id="sprite-upload-btn" class="btn">Upload Sprite Sheet</button>
+                        <input id="sprite-upload-input" type="file" accept="image/*" style="display:none;" />
+                    </div>
                     <label>X Position</label>
                     <input type="range" id="player-x" min="0" max="800" value="100">
                     <label>Y Position</label>
@@ -502,8 +511,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const assets = {
         bg: {
             desert: { src: "/images/gamify/desert.png", h: 580, w: 1038 },
-            alien: { src: "/images/gamebuilder/alien_planet.jpg", h: 600, w: 1000 },
-            clouds: { src: "/images/gamebuilder/clouds.jpg", h: 720, w: 1280 }
+            alien: { src: "/images/gamebuilder/backgrounds/alien_planet.jpg", h: 600, w: 1000 },
+            clouds: { src: "/images/gamebuilder/backgrounds/clouds.jpg", h: 720, w: 1280 }
         },
         sprites: {
             tux: { src: "/images/gamify/tux.png", h:256, w:352, rows:8, cols:11 },
@@ -511,10 +520,161 @@ document.addEventListener('DOMContentLoaded', () => {
             r2d2: { src: "/images/gamify/r2_idle.png", h:223, w:505, rows:1, cols:3 }
         }
     };
+    // Load user-uploaded assets from localStorage
+    const LS_BG_KEY = 'gb_user_backgrounds';
+    const LS_SPR_KEY = 'gb_user_sprites';
+    const GB_BG_DIRS = ['/images/gamebuilder/backgrounds', '/images/gamebuilder/bg', '/images/gamebuilder'];
+    const GB_SPR_DIRS = ['/images/gamebuilder/spritesheets', '/images/gamebuilder/sprites', '/images/gamebuilder'];
+    const IMG_EXT_RE = /\.(png|jpg|jpeg|gif|webp|bmp)$/i;
+    function loadUserAssets() {
+        try {
+            const bgs = JSON.parse(localStorage.getItem(LS_BG_KEY) || '[]');
+            bgs.forEach((b) => {
+                if (b && b.key && b.src) {
+                    assets.bg[b.key] = { src: b.src, h: b.h, w: b.w };
+                    const opt = document.createElement('option');
+                    opt.value = b.key;
+                    opt.textContent = b.name || b.key;
+                    ui.bg.appendChild(opt);
+                }
+            });
+        } catch (_) {}
+        try {
+            const sprs = JSON.parse(localStorage.getItem(LS_SPR_KEY) || '[]');
+            sprs.forEach((s) => {
+                if (s && s.key && s.src) {
+                    assets.sprites[s.key] = { src: s.src, h: s.h, w: s.w, rows: s.rows, cols: s.cols };
+                    const opt = document.createElement('option');
+                    opt.value = s.key;
+                    opt.textContent = s.name || s.key;
+                    ui.pSprite.appendChild(opt);
+                }
+            });
+        } catch (_) {}
+    }
+
+    async function fetchJson(url) {
+        try {
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) return null;
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) return await res.json();
+            return null;
+        } catch (_) { return null; }
+    }
+
+    async function fetchText(url) {
+        try {
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) return null;
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('text/html')) return await res.text();
+            return null;
+        } catch (_) { return null; }
+    }
+
+    function sanitizeKey(name) {
+        return 'user_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    }
+
+    async function scanDirForImages(dirUrl) {
+        const html = await fetchText(dirUrl);
+        const results = [];
+        if (!html) return results;
+        const aRe = /href\s*=\s*"([^"]+)"/gi;
+        let m;
+        while ((m = aRe.exec(html)) !== null) {
+            const href = m[1];
+            const full = href.startsWith('http') ? href : (dirUrl.replace(/\/$/, '') + '/' + href.replace(/^\//, ''));
+            if (IMG_EXT_RE.test(full)) results.push(full);
+        }
+        return results;
+    }
+
+    async function ensureImageDims(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve({ h: img.naturalHeight, w: img.naturalWidth });
+            img.onerror = () => resolve({ h: undefined, w: undefined });
+            img.src = src;
+        });
+    }
+
+    async function scanServerAssets() {
+        // Backgrounds: try JSON manifests first, then directory listing fallback
+        for (const dir of GB_BG_DIRS) {
+            const manifestUrls = [dir + '/index.json', dir + '/manifest.json'];
+            let data = null;
+            for (const u of manifestUrls) { data = await fetchJson(u); if (data) break; }
+            if (data && Array.isArray(data)) {
+                for (const item of data) {
+                    const name = item.name || item.key || item.src;
+                    const key = sanitizeKey(name);
+                    const src = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const dims = (item.h && item.w) ? { h: item.h, w: item.w } : await ensureImageDims(src);
+                    if (!assets.bg[key]) assets.bg[key] = { src, h: dims.h, w: dims.w };
+                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
+                }
+            } else {
+                // Fallback: parse directory listing
+                const imgs = await scanDirForImages(dir);
+                for (const src of imgs) {
+                    const base = src.split('/').pop();
+                    const name = base.replace(/\.[^.]+$/, '');
+                    const key = sanitizeKey(name);
+                    if (assets.bg[key]) continue;
+                    const dims = await ensureImageDims(src);
+                    assets.bg[key] = { src, h: dims.h, w: dims.w };
+                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
+                }
+            }
+        }
+
+        // Sprites: similar approach
+        for (const dir of GB_SPR_DIRS) {
+            const manifestUrls = [dir + '/index.json', dir + '/manifest.json'];
+            let data = null;
+            for (const u of manifestUrls) { data = await fetchJson(u); if (data) break; }
+            if (data && Array.isArray(data)) {
+                for (const item of data) {
+                    const name = item.name || item.key || item.src;
+                    const key = sanitizeKey(name);
+                    const src = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const dims = (item.h && item.w) ? { h: item.h, w: item.w } : await ensureImageDims(src);
+                    const rows = item.rows || 4; const cols = item.cols || 3;
+                    if (!assets.sprites[key]) assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
+                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.pSprite.appendChild(opt);
+                    // Add to existing NPC sprite selects
+                    document.querySelectorAll('.npc-sprite').forEach(sel => {
+                        const o = document.createElement('option'); o.value = key; o.textContent = name; sel.appendChild(o);
+                    });
+                }
+            } else {
+                const imgs = await scanDirForImages(dir);
+                for (const src of imgs) {
+                    const base = src.split('/').pop();
+                    const name = base.replace(/\.[^.]+$/, '');
+                    const key = sanitizeKey(name);
+                    if (assets.sprites[key]) continue;
+                    const dims = await ensureImageDims(src);
+                    const rows = 4, cols = 3; // default fallback
+                    assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
+                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.pSprite.appendChild(opt);
+                    document.querySelectorAll('.npc-sprite').forEach(sel => {
+                        const o = document.createElement('option'); o.value = key; o.textContent = name; sel.appendChild(o);
+                    });
+                }
+            }
+        }
+    }
 
     const ui = {
         bg: document.getElementById('bg-select'),
+        bgUploadBtn: document.getElementById('bg-upload-btn'),
+        bgUploadInput: document.getElementById('bg-upload-input'),
         pSprite: document.getElementById('player-select'),
+        spriteUploadBtn: document.getElementById('sprite-upload-btn'),
+        spriteUploadInput: document.getElementById('sprite-upload-input'),
         pX: document.getElementById('player-x'),
         pY: document.getElementById('player-y'),
         pName: document.getElementById('player-name'),
@@ -555,6 +715,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Drawing overlay: enable drag-to-create rectangles for barriers and pass zones
+        // Upload handlers
+        // sanitizeKey defined above for reuse
+        function handleBackgroundUpload(file) {
+            if (!file) return;
+            const name = prompt('Background name:', file.name.replace(/\.[^.]+$/, '')) || file.name;
+            const key = sanitizeKey(name);
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => { alert('Failed to load image. Please try a different file.'); };
+                img.onload = () => {
+                    const src = reader.result;
+                    const h = img.naturalHeight; const w = img.naturalWidth;
+                    assets.bg[key] = { src, h, w };
+                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
+                    ui.bg.value = key;
+                    try {
+                        const bgs = JSON.parse(localStorage.getItem(LS_BG_KEY) || '[]');
+                        const idx = bgs.findIndex((b) => b.key === key);
+                        const entry = { key, name, src, h, w };
+                        if (idx >= 0) bgs[idx] = entry; else bgs.push(entry);
+                        localStorage.setItem(LS_BG_KEY, JSON.stringify(bgs));
+                    } catch (_) {}
+                    syncFromControlsIfFreestyle();
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        function handleSpriteUpload(file) {
+            if (!file) return;
+            const name = prompt('Sprite name:', file.name.replace(/\.[^.]+$/, '')) || file.name;
+            const rows = parseInt(prompt('Rows (animations down/up/etc):', '4') || '4', 10);
+            const cols = parseInt(prompt('Columns (frames per row):', '3') || '3', 10);
+            const key = sanitizeKey(name);
+            const reader = new FileReader();
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => { alert('Failed to load sprite sheet. Please try a different file.'); };
+                img.onload = () => {
+                    const src = reader.result;
+                    const h = img.naturalHeight; const w = img.naturalWidth;
+                    assets.sprites[key] = { src, h, w, rows, cols };
+                    const opt1 = document.createElement('option'); opt1.value = key; opt1.textContent = name; ui.pSprite.appendChild(opt1);
+                    ui.pSprite.value = key;
+                    // Update all NPC sprite selects
+                    document.querySelectorAll('.npc-sprite').forEach(sel => {
+                        const opt = document.createElement('option'); opt.value = key; opt.textContent = name; sel.appendChild(opt);
+                    });
+                    try {
+                        const sprs = JSON.parse(localStorage.getItem(LS_SPR_KEY) || '[]');
+                        const idx = sprs.findIndex((s) => s.key === key);
+                        const entry = { key, name, src, h, w, rows, cols };
+                        if (idx >= 0) sprs[idx] = entry; else sprs.push(entry);
+                        localStorage.setItem(LS_SPR_KEY, JSON.stringify(sprs));
+                    } catch (_) {}
+                    syncFromControlsIfFreestyle();
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        if (ui.bgUploadBtn && ui.bgUploadInput) {
+            ui.bgUploadBtn.addEventListener('click', () => ui.bgUploadInput.click());
+            ui.bgUploadInput.addEventListener('change', (e) => handleBackgroundUpload(e.target.files?.[0]));
+        }
+        if (ui.spriteUploadBtn && ui.spriteUploadInput) {
+            ui.spriteUploadBtn.addEventListener('click', () => ui.spriteUploadInput.click());
+            ui.spriteUploadInput.addEventListener('change', (e) => handleSpriteUpload(e.target.files?.[0]));
+        }
     function removePreview() {
         if (!ui.drawOverlay) return;
         const preview = ui.drawOverlay.querySelector('.draw-rect.preview');
@@ -706,12 +936,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <label>Message</label>
             <input type="text" placeholder="Message when interacted with" class="npc-msg">
             <label>Sprite</label>
-            <select class="npc-sprite">
-                <option value="" selected disabled>Select sprite…</option>
-                <option value="chillguy">Chill Guy</option>
-                <option value="tux">Tux (penguin)</option>
-                <option value="r2d2">R2D2</option>
-            </select>
+            <select class="npc-sprite"></select>
             <label>Position X</label>
             <input type="range" min="0" max="800" value="500" class="npc-x">
             <label>Position Y</label>
@@ -729,6 +954,15 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.nId = fields.querySelector('.npc-id');
         slot.nMsg = fields.querySelector('.npc-msg');
         slot.nSprite = fields.querySelector('.npc-sprite');
+        // Populate sprite options dynamically
+        if (slot.nSprite) {
+            const none = document.createElement('option'); none.value = ''; none.disabled = true; none.selected = true; none.textContent = 'Select sprite…'; slot.nSprite.appendChild(none);
+            Object.keys(assets.sprites).forEach((key) => {
+                const opt = document.createElement('option');
+                opt.value = key; opt.textContent = key;
+                slot.nSprite.appendChild(opt);
+            });
+        }
         slot.nX = fields.querySelector('.npc-x');
         slot.nY = fields.querySelector('.npc-y');
         slot.deleteBtn = fields.querySelector('.npc-delete');
@@ -872,6 +1106,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Load persisted user assets and append to dropdowns
+    loadUserAssets();
 
     function setIndicator() {
         const current = steps[stepIndex];
@@ -1034,10 +1271,12 @@ export const gameLevelClasses = [CustomLevel];`;
 
                 if (currentStep === 'background') {
                         if (!ui.bg.value) return null;
+                        const bgIsData = bg && bg.src && bg.src.startsWith('data:');
+                        const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
                         const defs = `
         const bgData = {
             name: 'custom_bg',
-            src: path + "${bg.src}",
+            src: ${bgSrcVal},
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };`;
                         const classes = [
@@ -1049,15 +1288,19 @@ export const gameLevelClasses = [CustomLevel];`;
                 if (currentStep === 'player') {
                         if (!ui.bg.value || !ui.pSprite.value) return null;
                         const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
+                        const bgIsData = bg && bg.src && bg.src.startsWith('data:');
+                        const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
+                        const pIsData = p && p.src && p.src.startsWith('data:');
+                        const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
                         const defs = `
         const bgData = {
             name: 'custom_bg',
-            src: path + "${bg.src}",
+            src: ${bgSrcVal},
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };
         const playerData = {
             id: '${name}',
-            src: path + "${p.src}",
+            src: ${pSrcVal},
             SCALE_FACTOR: 5,
             STEP_FACTOR: 1000,
             ANIMATION_RATE: 50,
@@ -1087,15 +1330,19 @@ export const gameLevelClasses = [CustomLevel];`;
                     if (includedSlots.length === 0) return null;
 
                         const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
+                        const bgIsData = bg && bg.src && bg.src.startsWith('data:');
+                        const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
+                        const pIsData = p && p.src && p.src.startsWith('data:');
+                        const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
                         const defsStart = `
         const bgData = {
             name: 'custom_bg',
-            src: path + "${bg.src}",
+            src: ${bgSrcVal},
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };
         const playerData = {
             id: '${name}',
-            src: path + "${p.src}",
+            src: ${pSrcVal},
             SCALE_FACTOR: 5,
             STEP_FACTOR: 1000,
             ANIMATION_RATE: 50,
@@ -1126,11 +1373,13 @@ export const gameLevelClasses = [CustomLevel];`;
                             const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
                             const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
                             const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+                            const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
+                            const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
                             npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
             greeting: '${nMsg}',
-            src: path + "${nSprite.src}",
+            src: ${nSrcVal},
             SCALE_FACTOR: 8,
             ANIMATION_RATE: 50,
             INIT_POSITION: { x: ${nX}, y: ${nY} },
@@ -1151,15 +1400,19 @@ export const gameLevelClasses = [CustomLevel];`;
                 if (currentStep === 'walls') {
                     if (!ui.bg.value || !ui.pSprite.value) return null;
                     const name = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'Hero').replace(/'/g, "\\'");
+                    const bgIsData = bg && bg.src && bg.src.startsWith('data:');
+                    const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
+                    const pIsData = p && p.src && p.src.startsWith('data:');
+                    const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
                     const defsStart = `
         const bgData = {
             name: 'custom_bg',
-            src: path + "${bg.src}",
+            src: ${bgSrcVal},
             pixels: { height: ${bg.h}, width: ${bg.w} }
         };
         const playerData = {
             id: '${name}',
-            src: path + "${p.src}",
+            src: ${pSrcVal},
             SCALE_FACTOR: 5,
             STEP_FACTOR: 1000,
             ANIMATION_RATE: 50,
@@ -1191,11 +1444,13 @@ export const gameLevelClasses = [CustomLevel];`;
                         const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
                         const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
                         const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+                        const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
+                        const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
                         npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
             greeting: '${nMsg}',
-            src: path + "${nSprite.src}",
+            src: ${nSrcVal},
             SCALE_FACTOR: 8,
             ANIMATION_RATE: 50,
             INIT_POSITION: { x: ${nX}, y: ${nY} },
@@ -1284,8 +1539,8 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function syncFromControlsIfFreestyle() {
         const current = steps[stepIndex];
-        if (current !== 'freestyle') return;
-        if (state.userEdited) return; 
+        // Preserve user edits only when in freestyle mode
+        if (state.userEdited && current === 'freestyle') return; 
         const hasNPCs = ui.npcs.length > 0;
         const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
         const hasPlayer = !!ui.pSprite.value;
@@ -1471,12 +1726,17 @@ export const gameLevelClasses = [CustomLevel];`;
     const exportBtn = document.getElementById('btn-export');
     if (exportBtn) exportBtn.addEventListener('click', exportCode);
 
+    const refreshBtn = document.getElementById('btn-refresh-assets');
+    if (refreshBtn) refreshBtn.addEventListener('click', () => { scanServerAssets(); });
+
 
     ui.editor.value = generateBaselineCode();
     setIndicator();
     updateStepUI();
     renderOverlay();
     updateOverlayVisibility();
+    // Scan server-side assets if available
+    scanServerAssets();
 });
 </script>
 
