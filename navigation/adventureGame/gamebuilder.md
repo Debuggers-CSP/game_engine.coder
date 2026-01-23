@@ -429,8 +429,12 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="alien">Alien Planet</option>
                         <option value="clouds">Sky Kingdom</option>
                     </select>
-                    <div class="note" style="font-size:0.75em; color: var(--text-muted);">
-                        To add your own backgrounds, place files under <code>images/gamebuilder/backgrounds</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/docs/gamebuilder-manifests">upload instructions</a>.
+                    <div class="upload-instructions" style="margin-top:6px;">
+                        <button id="bg-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
+                        <div id="bg-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
+                            To add your own backgrounds, place files under <code>images/gamebuilder/bg</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/docs/gamebuilder-upload-instructions">upload instructions</a>.
+                            <div style="margin-top:4px;">Backgrounds manifest: <a href="{{ site.baseurl }}/images/gamebuilder/bg/index.json">images/gamebuilder/bg/index.json</a></div>
+                        </div>
                     </div>
                 </div>
                 <div class="asset-group">
@@ -443,8 +447,12 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="chillguy">Chill Guy</option>
                         <option value="tux">Tux</option>
                     </select>
-                    <div class="note" style="font-size:0.75em; color: var(--text-muted);">
-                        To add your own spritesheets, place files under <code>images/gamebuilder/spritesheets</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/docs/gamebuilder-manifests">upload instructions</a>.
+                    <div class="upload-instructions" style="margin-top:6px;">
+                        <button id="sprite-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
+                        <div id="sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
+                            To add your own spritesheets, place files under <code>images/gamebuilder/sprites</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/docs/gamebuilder-upload-instructions">upload instructions</a>.
+                            <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
+                        </div>
                     </div>
                     <label>X Position</label>
                     <input type="range" id="player-x" min="0" max="800" value="100">
@@ -519,8 +527,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     // User uploads via file-based workflow (see docs); localStorage upload is disabled
-    const GB_BG_DIRS = ['/images/gamebuilder/backgrounds', '/images/gamebuilder/bg', '/images/gamebuilder'];
-    const GB_SPR_DIRS = ['/images/gamebuilder/spritesheets', '/images/gamebuilder/sprites', '/images/gamebuilder'];
+    const GB_BG_DIRS = ['/images/gamebuilder/bg', '/images/gamebuilder/bg', '/images/gamebuilder'];
+    const GB_SPR_DIRS = ['/images/gamebuilder/sprites', '/images/gamebuilder/sprites', '/images/gamebuilder'];
     const IMG_EXT_RE = /\.(png|jpg|jpeg|gif|webp|bmp)$/i;
     // Note: previously supported localStorage-based uploads have been removed.
 
@@ -664,7 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ui = {
         bg: document.getElementById('bg-select'),
+        bgInstructionsBtn: document.getElementById('bg-instructions-btn'),
+        bgInstructionsPanel: document.getElementById('bg-instructions-panel'),
         pSprite: document.getElementById('player-select'),
+        spriteInstructionsBtn: document.getElementById('sprite-instructions-btn'),
+        spriteInstructionsPanel: document.getElementById('sprite-instructions-panel'),
         pX: document.getElementById('player-x'),
         pY: document.getElementById('player-y'),
         pName: document.getElementById('player-name'),
@@ -703,6 +715,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
         });
     });
+
+    // Info buttons: toggle dropdown panels with instructions and manifest links
+    function toggle(el) {
+        if (!el) return;
+        const show = el.style.display === 'none' || !el.style.display;
+        el.style.display = show ? '' : 'none';
+    }
+    if (ui.bgInstructionsBtn) ui.bgInstructionsBtn.addEventListener('click', () => toggle(ui.bgInstructionsPanel));
+    if (ui.spriteInstructionsBtn) ui.spriteInstructionsBtn.addEventListener('click', () => toggle(ui.spriteInstructionsPanel));
 
     // Drawing overlay: enable drag-to-create rectangles for barriers
     function removePreview() {

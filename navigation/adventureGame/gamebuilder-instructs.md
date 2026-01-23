@@ -1,7 +1,7 @@
 ---
 layout: page
 title: GameBuilder Assets
-permalink: /docs/gamebuilder-manifests
+permalink: /docs/gamebuilder-upload-intructions
 ---
 
 ## Add Your Own Images
