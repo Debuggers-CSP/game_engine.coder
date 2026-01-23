@@ -564,7 +564,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function sanitizeKey(name) {
-        return 'user_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        return String(name || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
+    function clearSelectOptions(selectEl) {
+        if (!selectEl) return;
+        const opts = Array.from(selectEl.options || []);
+        for (const opt of opts) {
+            if (!opt.disabled) {
+                opt.remove();
+            }
+        }
     }
 
     async function scanDirForImages(dirUrl) {
@@ -607,6 +620,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function scanServerAssets() {
+        // Reset selects (keep their disabled placeholders intact)
+        clearSelectOptions(ui.bg);
+        clearSelectOptions(ui.pSprite);
+        document.querySelectorAll('.npc-sprite').forEach(sel => clearSelectOptions(sel));
+
         for (const dir of GB_BG_DIRS) {
             const manifestUrls = [dir + '/index.json', dir + '/manifest.json'];
             let data = null;
@@ -723,12 +741,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Capture environment metrics from the iframe (e.g., top offset)
+    // Capture environment metrics from the iframe (e.g., top/left offset)
     let envTopOffset = 0;
+    let envLeftOffset = 0;
     window.addEventListener('message', (e) => {
         try {
             if (e && e.data && e.data.type === 'rpg:env-metrics') {
                 envTopOffset = Number(e.data.top) || 0;
+                envLeftOffset = Number(e.data.left) || 0;
             }
         } catch (_) { /* ignore */ }
     });
@@ -761,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!mode) removePreview();
     }
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
-    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); });
+    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); if (state.userEdited) syncOverlayBarriersToRunner(); });
 
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
@@ -783,6 +803,10 @@ document.addEventListener('DOMContentLoaded', () => {
             frag.appendChild(el);
         });
         ui.drawOverlay.appendChild(frag);
+        // Sync to runner in freestyle so barriers render even without code regen
+        if (state.userEdited) {
+            syncOverlayBarriersToRunner();
+        }
     }
 
     function currentPreviewEl() {
@@ -833,6 +857,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.drawShapes.push({ type: mode, x: Math.round(left), y: Math.round(top), width: Math.round(width), height: Math.round(height) });
             renderDrawShapes();
             syncFromControlsIfFreestyle();
+            // Also push to runner if in freestyle
+            if (state.userEdited) syncOverlayBarriersToRunner();
         }
     }
 
@@ -888,6 +914,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" placeholder="Message when interacted with" class="npc-msg">
             <label>Sprite</label>
             <select class="npc-sprite"></select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end;">
+                <div>
+                    <label>Rows</label>
+                    <input type="number" min="1" value="1" class="npc-rows">
+                </div>
+                <div>
+                    <label>Columns</label>
+                    <input type="number" min="1" value="1" class="npc-cols">
+                </div>
+            </div>
             <label>Position X</label>
             <input type="range" min="0" max="800" value="500" class="npc-x">
             <label>Position Y</label>
@@ -905,6 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.nId = fields.querySelector('.npc-id');
         slot.nMsg = fields.querySelector('.npc-msg');
         slot.nSprite = fields.querySelector('.npc-sprite');
+        slot.nRows = fields.querySelector('.npc-rows');
+        slot.nCols = fields.querySelector('.npc-cols');
         if (slot.nSprite) {
             const none = document.createElement('option'); none.value = ''; none.disabled = true; none.selected = true; none.textContent = 'Select sprite…'; slot.nSprite.appendChild(none);
             Object.keys(assets.sprites).forEach((key) => {
@@ -937,11 +975,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ['input','change'].forEach(evt => {
             const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
-            slot.nId.addEventListener(evt, rerun);
-            slot.nMsg.addEventListener(evt, rerun);
-            slot.nSprite.addEventListener(evt, rerun);
-            slot.nX.addEventListener(evt, rerun);
-            slot.nY.addEventListener(evt, rerun);
+            slot.nId?.addEventListener(evt, rerun);
+            slot.nMsg?.addEventListener(evt, rerun);
+            slot.nSprite?.addEventListener(evt, (e) => {
+                // On sprite change, set default rows/cols from asset if available
+                const key = slot.nSprite.value;
+                const spr = assets.sprites[key];
+                if (spr) {
+                    if (slot.nRows) slot.nRows.value = spr.rows ?? 1;
+                    if (slot.nCols) slot.nCols.value = spr.cols ?? 1;
+                }
+                rerun();
+            });
+            slot.nRows?.addEventListener(evt, rerun);
+            slot.nCols?.addEventListener(evt, rerun);
+            slot.nX?.addEventListener(evt, rerun);
+            slot.nY?.addEventListener(evt, rerun);
         });
 
         ui.npcs.push(slot);
@@ -1198,7 +1247,12 @@ class CustomLevel {
         // Report environment metrics (like top offset) to builder
         try {
             if (window && window.parent) {
-                window.parent.postMessage({ type: 'rpg:env-metrics', top: gameEnv.top }, '*');
+                try {
+                    const rect = (gameEnv && gameEnv.container && gameEnv.container.getBoundingClientRect) ? gameEnv.container.getBoundingClientRect() : { top: gameEnv.top || 0, left: 0 };
+                    window.parent.postMessage({ type: 'rpg:env-metrics', top: rect.top, left: rect.left }, '*');
+                } catch (_) {
+                    try { window.parent.postMessage({ type: 'rpg:env-metrics', top: gameEnv.top, left: 0 }, '*'); } catch (__){ }
+                }
             }
         } catch (_) {}
         // Listen for in-game wall visibility toggles from builder
@@ -1214,6 +1268,35 @@ class CustomLevel {
                             }
                         }
                     }
+                } else if (e.data.type === 'rpg:set-drawn-barriers') {
+                    const arr = Array.isArray(e.data.barriers) ? e.data.barriers : [];
+                    // Track overlay barriers locally so we can remove/replace
+                    window.__overlayBarriers = window.__overlayBarriers || [];
+                    // Remove previous overlay barriers
+                    try {
+                        for (const ob of window.__overlayBarriers) {
+                            if (ob && typeof ob.destroy === 'function') ob.destroy();
+                        }
+                    } catch (_) {}
+                    window.__overlayBarriers = [];
+                    // Add new overlay barriers
+                    for (const bd of arr) {
+                        try {
+                            const data = {
+                                id: bd.id,
+                                x: bd.x,
+                                y: bd.y,
+                                width: bd.width,
+                                height: bd.height,
+                                visible: !!bd.visible,
+                                hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+                                fromOverlay: true
+                            };
+                            const bobj = new Barrier(data, gameEnv);
+                            gameEnv.gameObjects.push(bobj);
+                            window.__overlayBarriers.push(bobj);
+                        } catch (_) {}
+                    }
                 }
             });
         } catch (_) {}
@@ -1228,7 +1311,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         if (!ui.bg.value) return null;
                         const bgIsData = bg && bg.src && bg.src.startsWith('data:');
                         const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
-                        const defs = `
+                        let defs = `
         const bgData = {
             name: 'custom_bg',
             src: ${bgSrcVal},
@@ -1237,6 +1320,35 @@ export const gameLevelClasses = [CustomLevel];`;
                         const classes = [
             "      { class: GameEnvBackground, data: bgData }"
                         ];
+                        // Always include any existing barriers so they don't disappear when editing background
+                        const barrierDefsB = [];
+                        const includedWallsB = ui.walls.slice();
+                        includedWallsB.forEach((w, idx) => {
+                            const x = parseInt(w.wX?.value || 100, 10);
+                            const y = parseInt(w.wY?.value || 100, 10);
+                            const wWidth = parseInt(w.wW?.value || 150, 10);
+                            const wHeight = parseInt(w.wH?.value || 20, 10);
+                            const visible = true; /* BUILDER_DEFAULT */
+                            const id = `wall_${idx+1}`;
+                            barrierDefsB.push(`
+        const barrierData${idx+1} = {
+            id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
+        };`);
+                            classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+                        });
+                        const drawnBarriersB = ui.drawShapes.filter(s => s.type === 'barrier');
+                        drawnBarriersB.forEach((b, bIdx) => {
+                            const id = `dbarrier_${bIdx+1}`;
+                            barrierDefsB.push(`
+        const ${id} = {
+            id: '${id}', x: ${Math.max(0, Math.round(b.x - envLeftOffset))}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+            fromOverlay: true
+        };`);
+                            classes.push(`      { class: Barrier, data: ${id} }`);
+                        });
+                        if (barrierDefsB.length) defs += ('\n' + barrierDefsB.join('\n'));
                         return header() + defs + footer(classes);
                 }
 
@@ -1301,7 +1413,7 @@ export const gameLevelClasses = [CustomLevel];`;
                             const id = `dbarrier_${bIdx+1}`;
                             barrierDefs.push(`
         const ${id} = {
-            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            id: '${id}', x: ${Math.max(0, Math.round(b.x - envLeftOffset))}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
             fromOverlay: true
         };`);
@@ -1362,6 +1474,8 @@ export const gameLevelClasses = [CustomLevel];`;
                             const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
                             const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
                             const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
+                            const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
+                            const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
                             npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
@@ -1371,8 +1485,8 @@ export const gameLevelClasses = [CustomLevel];`;
             ANIMATION_RATE: 50,
             INIT_POSITION: { x: ${nX}, y: ${nY} },
             pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
-            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },
-            down: { row: 0, start: 0, columns: 3 },
+            orientation: { rows: ${nRows}, columns: ${nCols} },
+            down: { row: 0, start: 0 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
             dialogues: ['${nMsg}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
@@ -1402,7 +1516,7 @@ export const gameLevelClasses = [CustomLevel];`;
                             const id = `dbarrier_${bIdx+1}`;
                             barrierDefsN.push(`
         const ${id} = {
-            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            id: '${id}', x: ${Math.max(0, Math.round(b.x - envLeftOffset))}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
             fromOverlay: true
         };`);
@@ -1507,7 +1621,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const id = `dbarrier_${bIdx+1}`;
                         barrierDefs.push(`
         const ${id} = {
-            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            id: '${id}', x: ${Math.max(0, Math.round(b.x - envLeftOffset))}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
             fromOverlay: true
         };`);
@@ -1572,37 +1686,16 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     function animateTypingDiff(oldCode, newCode, onDone) {
+        // Instant apply: update only the changed range metadata, not character-by-character typing
         state.programmaticEdit = true;
         const { startLine, lineCount } = computeChangeRange(oldCode, newCode);
-        const oldLines = oldCode.split('\n');
-        const newLines = newCode.split('\n');
-        let current = oldLines.slice();
-        const targetBlock = newLines.slice(startLine, startLine + lineCount).join('\n');
-        let typed = '';
-        state.persistent = null;
-        state.typing = { startLine, lineCount: Math.max(1, lineCount) };
+        ui.editor.value = newCode;
+        // Highlight the changed block briefly for context
+        state.typing = null;
+        state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
         renderOverlay();
-        const speed = 6; 
-        function step() {
-            for (let i = 0; i < speed && typed.length < targetBlock.length; i++) typed += targetBlock[typed.length];
-            const partial = typed.split('\n');
-            for (let i = 0; i < Math.max(1, lineCount); i++) {
-                current[startLine + i] = partial[i] !== undefined ? partial[i] : '';
-            }
-            ui.editor.value = current.join('\n');
-            renderOverlay();
-            if (typed.length < targetBlock.length) {
-                requestAnimationFrame(step);
-            } else {
-                ui.editor.value = newCode;
-                state.programmaticEdit = false;
-                state.typing = null;
-                state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
-                renderOverlay();
-                if (typeof onDone === 'function') onDone();
-            }
-        }
-        requestAnimationFrame(step);
+        state.programmaticEdit = false;
+        if (typeof onDone === 'function') onDone();
     }
 
     const mvEl = document.getElementById('movement-keys');
@@ -1709,9 +1802,29 @@ export const gameLevelClasses = [CustomLevel];`;
         return hasLevels ? code : generateBaselineCode();
     }
 
+    // Send current overlay-drawn barriers to the runner, adjusted for env offset
+    function syncOverlayBarriersToRunner() {
+        try {
+            const shapes = Array.isArray(ui.drawShapes) ? ui.drawShapes : [];
+            const barriers = shapes
+                .filter(s => s && s.type === 'barrier')
+                .map((s, i) => ({
+                    id: `dbarrier_rt_${i+1}`,
+                    x: Math.max(0, Math.round((s.x || 0) - (envLeftOffset || 0))),
+                    y: Math.max(0, Math.round((s.y || 0) - (envTopOffset || 0))),
+                    width: Math.max(0, Math.round(s.width || 0)),
+                    height: Math.max(0, Math.round(s.height || 0)),
+                    visible: !!ui.gameWallsVisible
+                }));
+            ui.iframe?.contentWindow?.postMessage({ type: 'rpg:set-drawn-barriers', barriers }, '*');
+        } catch (_) { /* ignore */ }
+    }
+
     function runInEmbed() {
         renderOverlay();
         const code = safeCodeToRun();
+        // Keep overlay visibility in sync with current toggle state
+        updateOverlayVisibility();
         ui.iframe.src = ui.iframe.src;
         ui.iframe.onload = () => {
             setTimeout(() => {
@@ -1721,6 +1834,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
+                    // Also re-sync overlay barriers into the fresh runtime (freestyle only)
+                    try { if (steps[stepIndex] === 'freestyle') syncOverlayBarriersToRunner(); } catch (_) {}
                 }, 150);
             }, 100);
         };
