@@ -620,7 +620,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function scanServerAssets() {
-        // Reset selects (keep their disabled placeholders intact)
         clearSelectOptions(ui.bg);
         clearSelectOptions(ui.pSprite);
         document.querySelectorAll('.npc-sprite').forEach(sel => clearSelectOptions(sel));
@@ -741,7 +740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Capture environment metrics from the iframe (e.g., top/left offset)
     let envTopOffset = 0;
     let envLeftOffset = 0;
     window.addEventListener('message', (e) => {
@@ -785,7 +783,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
-        // When walls are hidden in-game, hide overlay lines as well
         ui.drawOverlay.style.display = ui.gameWallsVisible ? '' : 'none';
     }
 
@@ -803,7 +800,6 @@ document.addEventListener('DOMContentLoaded', () => {
             frag.appendChild(el);
         });
         ui.drawOverlay.appendChild(frag);
-        // Sync to runner in freestyle so barriers render even without code regen
         if (state.userEdited) {
             syncOverlayBarriersToRunner();
         }
@@ -857,7 +853,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.drawShapes.push({ type: mode, x: Math.round(left), y: Math.round(top), width: Math.round(width), height: Math.round(height) });
             renderDrawShapes();
             syncFromControlsIfFreestyle();
-            // Also push to runner if in freestyle
             if (state.userEdited) syncOverlayBarriersToRunner();
         }
     }
@@ -934,6 +929,11 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         slot.container.appendChild(headerBtn);
         slot.container.appendChild(fields);
+        if (!ui.npcsContainer) {
+            ui.npcsContainer = document.createElement('div');
+            ui.npcsContainer.id = 'npcs-container';
+            document.body.appendChild(ui.npcsContainer);
+        }
         ui.npcsContainer.appendChild(slot.container);
 
         slot.addBtn = headerBtn;
@@ -945,11 +945,13 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.nCols = fields.querySelector('.npc-cols');
         if (slot.nSprite) {
             const none = document.createElement('option'); none.value = ''; none.disabled = true; none.selected = true; none.textContent = 'Select sprite…'; slot.nSprite.appendChild(none);
-            Object.keys(assets.sprites).forEach((key) => {
-                const opt = document.createElement('option');
-                opt.value = key; opt.textContent = key;
-                slot.nSprite.appendChild(opt);
-            });
+            if (assets && assets.sprites) {
+                Object.keys(assets.sprites).forEach((key) => {
+                    const opt = document.createElement('option');
+                    opt.value = key; opt.textContent = key;
+                    slot.nSprite.appendChild(opt);
+                });
+            }
         }
         slot.nX = fields.querySelector('.npc-x');
         slot.nY = fields.querySelector('.npc-y');
@@ -970,41 +972,84 @@ document.addEventListener('DOMContentLoaded', () => {
             slot.container.remove();
             ui.npcs = ui.npcs.filter(n => n !== slot);
             updateStepUI();
+            scanServerAssets();
             syncFromControlsIfFreestyle();
+            if (ui.freestyleMode) syncToCode();
         });
 
         ['input','change'].forEach(evt => {
             const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
-            slot.nId?.addEventListener(evt, rerun);
-            slot.nMsg?.addEventListener(evt, rerun);
+            // Update NPC code block only, never overwrite other code
+            function updateNpcBlock() {
+                if (typeof ui.editor !== 'undefined' && ui.editor) {
+                    const index = slot.index;
+                    const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
+                    const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+                    const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
+                    const nSprite = assets && assets.sprites ? assets.sprites[nSpriteKey] || assets.sprites['chillguy'] : { h: 32, w: 32, rows: 1, cols: 1, src: '' };
+                    const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
+                    const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+                    const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
+                    const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
+                    const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
+                    const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
+                    const npcBlockRegex = new RegExp(`(// --- Added NPC ---\nconst npcData${index} = {)[^}]*}`, 'm');
+                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsg}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsg}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nclasses.push({ class: Npc, data: npcData${index} });\n`;
+                    ui.editor.value = ui.editor.value.replace(npcBlockRegex, newNpcBlock);
+                }
+            }
+            slot.nId?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nMsg?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
             slot.nSprite?.addEventListener(evt, (e) => {
-                // On sprite change, set default rows/cols from asset if available
                 const key = slot.nSprite.value;
-                const spr = assets.sprites[key];
+                const spr = assets && assets.sprites ? assets.sprites[key] : null;
                 if (spr) {
                     if (slot.nRows) slot.nRows.value = spr.rows ?? 1;
                     if (slot.nCols) slot.nCols.value = spr.cols ?? 1;
                 }
+                updateNpcBlock();
                 rerun();
             });
-            slot.nRows?.addEventListener(evt, rerun);
-            slot.nCols?.addEventListener(evt, rerun);
-            slot.nX?.addEventListener(evt, rerun);
-            slot.nY?.addEventListener(evt, rerun);
+            slot.nRows?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nCols?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nX?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nY?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
         });
 
+        // Robust: always push to array
+        if (!ui.npcs) ui.npcs = [];
         ui.npcs.push(slot);
+        updateStepUI();
+        // Strictly append NPC code block to the end, do not modify any other code
+        if (typeof ui.editor !== 'undefined' && ui.editor) {
+            const index = slot.index;
+            const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
+            const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+            const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
+            const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
+            const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
+            const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+            const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
+            const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
+            const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
+            const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
+            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsg}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsg}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nclasses.push({ class: Npc, data: npcData${index} });\n`;
+            ui.editor.value = ui.editor.value + npcCode;
+        }
+        // Do NOT call syncFromControlsIfFreestyle or code generators here
         return slot;
     }
 
     if (ui.addNpcBtn) {
         ui.addNpcBtn.addEventListener('click', () => {
+            // Always allow asset add, even after direct code edits
+            if (typeof state !== 'undefined') state.userEdited = false;
             const slot = makeNpcSlot(ui.npcs.length + 1);
             if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
             slot.fieldsOpen = true;
             slot.addBtn.textContent = `NPC ${ui.npcs.length} ▾`;
+            // Only update UI, do not call any code generators or sync functions
             updateStepUI();
-            syncFromControlsIfFreestyle();
         });
     }
 
@@ -1063,7 +1108,9 @@ document.addEventListener('DOMContentLoaded', () => {
             slot.container.remove();
             ui.walls = ui.walls.filter(w => w !== slot);
             updateStepUI();
+            scanServerAssets();
             syncFromControlsIfFreestyle();
+            if (ui.freestyleMode) syncToCode();
         });
 
         ['input','change'].forEach(evt => {
@@ -1079,12 +1126,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ui.addWallBtn) {
         ui.addWallBtn.addEventListener('click', () => {
+            // Always allow asset add, even after direct code edits
+            if (typeof state !== 'undefined') state.userEdited = false;
             const slot = makeWallSlot(ui.walls.length + 1);
             if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
             slot.fieldsOpen = true;
             slot.addBtn.textContent = `Wall ${ui.walls.length} ▾`;
             updateStepUI();
+            scanServerAssets();
             syncFromControlsIfFreestyle();
+            if (ui.freestyleMode) syncToCode();
         });
     }
 
@@ -1490,7 +1541,15 @@ export const gameLevelClasses = [CustomLevel];`;
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
             dialogues: ['${nMsg}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
-            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }
+            interact: function() {
+                if (this.dialogueSystem) {
+                    this.showRandomDialogue();
+                } else if (this.greeting) {
+                    alert(this.greeting);
+                } else {
+                    alert('Hello!');
+                }
+            }
         };`);
                             classes.push(`      { class: Npc, data: npcData${index} }`);
                         });
@@ -1861,6 +1920,11 @@ export const gameLevelClasses = [CustomLevel];`;
         let code = safeCodeToRun();
         // Ensure exported barriers are invisible by default: flip BUILDER_DEFAULT visible flags
         code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
+        // Strip builder-only hooks for standalone export
+        code = code.replace(/\/\* BUILDER_HOOKS_START \*\/[\s\S]*?\/\* BUILDER_HOOKS_END \*\//g, '');
+        // Add a header for clarity
+        const header = `// Adventure Game Custom Level\n// Exported from GameBuilder on ${(new Date()).toISOString()}\n// Drop this file into your Adventure Game project.\n`;
+        code = header + code;
         const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
         const a = document.createElement('a');
         const url = URL.createObjectURL(blob);
