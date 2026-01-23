@@ -301,7 +301,10 @@ class Character extends GameObject {
      * stays within the boundaries of the canvas.
      */
     move(x, y) {
-
+        // Preemptively stop if next step would collide with barriers
+        if (typeof this.preemptCollisionStop === 'function') {
+            this.preemptCollisionStop();
+        }
         if(x != undefined){
             this.transform.x = x;
         }

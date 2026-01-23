@@ -475,6 +475,13 @@ iframe { width: 100%; height: 100%; border: none; }
                         <span>NPC</span>
                         <button class="add-item-btn" id="add-npc">+</button>
                     </div>
+                    <div class="upload-instructions" style="margin-top:6px;">
+                        <button id="npc-sprite-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
+                        <div id="npc-sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
+                            NPCs use the same spritesheet system as the Player. Place files under <code>images/gamebuilder/sprites</code> and set <code>rows</code>/<code>cols</code> in the manifest, then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
+                            <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
+                        </div>
+                    </div>
                     <div id="npcs-container"></div>
                 </div>
                 <div class="asset-group">
@@ -675,6 +682,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pSprite: document.getElementById('player-select'),
         spriteInstructionsBtn: document.getElementById('sprite-instructions-btn'),
         spriteInstructionsPanel: document.getElementById('sprite-instructions-panel'),
+        npcSpriteInstructionsBtn: document.getElementById('npc-sprite-instructions-btn'),
+        npcSpriteInstructionsPanel: document.getElementById('npc-sprite-instructions-panel'),
         pX: document.getElementById('player-x'),
         pY: document.getElementById('player-y'),
         pName: document.getElementById('player-name'),
@@ -731,6 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (ui.bgInstructionsBtn) ui.bgInstructionsBtn.addEventListener('click', () => toggle(ui.bgInstructionsPanel));
     if (ui.spriteInstructionsBtn) ui.spriteInstructionsBtn.addEventListener('click', () => toggle(ui.spriteInstructionsPanel));
+    if (ui.npcSpriteInstructionsBtn) ui.npcSpriteInstructionsBtn.addEventListener('click', () => toggle(ui.npcSpriteInstructionsPanel));
 
     function removePreview() {
         if (!ui.drawOverlay) return;
@@ -755,8 +765,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
-        // Always keep overlay visible; enable drawing only via mode
-        ui.drawOverlay.style.display = '';
+        // When walls are hidden in-game, hide overlay lines as well
+        ui.drawOverlay.style.display = ui.gameWallsVisible ? '' : 'none';
     }
 
     function renderDrawShapes() {
@@ -1267,7 +1277,39 @@ export const gameLevelClasses = [CustomLevel];`;
             "      { class: GameEnvBackground, data: bgData }",
             "      { class: Player, data: playerData }"
                         ];
-                        return header() + defs + footer(classes);
+
+                        // Always include any existing barriers so they don't disappear when editing player
+                        const barrierDefs = [];
+                        const includedWallsP = ui.walls.slice();
+                        includedWallsP.forEach((w, idx) => {
+                            const x = parseInt(w.wX?.value || 100, 10);
+                            const y = parseInt(w.wY?.value || 100, 10);
+                            const wWidth = parseInt(w.wW?.value || 150, 10);
+                            const wHeight = parseInt(w.wH?.value || 20, 10);
+                            const visible = true; /* BUILDER_DEFAULT */
+                            const id = `wall_${idx+1}`;
+                            barrierDefs.push(`
+        const barrierData${idx+1} = {
+            id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
+        };`);
+                            classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+                        });
+
+                        const drawnBarriersP = ui.drawShapes.filter(s => s.type === 'barrier');
+                        drawnBarriersP.forEach((b, bIdx) => {
+                            const id = `dbarrier_${bIdx+1}`;
+                            barrierDefs.push(`
+        const ${id} = {
+            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+            fromOverlay: true
+        };`);
+                            classes.push(`      { class: Barrier, data: ${id} }`);
+                        });
+
+                        const fullDefs = defs + (barrierDefs.length ? ('\n' + barrierDefs.join('\n')) : '');
+                        return header() + fullDefs + footer(classes);
                 }
 
                 if (currentStep === 'npc') {
@@ -1338,7 +1380,36 @@ export const gameLevelClasses = [CustomLevel];`;
         };`);
                             classes.push(`      { class: Npc, data: npcData${index} }`);
                         });
-                        const defs = defsStart + npcDefs.join('\n');
+                        // Always include any existing barriers so they don't disappear when editing NPCs
+                        const barrierDefsN = [];
+                        const includedWallsN = ui.walls.slice();
+                        includedWallsN.forEach((w, idx) => {
+                            const x = parseInt(w.wX?.value || 100, 10);
+                            const y = parseInt(w.wY?.value || 100, 10);
+                            const wWidth = parseInt(w.wW?.value || 150, 10);
+                            const wHeight = parseInt(w.wH?.value || 20, 10);
+                            const visible = true; /* BUILDER_DEFAULT */
+                            const id = `wall_${idx+1}`;
+                            barrierDefsN.push(`
+        const barrierData${idx+1} = {
+            id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: ${visible},
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }
+        };`);
+                            classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+                        });
+                        const drawnBarriersN = ui.drawShapes.filter(s => s.type === 'barrier');
+                        drawnBarriersN.forEach((b, bIdx) => {
+                            const id = `dbarrier_${bIdx+1}`;
+                            barrierDefsN.push(`
+        const ${id} = {
+            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
+            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
+            fromOverlay: true
+        };`);
+                            classes.push(`      { class: Barrier, data: ${id} }`);
+                        });
+
+                        const defs = defsStart + npcDefs.join('\n') + (barrierDefsN.length ? ('\n' + barrierDefsN.join('\n')) : '');
                         return header() + defs + footer(classes);
                 }
 
@@ -1420,7 +1491,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const y = parseInt(w.wY?.value || 100, 10);
                         const wWidth = parseInt(w.wW?.value || 150, 10);
                         const wHeight = parseInt(w.wH?.value || 20, 10);
-                        const visible = false; // invisible by default; collision still active
+                        const visible = true; /* BUILDER_DEFAULT */ // visible in builder; collision active regardless
                         const id = `wall_${idx+1}`;
                         barrierDefs.push(`
         const barrierData${idx+1} = {
@@ -1436,7 +1507,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const id = `dbarrier_${bIdx+1}`;
                         barrierDefs.push(`
         const ${id} = {
-            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: false,
+            id: '${id}', x: ${Math.round(b.x)}, y: ${Math.max(0, Math.round(b.y - envTopOffset))}, width: ${Math.round(b.width)}, height: ${Math.round(b.height)}, visible: true /* BUILDER_DEFAULT */,
             hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 },
             fromOverlay: true
         };`);
@@ -1672,7 +1743,9 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     function exportCode() {
-        const code = safeCodeToRun();
+        let code = safeCodeToRun();
+        // Ensure exported barriers are invisible by default: flip BUILDER_DEFAULT visible flags
+        code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
         const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
         const a = document.createElement('a');
         const url = URL.createObjectURL(blob);

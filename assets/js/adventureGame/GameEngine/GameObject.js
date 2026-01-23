@@ -111,6 +111,70 @@ class GameObject {
     }
 
     /**
+     * Preemptively stop movement if the next step would collide with a barrier.
+     * Uses engine-space AABB on predicted next position.
+     */
+    preemptCollisionStop() {
+        if (!this.gameEnv || !this.gameEnv.gameObjects) return;
+        const nextX = (this.transform?.x ?? 0) + (this.transform?.xv ?? 0);
+        const nextY = (this.transform?.y ?? 0) + (this.transform?.yv ?? 0);
+        const w = (this.width ?? this.canvas?.width ?? 0);
+        const h = (this.height ?? this.canvas?.height ?? 0);
+        const thisWidthReduction = w * (this.hitbox?.widthPercentage || 0.0);
+        const thisHeightReduction = h * (this.hitbox?.heightPercentage || 0.0);
+
+        const nLeft = nextX + thisWidthReduction;
+        const nTop = nextY + thisHeightReduction;
+        const nRight = nextX + w - thisWidthReduction;
+        const nBottom = nextY + h;
+
+        for (const other of this.gameEnv.gameObjects) {
+            if (!other || other === this || !other.canvas) continue;
+            // Heuristic: barriers have spriteData.passZones defined
+            const isBarrier = !!(other.spriteData && other.spriteData.passZones !== undefined);
+            if (!isBarrier) continue;
+            const ow = (other.width ?? other.canvas?.width ?? 0);
+            const oh = (other.height ?? other.canvas?.height ?? 0);
+            const ox = other.transform?.x ?? 0;
+            const oy = other.transform?.y ?? 0;
+            const oWidthReduction = ow * (other.hitbox?.widthPercentage || 0.0);
+            const oHeightReduction = oh * (other.hitbox?.heightPercentage || 0.0);
+            const oLeft = ox + oWidthReduction;
+            const oTop = oy + oHeightReduction;
+            const oRight = ox + ow - oWidthReduction;
+            const oBottom = oy + oh;
+
+            const willHit = (nLeft < oRight && nRight > oLeft && nTop < oBottom && nBottom > oTop);
+            if (!willHit) continue;
+
+            // Stop components that push into the barrier
+            if (this.transform.xv > 0 && (nRight > oLeft) && ((this.transform.x + w - thisWidthReduction) <= oLeft)) {
+                this.transform.xv = 0;
+                this.state.movement.right = false;
+                // Clamp flush against left side
+                this.transform.x = oLeft - (w - thisWidthReduction);
+            } else if (this.transform.xv < 0 && (nLeft < oRight) && ((this.transform.x + thisWidthReduction) >= oRight)) {
+                this.transform.xv = 0;
+                this.state.movement.left = false;
+                // Clamp flush against right side
+                this.transform.x = oRight - thisWidthReduction;
+            }
+
+            if (this.transform.yv > 0 && (nBottom > oTop) && ((this.transform.y + h) <= oTop)) {
+                this.transform.yv = 0;
+                this.state.movement.down = false;
+                // Clamp flush above top side
+                this.transform.y = oTop - h;
+            } else if (this.transform.yv < 0 && (nTop < oBottom) && ((this.transform.y + thisHeightReduction) >= oBottom)) {
+                this.transform.yv = 0;
+                this.state.movement.up = false;
+                // Clamp flush below bottom side
+                this.transform.y = oBottom - thisHeightReduction;
+            }
+        }
+    }
+
+    /**
      * Updates the object's state.
      * This method must be implemented by subclasses.
      * @abstract
@@ -290,8 +354,7 @@ class GameObject {
     handleCollisionState() {
         // handle player reaction based on collision type
         if (this.state.collisionEvents.length > 0) {
-            // Reset movement to allow all directions initially
-            this.state.movement = { up: true, down: true, left: true, right: true };
+            // Do not reset movement here; it is reset at frame start in collisionChecks().
 
             // Robust separation: resolve minimal overlap on primary axis using engine-space bounds
             const b2 = this.collisionData?.bounds;
