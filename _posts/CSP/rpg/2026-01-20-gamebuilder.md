@@ -429,9 +429,8 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="alien">Alien Planet</option>
                         <option value="clouds">Sky Kingdom</option>
                     </select>
-                    <div style="display:flex; gap:8px;">
-                        <button id="bg-upload-btn" class="btn">Upload Background</button>
-                        <input id="bg-upload-input" type="file" accept="image/*" style="display:none;" />
+                    <div class="note" style="font-size:0.75em; color: var(--text-muted);">
+                        To add your own backgrounds, place files under <code>images/gamebuilder/backgrounds</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/docs/gamebuilder-manifests">upload instructions</a>.
                     </div>
                 </div>
                 <div class="asset-group">
@@ -444,9 +443,8 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="chillguy">Chill Guy</option>
                         <option value="tux">Tux</option>
                     </select>
-                    <div style="display:flex; gap:8px;">
-                        <button id="sprite-upload-btn" class="btn">Upload Sprite Sheet</button>
-                        <input id="sprite-upload-input" type="file" accept="image/*" style="display:none;" />
+                    <div class="note" style="font-size:0.75em; color: var(--text-muted);">
+                        To add your own spritesheets, place files under <code>images/gamebuilder/spritesheets</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/docs/gamebuilder-manifests">upload instructions</a>.
                     </div>
                     <label>X Position</label>
                     <input type="range" id="player-x" min="0" max="800" value="100">
@@ -511,8 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const assets = {
         bg: {
             desert: { src: "/images/gamify/desert.png", h: 580, w: 1038 },
-            alien: { src: "/images/gamebuilder/backgrounds/alien_planet.jpg", h: 600, w: 1000 },
-            clouds: { src: "/images/gamebuilder/backgrounds/clouds.jpg", h: 720, w: 1280 }
+            alien: { src: "/images/gamebuilder/bg/alien_planet.jpg", h: 600, w: 1000 },
+            skykingdom: { src: "/images/gamebuilder/bg/clouds.jpg", h: 720, w: 1280 }
         },
         sprites: {
             tux: { src: "/images/gamify/tux.png", h:256, w:352, rows:8, cols:11 },
@@ -520,38 +518,11 @@ document.addEventListener('DOMContentLoaded', () => {
             r2d2: { src: "/images/gamify/r2_idle.png", h:223, w:505, rows:1, cols:3 }
         }
     };
-    // Load user-uploaded assets from localStorage
-    const LS_BG_KEY = 'gb_user_backgrounds';
-    const LS_SPR_KEY = 'gb_user_sprites';
+    // User uploads via file-based workflow (see docs); localStorage upload is disabled
     const GB_BG_DIRS = ['/images/gamebuilder/backgrounds', '/images/gamebuilder/bg', '/images/gamebuilder'];
     const GB_SPR_DIRS = ['/images/gamebuilder/spritesheets', '/images/gamebuilder/sprites', '/images/gamebuilder'];
     const IMG_EXT_RE = /\.(png|jpg|jpeg|gif|webp|bmp)$/i;
-    function loadUserAssets() {
-        try {
-            const bgs = JSON.parse(localStorage.getItem(LS_BG_KEY) || '[]');
-            bgs.forEach((b) => {
-                if (b && b.key && b.src) {
-                    assets.bg[b.key] = { src: b.src, h: b.h, w: b.w };
-                    const opt = document.createElement('option');
-                    opt.value = b.key;
-                    opt.textContent = b.name || b.key;
-                    ui.bg.appendChild(opt);
-                }
-            });
-        } catch (_) {}
-        try {
-            const sprs = JSON.parse(localStorage.getItem(LS_SPR_KEY) || '[]');
-            sprs.forEach((s) => {
-                if (s && s.key && s.src) {
-                    assets.sprites[s.key] = { src: s.src, h: s.h, w: s.w, rows: s.rows, cols: s.cols };
-                    const opt = document.createElement('option');
-                    opt.value = s.key;
-                    opt.textContent = s.name || s.key;
-                    ui.pSprite.appendChild(opt);
-                }
-            });
-        } catch (_) {}
-    }
+    // Note: previously supported localStorage-based uploads have been removed.
 
     async function fetchJson(url) {
         try {
@@ -600,6 +571,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function dedupSelectOptions(selectEl) {
+        if (!selectEl) return;
+        const seen = new Set();
+        for (let i = 0; i < selectEl.options.length; i++) {
+            const opt = selectEl.options[i];
+            const label = (opt.textContent || '').trim().toLowerCase();
+            if (opt.disabled) continue;
+            if (seen.has(label)) {
+                selectEl.removeChild(opt);
+                i--;
+            } else {
+                seen.add(label);
+            }
+        }
+    }
+
     async function scanServerAssets() {
         // Backgrounds: try JSON manifests first, then directory listing fallback
         for (const dir of GB_BG_DIRS) {
@@ -629,6 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        // Remove duplicate background entries by label
+        dedupSelectOptions(ui.bg);
 
         // Sprites: similar approach
         for (const dir of GB_SPR_DIRS) {
@@ -666,15 +656,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+
+        // Remove duplicate sprite entries by label on player and NPC selects
+        dedupSelectOptions(ui.pSprite);
+        document.querySelectorAll('.npc-sprite').forEach(sel => dedupSelectOptions(sel));
     }
 
     const ui = {
         bg: document.getElementById('bg-select'),
-        bgUploadBtn: document.getElementById('bg-upload-btn'),
-        bgUploadInput: document.getElementById('bg-upload-input'),
         pSprite: document.getElementById('player-select'),
-        spriteUploadBtn: document.getElementById('sprite-upload-btn'),
-        spriteUploadInput: document.getElementById('sprite-upload-input'),
         pX: document.getElementById('player-x'),
         pY: document.getElementById('player-y'),
         pName: document.getElementById('player-name'),
@@ -714,77 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Drawing overlay: enable drag-to-create rectangles for barriers and pass zones
-        // Upload handlers
-        // sanitizeKey defined above for reuse
-        function handleBackgroundUpload(file) {
-            if (!file) return;
-            const name = prompt('Background name:', file.name.replace(/\.[^.]+$/, '')) || file.name;
-            const key = sanitizeKey(name);
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = new Image();
-                img.onerror = () => { alert('Failed to load image. Please try a different file.'); };
-                img.onload = () => {
-                    const src = reader.result;
-                    const h = img.naturalHeight; const w = img.naturalWidth;
-                    assets.bg[key] = { src, h, w };
-                    const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
-                    ui.bg.value = key;
-                    try {
-                        const bgs = JSON.parse(localStorage.getItem(LS_BG_KEY) || '[]');
-                        const idx = bgs.findIndex((b) => b.key === key);
-                        const entry = { key, name, src, h, w };
-                        if (idx >= 0) bgs[idx] = entry; else bgs.push(entry);
-                        localStorage.setItem(LS_BG_KEY, JSON.stringify(bgs));
-                    } catch (_) {}
-                    syncFromControlsIfFreestyle();
-                };
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        function handleSpriteUpload(file) {
-            if (!file) return;
-            const name = prompt('Sprite name:', file.name.replace(/\.[^.]+$/, '')) || file.name;
-            const rows = parseInt(prompt('Rows (animations down/up/etc):', '4') || '4', 10);
-            const cols = parseInt(prompt('Columns (frames per row):', '3') || '3', 10);
-            const key = sanitizeKey(name);
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = new Image();
-                img.onerror = () => { alert('Failed to load sprite sheet. Please try a different file.'); };
-                img.onload = () => {
-                    const src = reader.result;
-                    const h = img.naturalHeight; const w = img.naturalWidth;
-                    assets.sprites[key] = { src, h, w, rows, cols };
-                    const opt1 = document.createElement('option'); opt1.value = key; opt1.textContent = name; ui.pSprite.appendChild(opt1);
-                    ui.pSprite.value = key;
-                    // Update all NPC sprite selects
-                    document.querySelectorAll('.npc-sprite').forEach(sel => {
-                        const opt = document.createElement('option'); opt.value = key; opt.textContent = name; sel.appendChild(opt);
-                    });
-                    try {
-                        const sprs = JSON.parse(localStorage.getItem(LS_SPR_KEY) || '[]');
-                        const idx = sprs.findIndex((s) => s.key === key);
-                        const entry = { key, name, src, h, w, rows, cols };
-                        if (idx >= 0) sprs[idx] = entry; else sprs.push(entry);
-                        localStorage.setItem(LS_SPR_KEY, JSON.stringify(sprs));
-                    } catch (_) {}
-                    syncFromControlsIfFreestyle();
-                };
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        }
-        if (ui.bgUploadBtn && ui.bgUploadInput) {
-            ui.bgUploadBtn.addEventListener('click', () => ui.bgUploadInput.click());
-            ui.bgUploadInput.addEventListener('change', (e) => handleBackgroundUpload(e.target.files?.[0]));
-        }
-        if (ui.spriteUploadBtn && ui.spriteUploadInput) {
-            ui.spriteUploadBtn.addEventListener('click', () => ui.spriteUploadInput.click());
-            ui.spriteUploadInput.addEventListener('change', (e) => handleSpriteUpload(e.target.files?.[0]));
-        }
+    // Drawing overlay: enable drag-to-create rectangles for barriers
     function removePreview() {
         if (!ui.drawOverlay) return;
         const preview = ui.drawOverlay.querySelector('.draw-rect.preview');
@@ -1107,8 +1027,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Load persisted user assets and append to dropdowns
-    loadUserAssets();
+    // Persisted uploads are disabled; use server-side assets scan instead
 
     function setIndicator() {
         const current = steps[stepIndex];
