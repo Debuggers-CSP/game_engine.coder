@@ -136,6 +136,11 @@ permalink: /rpg/gamebuilder
     position: relative;
 }
 
+.icon-btn.staged {
+    box-shadow: 0 0 10px rgba(0,200,0,0.9);
+    border-color: rgba(0,200,0,0.9);
+}
+
 .icon-btn:hover::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -1141,6 +1146,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const LINE_HEIGHT = 20;
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false };
+    let stagedCode = null;
+    let stagedStep = null;
     const steps = ['background','player','freestyle'];
     let stepIndex = 0; 
     const stepIndicatorMini = document.getElementById('step-indicator-mini');
@@ -1729,7 +1736,7 @@ export const gameLevelClasses = [CustomLevel];`;
     function syncFromControlsIfFreestyle() {
         const current = steps[stepIndex];
         // Preserve user edits only when in freestyle mode
-        if (state.userEdited && current === 'freestyle') return; 
+        if (state.userEdited && current === 'freestyle') return;
         const hasNPCs = ui.npcs.length > 0;
         const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
         const hasPlayer = !!ui.pSprite.value;
@@ -1737,19 +1744,23 @@ export const gameLevelClasses = [CustomLevel];`;
         const stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
         const newCode = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
         if (newCode) {
-            const oldCode = ui.editor.value;
-            animateTypingDiff(oldCode, newCode, () => {
-                runInEmbed();
-            });
+            // Stage the change instead of applying it immediately.
+            stagedCode = newCode;
+            stagedStep = stepToCompose;
+            const btn = document.getElementById('btn-confirm');
+            if (btn) btn.classList.add('staged');
+            // Provide a persistent highlight of the changed region for context
+            const { startLine, lineCount } = computeChangeRange(ui.editor.value, newCode);
+            state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
+            renderOverlay();
         }
     }
 
     function animateTypingDiff(oldCode, newCode, onDone) {
-        // Instant apply: update only the changed range metadata, not character-by-character typing
+        // Apply new code to editor and mark changed region
         state.programmaticEdit = true;
         const { startLine, lineCount } = computeChangeRange(oldCode, newCode);
         ui.editor.value = newCode;
-        // Highlight the changed block briefly for context
         state.typing = null;
         state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
         renderOverlay();
@@ -1758,7 +1769,8 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     const mvEl = document.getElementById('movement-keys');
-    const rerunPlayer = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
+    // rerunPlayer should stage changes (not auto-apply) so the user can confirm
+    const rerunPlayer = () => { syncFromControlsIfFreestyle(); };
     // Targeted in-editor update of Player INIT_POSITION to work even in freestyle
     function updatePlayerPositionInEditor() {
         const code = ui.editor.value || '';
@@ -1800,8 +1812,68 @@ export const gameLevelClasses = [CustomLevel];`;
     });
 
     document.getElementById('btn-confirm').addEventListener('click', () => {
+        const btn = document.getElementById('btn-confirm');
         const oldCode = ui.editor.value;
         const current = steps[stepIndex];
+
+        // If there's a staged change, apply that first
+        if (stagedCode) {
+            const applyingStep = stagedStep || current;
+            const codeToApply = stagedCode;
+            animateTypingDiff(oldCode, codeToApply, () => {
+                // Apply same locking/advance logic as the normal confirm flow
+                if (applyingStep === 'background') { lockField(ui.bg); }
+                if (applyingStep === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
+                if (applyingStep === 'npc') {
+                    ui.npcs.forEach(slot => {
+                        if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
+                            slot.locked = true;
+                            const name = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC');
+                            slot.displayName = name;
+                            if (slot.addBtn) {
+                                const open = slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none';
+                                slot.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                slot.addBtn.classList.add('btn-confirm');
+                            }
+                            if (slot.deleteBtn) {
+                                slot.deleteBtn.disabled = false;
+                                slot.deleteBtn.style.display = '';
+                            }
+                        }
+                    });
+
+                    stepIndex = steps.indexOf('freestyle');
+                } else {
+                    if (applyingStep === 'walls') {
+                        ui.walls.forEach(w => {
+                            if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                                w.locked = true;
+                                const name = w.displayName || `Wall ${w.index}`;
+                                w.displayName = name;
+                                if (w.addBtn) {
+                                    const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                    w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                    w.addBtn.classList.add('btn-confirm');
+                                }
+                                if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                            }
+                        });
+                    }
+                    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+                }
+
+                // Clear staged state and UI
+                stagedCode = null; stagedStep = null;
+                if (btn) btn.classList.remove('staged');
+
+                setIndicator();
+                updateStepUI();
+                runInEmbed();
+            });
+            return;
+        }
+
+        // No staged change: behave as before (confirm current step)
         const newCode = generateStepCode(current);
         if (!newCode) {
             if (current === 'background') alert('Select a Background, then Confirm Step.');
