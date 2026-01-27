@@ -511,7 +511,8 @@ function closeCustomAlert() {
                     if (el && msgBtn) {
                         msgBtn.textContent = msg;
                         el.style.display = 'block';
-                        enableBlockers();
+                        // Do NOT keep blockers active on failure; allow builder controls to remain responsive
+                        disableBlockers();
                     }
                 } catch (_) {}
                 return;
@@ -524,7 +525,8 @@ function closeCustomAlert() {
                 if (el && msgBtn) {
                     msgBtn.textContent = `Error: ${err.message || err}`;
                     el.style.display = 'block';
-                    enableBlockers();
+                    // Do NOT keep blockers active on failure
+                    disableBlockers();
                 }
             } catch (_) {}
         }

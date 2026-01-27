@@ -474,6 +474,34 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="wasd">WASD</option>
                         <option value="arrows">Arrow Keys</option>
                     </select>
+                    <div class="upload-instructions" style="margin-top:6px;">
+                        <button id="player-advanced-btn" class="btn btn-sm">Advanced ▸</button>
+                        <div id="player-advanced-panel" class="instructions-panel" style="display:none; font-size:0.85em; color: var(--text-muted); margin-top:6px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end;">
+                                <div>
+                                    <label>Scale Factor</label>
+                                    <input type="number" id="player-scale" min="1" max="20" value="5">
+                                </div>
+                                <div>
+                                    <label>Step Factor</label>
+                                    <input type="number" id="player-step" min="100" max="5000" value="1000">
+                                </div>
+                                <div>
+                                    <label>Animation Rate (ms)</label>
+                                    <input type="number" id="player-anim" min="10" max="500" value="50">
+                                </div>
+                                <div>
+                                    <label>Rows</label>
+                                    <input type="number" id="player-rows" min="1" value="1">
+                                </div>
+                                <div>
+                                    <label>Columns</label>
+                                    <input type="number" id="player-cols" min="1" value="1">
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="asset-group">
                     <div class="group-title">
@@ -707,6 +735,14 @@ document.addEventListener('DOMContentLoaded', () => {
         pSprite: document.getElementById('player-select'),
         spriteInstructionsBtn: document.getElementById('sprite-instructions-btn'),
         spriteInstructionsPanel: document.getElementById('sprite-instructions-panel'),
+        pScale: document.getElementById('player-scale'),
+        pStep: document.getElementById('player-step'),
+        pAnim: document.getElementById('player-anim'),
+        pRows: document.getElementById('player-rows'),
+        pCols: document.getElementById('player-cols'),
+        
+        playerAdvancedBtn: document.getElementById('player-advanced-btn'),
+        playerAdvancedPanel: document.getElementById('player-advanced-panel'),
         npcSpriteInstructionsBtn: document.getElementById('npc-sprite-instructions-btn'),
         npcSpriteInstructionsPanel: document.getElementById('npc-sprite-instructions-panel'),
         pX: document.getElementById('player-x'),
@@ -761,12 +797,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggle(el) {
         if (!el) return;
-        const show = el.style.display === 'none' || !el.style.display;
-        el.style.display = show ? '' : 'none';
+        // Simple toggle: if hidden, show; else hide
+        const isHidden = el.style.display === 'none';
+        el.style.display = isHidden ? '' : 'none';
     }
+    // Ensure panels start closed
+    if (ui.bgInstructionsPanel) ui.bgInstructionsPanel.style.display = 'none';
+    if (ui.spriteInstructionsPanel) ui.spriteInstructionsPanel.style.display = 'none';
+    if (ui.npcSpriteInstructionsPanel) ui.npcSpriteInstructionsPanel.style.display = 'none';
+    if (ui.playerAdvancedPanel) ui.playerAdvancedPanel.style.display = 'none';
+
     if (ui.bgInstructionsBtn) ui.bgInstructionsBtn.addEventListener('click', () => toggle(ui.bgInstructionsPanel));
     if (ui.spriteInstructionsBtn) ui.spriteInstructionsBtn.addEventListener('click', () => toggle(ui.spriteInstructionsPanel));
     if (ui.npcSpriteInstructionsBtn) ui.npcSpriteInstructionsBtn.addEventListener('click', () => toggle(ui.npcSpriteInstructionsPanel));
+    if (ui.playerAdvancedBtn) ui.playerAdvancedBtn.addEventListener('click', () => toggle(ui.playerAdvancedPanel));
 
     function removePreview() {
         if (!ui.drawOverlay) return;
@@ -927,6 +971,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <input type="number" min="1" value="1" class="npc-cols">
                 </div>
             </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end; margin-top:8px;">
+                <div>
+                    <label>Scale Factor</label>
+                    <input type="number" min="1" max="20" value="8" class="npc-scale">
+                </div>
+                <div>
+                    <label>Animation Rate (ms)</label>
+                    <input type="number" min="10" max="500" value="50" class="npc-anim">
+                </div>
+            </div>
             <label>Position X</label>
             <input type="range" min="0" max="800" value="500" class="npc-x">
             <label>Position Y</label>
@@ -951,6 +1005,8 @@ document.addEventListener('DOMContentLoaded', () => {
         slot.nSprite = fields.querySelector('.npc-sprite');
         slot.nRows = fields.querySelector('.npc-rows');
         slot.nCols = fields.querySelector('.npc-cols');
+        slot.nScale = fields.querySelector('.npc-scale');
+        slot.nAnim = fields.querySelector('.npc-anim');
         if (slot.nSprite) {
             const none = document.createElement('option'); none.value = ''; none.disabled = true; none.selected = true; none.textContent = 'Select sprite…'; slot.nSprite.appendChild(none);
             if (assets && assets.sprites) {
@@ -1003,7 +1059,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
                     const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
                     const npcBlockRegex = new RegExp(`(// --- Added NPC ---\nconst npcData${index} = {)[^}]*}`, 'm');
-                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
+                    const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
+                    const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
+                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${nScale},\n    ANIMATION_RATE: ${nAnim},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
                     ui.editor.value = ui.editor.value.replace(npcBlockRegex, newNpcBlock);
                 }
             }
@@ -1021,6 +1079,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             slot.nRows?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
             slot.nCols?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nScale?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nAnim?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
             slot.nX?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
             slot.nY?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
         });
@@ -1043,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
             const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
             const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
-            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
+            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${Math.max(1, parseInt(slot.nScale?.value || 8, 10))},\n    ANIMATION_RATE: ${Math.max(1, parseInt(slot.nAnim?.value || 50, 10))},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
             ui.editor.value = ui.editor.value + npcCode;
         }
         // Do NOT call syncFromControlsIfFreestyle or code generators here
@@ -1145,12 +1205,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStepUI();
             scanServerAssets();
             syncFromControlsIfFreestyle();
-            if (ui.freestyleMode) syncToCode();
         });
     }
 
     const LINE_HEIGHT = 20;
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false };
+    // Stage programmatic code before applying to editor, so user can confirm
     let stagedCode = null;
     let stagedStep = null;
     const steps = ['background','player','freestyle'];
@@ -1187,6 +1247,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStepUI() {
         const current = steps[stepIndex];
+        // Always allow direct code edits across all steps
+        ui.editor.readOnly = false;
         const mv = document.getElementById('movement-keys');
         [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = true; });
         ui.npcs.forEach(slot => {
@@ -1208,13 +1270,18 @@ document.addEventListener('DOMContentLoaded', () => {
             unlockField(ui.pY);
             unlockField(ui.pName);
             unlockField(mv);
+            unlockField(ui.pScale);
+            unlockField(ui.pStep);
+            unlockField(ui.pAnim);
+            unlockField(ui.pRows);
+            unlockField(ui.pCols);
 
         } else if (current === 'npc') {
             if (ui.addNpcBtn) ui.addNpcBtn.disabled = false;
             ui.npcs.forEach(slot => {
                 if (slot.addBtn) slot.addBtn.disabled = false;
                 if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
-                    [slot.nId, slot.nMsg, slot.nSprite, slot.nX, slot.nY].forEach(el => unlockField(el));
+                    [slot.nId, slot.nMsg, slot.nSprite, slot.nRows, slot.nCols, slot.nScale, slot.nAnim, slot.nX, slot.nY].forEach(el => unlockField(el));
                     if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
                 } else {
                     if (slot.deleteBtn) { slot.deleteBtn.disabled = !slot.locked; slot.deleteBtn.style.display = slot.locked ? '' : 'none'; }
@@ -1236,10 +1303,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (current === 'freestyle') {
             ui.editor.readOnly = false;
             [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = false; });
+            [ui.pScale, ui.pStep, ui.pAnim, ui.pRows, ui.pCols].forEach(el => { if (el) el.disabled = false; });
             if (ui.addNpcBtn) ui.addNpcBtn.disabled = false;
             ui.npcs.forEach(slot => {
                 if (slot.addBtn) slot.addBtn.disabled = false;
-                [slot.nId, slot.nMsg, slot.nSprite, slot.nX, slot.nY].forEach(el => { if (el) el.disabled = false; });
+                [slot.nId, slot.nMsg, slot.nSprite, slot.nRows, slot.nCols, slot.nScale, slot.nAnim, slot.nX, slot.nY].forEach(el => { if (el) el.disabled = false; });
                 if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
             });
             if (ui.addWallBtn) ui.addWallBtn.disabled = false;
@@ -1422,6 +1490,12 @@ export const gameLevelClasses = [CustomLevel];`;
                         const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
                         const pIsData = p && p.src && p.src.startsWith('data:');
                         const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
+                        const pScaleVal = parseInt(ui.pScale?.value || '5', 10);
+                        const pStepVal = parseInt(ui.pStep?.value || '1000', 10);
+                        const pAnimVal = parseInt(ui.pAnim?.value || '50', 10);
+                        const pRowsVal = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
+                        const pColsVal = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
+                        
                         const defs = `
         const bgData = {
             name: 'custom_bg',
@@ -1431,20 +1505,16 @@ export const gameLevelClasses = [CustomLevel];`;
         const playerData = {
             id: '${name}',
             src: ${pSrcVal},
-            SCALE_FACTOR: 5,
-            STEP_FACTOR: 1000,
-            ANIMATION_RATE: 50,
+            SCALE_FACTOR: ${pScaleVal},
+            STEP_FACTOR: ${pStepVal},
+            ANIMATION_RATE: ${pAnimVal},
             INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
-            orientation: { rows: ${p.rows}, columns: ${p.cols} },
+            orientation: { rows: ${pRowsVal}, columns: ${pColsVal} },
             down: { row: 0, start: 0, columns: 3 },
-            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            downLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
             left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
-            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1496,6 +1566,12 @@ export const gameLevelClasses = [CustomLevel];`;
                         const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
                         const pIsData = p && p.src && p.src.startsWith('data:');
                         const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
+                        const pScaleValN = parseInt(ui.pScale?.value || '5', 10);
+                        const pStepValN = parseInt(ui.pStep?.value || '1000', 10);
+                        const pAnimValN = parseInt(ui.pAnim?.value || '50', 10);
+                        const pRowsValN = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
+                        const pColsValN = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
+                        
                         const defsStart = `
         const bgData = {
             name: 'custom_bg',
@@ -1505,20 +1581,16 @@ export const gameLevelClasses = [CustomLevel];`;
         const playerData = {
             id: '${name}',
             src: ${pSrcVal},
-            SCALE_FACTOR: 5,
-            STEP_FACTOR: 1000,
-            ANIMATION_RATE: 50,
+            SCALE_FACTOR: ${pScaleValN},
+            STEP_FACTOR: ${pStepValN},
+            ANIMATION_RATE: ${pAnimValN},
             INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
-            orientation: { rows: ${p.rows}, columns: ${p.cols} },
+            orientation: { rows: ${pRowsValN}, columns: ${pColsValN} },
             down: { row: 0, start: 0, columns: 3 },
-            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            downLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
             left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
-            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1540,13 +1612,15 @@ export const gameLevelClasses = [CustomLevel];`;
                             const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
                             const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
                             const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
+                            const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
+                            const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
                             npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
             greeting: '${nMsgSafe}',
             src: ${nSrcVal},
-            SCALE_FACTOR: 8,
-            ANIMATION_RATE: 50,
+            SCALE_FACTOR: ${nScale},
+            ANIMATION_RATE: ${nAnim},
             INIT_POSITION: { x: ${nX}, y: ${nY} },
             pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
             orientation: { rows: ${nRows}, columns: ${nCols} },
@@ -1606,6 +1680,12 @@ export const gameLevelClasses = [CustomLevel];`;
                     const bgSrcVal = bgIsData ? `'${bg.src.replace(/'/g, "\\'")}'` : `path + "${bg.src}"`;
                     const pIsData = p && p.src && p.src.startsWith('data:');
                     const pSrcVal = pIsData ? `'${p.src.replace(/'/g, "\\'")}'` : `path + "${p.src}"`;
+                    const pScaleValW = parseInt(ui.pScale?.value || '5', 10);
+                    const pStepValW = parseInt(ui.pStep?.value || '1000', 10);
+                    const pAnimValW = parseInt(ui.pAnim?.value || '50', 10);
+                    const pRowsValW = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
+                    const pColsValW = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
+                    
                     const defsStart = `
         const bgData = {
             name: 'custom_bg',
@@ -1615,20 +1695,16 @@ export const gameLevelClasses = [CustomLevel];`;
         const playerData = {
             id: '${name}',
             src: ${pSrcVal},
-            SCALE_FACTOR: 5,
-            STEP_FACTOR: 1000,
-            ANIMATION_RATE: 50,
+            SCALE_FACTOR: ${pScaleValW},
+            STEP_FACTOR: ${pStepValW},
+            ANIMATION_RATE: ${pAnimValW},
             INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
-            orientation: { rows: ${p.rows}, columns: ${p.cols} },
+            orientation: { rows: ${pRowsValW}, columns: ${pColsValW} },
             down: { row: 0, start: 0, columns: 3 },
-            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
-            downLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
             right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
             left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            upRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3, rotate: -Math.PI/16 },
-            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3, rotate: Math.PI/16 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1649,16 +1725,18 @@ export const gameLevelClasses = [CustomLevel];`;
                         const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
                         const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
                         const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
+                        const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
+                        const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
                         npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
             greeting: '${nMsgSafe}',
             src: ${nSrcVal},
-            SCALE_FACTOR: 8,
-            ANIMATION_RATE: 50,
+            SCALE_FACTOR: ${nScale},
+            ANIMATION_RATE: ${nAnim},
             INIT_POSITION: { x: ${nX}, y: ${nY} },
             pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
-            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },
+            orientation: { rows: ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))}, columns: ${Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10))} },
             down: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
             dialogues: ['${nMsgSafe}'],
@@ -1775,6 +1853,60 @@ export const gameLevelClasses = [CustomLevel];`;
         if (typeof onDone === 'function') onDone();
     }
 
+    // Merge helpers: append NPC/Barrier defs and class entries without clobbering existing code
+    function buildNpcInsertText() {
+        const includedSlots = ui.npcs.slice();
+        if (!includedSlots.length) return { defs: '', classes: [] };
+        const classes = [];
+        const defs = includedSlots.map((slot) => {
+            const index = slot.index;
+            const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
+            const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'") || 'Hello!';
+            const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
+            const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
+            const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
+            const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
+            const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
+            const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
+            return `\n        const npcData${index} = {\n            id: '${nId}',\n            greeting: '${nMsg}',\n            src: path + "${nSprite.src}",\n            SCALE_FACTOR: ${nScale},\n            ANIMATION_RATE: ${nAnim},\n            INIT_POSITION: { x: ${nX}, y: ${nY} },\n            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },\n            down: { row: 0, start: 0, columns: 3 },\n            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n            dialogues: ['${nMsg}'],\n            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }\n        };`;
+        }).join('\n');
+        includedSlots.forEach((slot) => {
+            classes.push(`      { class: Npc, data: npcData${slot.index} }`);
+        });
+        return { defs, classes };
+    }
+
+    function buildBarrierInsertText() {
+        const includedWalls = ui.walls.slice();
+        const classes = [];
+        const defs = includedWalls.map((w, idx) => {
+            const x = parseInt(w.wX?.value || 100, 10);
+            const y = parseInt(w.wY?.value || 100, 10);
+            const wWidth = parseInt(w.wW?.value || 150, 10);
+            const wHeight = parseInt(w.wH?.value || 20, 10);
+            const id = `wall_${idx+1}`;
+            classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
+            return `\n        const barrierData${idx+1} = {\n            id: '${id}', x: ${x}, y: ${y}, width: ${wWidth}, height: ${wHeight}, visible: true,\n            hitbox: { widthPercentage: 0.0, heightPercentage: 0.0 }\n        };`;
+        }).join('\n');
+        return { defs, classes };
+    }
+
+    function mergeDefsAndClasses(oldCode, insertDefs, insertClasses) {
+        let code = oldCode;
+        // Insert definitions before the classes array inside constructor
+        const ctorRe = /(class\s+CustomLevel[\s\S]*?constructor\s*\(gameEnv\)\s*\{[\s\S]*?)(this\.classes\s*=\s*\[)/;
+        code = code.replace(ctorRe, (m, p1, p2) => p1 + (insertDefs || '') + '\n' + p2);
+        // Append class entries inside classes array
+        const classesRe = /(this\.classes\s*=\s*\[)([\s\S]*?)(\]\s*;)/;
+        code = code.replace(classesRe, (m, p1, inner, p3) => {
+            const existing = inner.trim();
+            const suffix = (insertClasses && insertClasses.length) ? ('\n' + insertClasses.join(',\n')) : '';
+            const sep = existing.length ? ',\n' : '\n';
+            return p1 + existing + (suffix ? sep + suffix.trim() : '') + '\n' + p3;
+        });
+        return code;
+    }
+
     const mvEl = document.getElementById('movement-keys');
     // rerunPlayer should stage changes (not auto-apply) so the user can confirm
     const rerunPlayer = () => { syncFromControlsIfFreestyle(); };
@@ -1796,11 +1928,28 @@ export const gameLevelClasses = [CustomLevel];`;
         }
     }
     if (ui.bg) ui.bg.addEventListener('change', rerunPlayer);
-    if (ui.pSprite) ui.pSprite.addEventListener('change', rerunPlayer);
+    if (ui.pSprite) ui.pSprite.addEventListener('change', () => {
+        try {
+            const key = ui.pSprite.value;
+            const spr = assets && assets.sprites ? assets.sprites[key] : null;
+            if (spr) {
+                if (ui.pRows) ui.pRows.value = spr.rows ?? 1;
+                if (ui.pCols) ui.pCols.value = spr.cols ?? 1;
+            }
+        } finally {
+            rerunPlayer();
+        }
+    });
     if (ui.pX) ui.pX.addEventListener('input', updatePlayerPositionInEditor);
     if (ui.pY) ui.pY.addEventListener('input', updatePlayerPositionInEditor);
     if (ui.pName) ui.pName.addEventListener('input', rerunPlayer);
     if (mvEl) mvEl.addEventListener('change', rerunPlayer);
+    if (ui.pScale) ui.pScale.addEventListener('input', rerunPlayer);
+    if (ui.pStep) ui.pStep.addEventListener('input', rerunPlayer);
+    if (ui.pAnim) ui.pAnim.addEventListener('input', rerunPlayer);
+    if (ui.pRows) ui.pRows.addEventListener('input', rerunPlayer);
+    if (ui.pCols) ui.pCols.addEventListener('input', rerunPlayer);
+    
     ui.npcs.forEach(slot => {
         if (slot.nId) slot.nId.addEventListener('input', syncFromControlsIfFreestyle);
         if (slot.nId) slot.nId.addEventListener('input', () => {
@@ -1822,6 +1971,65 @@ export const gameLevelClasses = [CustomLevel];`;
         const btn = document.getElementById('btn-confirm');
         const oldCode = ui.editor.value;
         const current = steps[stepIndex];
+
+        // If user manually edited code, avoid regenerating the whole file.
+        if (state.userEdited) {
+            if (current === 'npc') {
+                const ins = buildNpcInsertText();
+                const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+                animateTypingDiff(oldCode, merged, () => {
+                    // Lock UI entries visually
+                    ui.npcs.forEach(slot => {
+                        if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
+                            slot.locked = true;
+                            const name = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC');
+                            slot.displayName = name;
+                            if (slot.addBtn) {
+                                const open = slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none';
+                                slot.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                slot.addBtn.classList.add('btn-confirm');
+                            }
+                            if (slot.deleteBtn) {
+                                slot.deleteBtn.disabled = false;
+                                slot.deleteBtn.style.display = '';
+                            }
+                        }
+                    });
+                    stepIndex = steps.indexOf('freestyle');
+                    setIndicator();
+                    updateStepUI();
+                    runInEmbed();
+                });
+                return;
+            }
+            if (current === 'walls') {
+                const ins = buildBarrierInsertText();
+                const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+                animateTypingDiff(oldCode, merged, () => {
+                    ui.walls.forEach(w => {
+                        if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                            w.locked = true;
+                            const name = w.displayName || `Wall ${w.index}`;
+                            w.displayName = name;
+                            if (w.addBtn) {
+                                const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                w.addBtn.classList.add('btn-confirm');
+                            }
+                            if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                        }
+                    });
+                    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+                    setIndicator();
+                    updateStepUI();
+                    runInEmbed();
+                });
+                return;
+            }
+            // For background/player steps, don’t overwrite manual edits.
+            alert('You have manual code edits. To avoid resetting them, configure background/player directly in code or clear edits before confirming.');
+            return;
+        }
 
         // If there's a staged change, apply that first
         if (stagedCode) {
@@ -1972,8 +2180,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
-                    // Also re-sync overlay barriers into the fresh runtime (freestyle only)
-                    try { if (steps[stepIndex] === 'freestyle') syncOverlayBarriersToRunner(); } catch (_) {}
+                    // Always re-sync overlay barriers after any code reload so collisions remain accurate
+                    try { syncOverlayBarriersToRunner(); } catch (_) {}
                     // Ensure keyboard focus goes to the game
                     try {
                         ui.iframe.setAttribute('tabindex', '0');
