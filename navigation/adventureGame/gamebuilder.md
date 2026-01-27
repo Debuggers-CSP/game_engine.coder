@@ -485,6 +485,9 @@ iframe { width: 100%; height: 100%; border: none; }
                         <div id="npc-sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
                             NPCs use the same spritesheet system as the Player. Place files under <code>images/gamebuilder/sprites</code> and set <code>rows</code>/<code>cols</code> in the manifest, then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
                             <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
+                            <div style="margin-top:6px;">
+                                Interaction: Walk up to an NPC and press <strong>E</strong> to open their dialogue. Interactions trigger on collision or close proximity. Ensure the NPC has either a <code>greeting</code> or <code>dialogues</code> set for text to appear.
+                            </div>
                         </div>
                     </div>
                     <div id="npcs-container"></div>
@@ -990,6 +993,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const index = slot.index;
                     const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
                     const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+                    const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
                     const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
                     const nSprite = assets && assets.sprites ? assets.sprites[nSpriteKey] || assets.sprites['chillguy'] : { h: 32, w: 32, rows: 1, cols: 1, src: '' };
                     const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
@@ -999,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
                     const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
                     const npcBlockRegex = new RegExp(`(// --- Added NPC ---\nconst npcData${index} = {)[^}]*}`, 'm');
-                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsg}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsg}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nclasses.push({ class: Npc, data: npcData${index} });\n`;
+                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
                     ui.editor.value = ui.editor.value.replace(npcBlockRegex, newNpcBlock);
                 }
             }
@@ -1030,6 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = slot.index;
             const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
             const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+            const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
             const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
             const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
             const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
@@ -1038,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
             const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
             const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
-            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsg}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsg}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nclasses.push({ class: Npc, data: npcData${index} });\n`;
+            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: 8,\n    ANIMATION_RATE: 50,\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
             ui.editor.value = ui.editor.value + npcCode;
         }
         // Do NOT call syncFromControlsIfFreestyle or code generators here
@@ -1526,6 +1531,7 @@ export const gameLevelClasses = [CustomLevel];`;
                             const index = slot.index;
                             const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
                             const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+                            const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
                             const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
                             const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
                             const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
@@ -1537,7 +1543,7 @@ export const gameLevelClasses = [CustomLevel];`;
                             npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
-            greeting: '${nMsg}',
+            greeting: '${nMsgSafe}',
             src: ${nSrcVal},
             SCALE_FACTOR: 8,
             ANIMATION_RATE: 50,
@@ -1546,7 +1552,7 @@ export const gameLevelClasses = [CustomLevel];`;
             orientation: { rows: ${nRows}, columns: ${nCols} },
             down: { row: 0, start: 0 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
-            dialogues: ['${nMsg}'],
+            dialogues: ['${nMsgSafe}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
             interact: function() {
                 if (this.dialogueSystem) {
@@ -1636,6 +1642,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         const index = slot.index;
                         const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
                         const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
+                        const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
                         const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
                         const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
                         const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
@@ -1645,7 +1652,7 @@ export const gameLevelClasses = [CustomLevel];`;
                         npcDefs.push(`
         const npcData${index} = {
             id: '${nId}',
-            greeting: '${nMsg}',
+            greeting: '${nMsgSafe}',
             src: ${nSrcVal},
             SCALE_FACTOR: 8,
             ANIMATION_RATE: 50,
@@ -1654,7 +1661,7 @@ export const gameLevelClasses = [CustomLevel];`;
             orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },
             down: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
-            dialogues: ['${nMsg}'],
+            dialogues: ['${nMsgSafe}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
             interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }
         };`);
@@ -1967,6 +1974,11 @@ export const gameLevelClasses = [CustomLevel];`;
                     } catch (e) { /* ignore */ }
                     // Also re-sync overlay barriers into the fresh runtime (freestyle only)
                     try { if (steps[stepIndex] === 'freestyle') syncOverlayBarriersToRunner(); } catch (_) {}
+                    // Ensure keyboard focus goes to the game
+                    try {
+                        ui.iframe.setAttribute('tabindex', '0');
+                        ui.iframe.focus();
+                    } catch (_) {}
                 }, 150);
             }, 100);
         };
@@ -2027,12 +2039,60 @@ export const gameLevelClasses = [CustomLevel];`;
 </script>
 
 <script>
+// Prevent page scroll with arrows/space only when the game iframe
+// is NOT focused and user isn’t typing in inputs.
 window.addEventListener('keydown', function(e) {
-    const keys = [32, 37, 38, 39, 40]; 
-    if (keys.includes(e.keyCode)) {
-        if (!(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) {
-            e.preventDefault();
-        }
+    const keys = [32, 37, 38, 39, 40];
+    if (!keys.includes(e.keyCode)) return;
+    const tgt = e.target;
+    const isForm = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable);
+    const active = document.activeElement;
+    const isGameFocused = active && active.tagName === 'IFRAME' && active.id === 'game-iframe';
+    if (!isForm && !isGameFocused) {
+        e.preventDefault();
     }
 }, { passive: false });
+
+// Clicking the game panel should focus the iframe to capture keys
+document.querySelector('.game-frame')?.addEventListener('click', () => {
+    const iframe = document.getElementById('game-iframe');
+    if (iframe) {
+        iframe.setAttribute('tabindex', '0');
+        iframe.focus();
+    }
+});
+</script>
+
+<script>
+// Forward E/U interaction keys to the game iframe so interactions work even
+// when the iframe is not currently focused (but user isn’t typing in inputs).
+function forwardInteractKey(ev, type) {
+    const tgt = ev.target;
+    const isForm = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable);
+    if (isForm) return;
+    const isInteract = (ev.key === 'e' || ev.key === 'E' || ev.code === 'KeyE' || ev.key === 'u' || ev.key === 'U');
+    if (!isInteract) return;
+    const iframe = document.getElementById('game-iframe');
+    try {
+        iframe?.contentWindow?.postMessage({
+            type: 'rpg:simulate-key',
+            evType: type,
+            key: ev.key,
+            keyCode: ev.keyCode,
+            code: ev.code
+        }, '*');
+    } catch (_) {}
+}
+
+window.addEventListener('keydown', function(e) {
+    forwardInteractKey(e, 'keydown');
+    // Also request a direct interaction trigger inside the iframe as a fallback
+    try {
+        const iframe = document.getElementById('game-iframe');
+        iframe?.contentWindow?.postMessage({ type: 'rpg:trigger-interact' }, '*');
+    } catch (_) {}
+});
+window.addEventListener('keyup', function(e) {
+    forwardInteractKey(e, 'keyup');
+});
 </script>

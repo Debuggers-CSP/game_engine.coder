@@ -49,6 +49,19 @@ class Npc extends Character {
         const players = this.gameEnv.gameObjects.filter(
             obj => obj && obj.state && obj.state.collisionEvents && obj.state.collisionEvents.includes(this.spriteData.id)
         );
+
+        // UX: Show interact hint when player is near this NPC
+        const nearby = this.isPlayerNearby();
+        const playerObjs = this.getPlayerObjects();
+        if (playerObjs && playerObjs.length) {
+            for (const p of playerObjs) {
+                if (nearby && typeof p.showInteractButton === 'function') {
+                    p.showInteractButton();
+                } else if (!nearby && typeof p.hideInteractButton === 'function') {
+                    p.hideInteractButton();
+                }
+            }
+        }
         
         // Reset interaction state if player moved away
         if (players.length === 0 && this.isInteracting) {
@@ -83,18 +96,71 @@ class Npc extends Character {
     }
 
     handleKeyDown(event) {
-        if (event.key === 'e' || event.key === 'u') {
+        // Robust E-key detection: accept 'e', 'E', and 'KeyE'.
+        const isEKey = (event.key === 'e' || event.key === 'E' || event.code === 'KeyE');
+        const isUKey = (event.key === 'u' || event.key === 'U');
+        // Ignore if typing in inputs/textareas to avoid accidental triggers
+        const tag = event.target && event.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        if (isEKey || isUKey) {
             this.handleKeyInteract();
         }
     }
 
     handleKeyUp(event) {
-        if (event.key === 'e' || event.key === 'u') {
+        const isEKey = (event.key === 'e' || event.key === 'E' || event.code === 'KeyE');
+        const isUKey = (event.key === 'u' || event.key === 'U');
+        if (isEKey || isUKey) {
             if (this.alertTimeout) {
                 clearTimeout(this.alertTimeout);
                 this.alertTimeout = null;
             }
         }
+    }
+
+    // Helper: find any player-like objects (heuristic: has keypress mapping)
+    getPlayerObjects() {
+        if (!this.gameEnv || !this.gameEnv.gameObjects) return [];
+        return this.gameEnv.gameObjects.filter(obj => obj && obj.keypress);
+    }
+
+    // Helper: check if any player is currently colliding with this NPC
+    isPlayerColliding() {
+        if (!this.gameEnv || !this.gameEnv.gameObjects) return false;
+        const colliders = this.gameEnv.gameObjects.filter(
+            obj => obj && obj.state && obj.state.collisionEvents && obj.state.collisionEvents.includes(this.spriteData.id)
+        );
+        return colliders.length > 0;
+    }
+
+    // Helper: proximity check within a reasonable interaction radius
+    isPlayerNearby() {
+        const players = this.getPlayerObjects();
+        if (!players.length) return false;
+
+        const npcX = this.transform?.x ?? 0;
+        const npcY = this.transform?.y ?? 0;
+        const npcW = (this.width ?? this.canvas?.width ?? 0);
+        const npcH = (this.height ?? this.canvas?.height ?? 0);
+        const npcCx = npcX + npcW / 2;
+        const npcCy = npcY + npcH / 2;
+
+        // Interaction radius based on sprite size; minimum 40px
+        const baseRadius = Math.max(40, Math.min(npcW, npcH));
+        const radiusSq = baseRadius * baseRadius;
+
+        for (const p of players) {
+            const px = p.transform?.x ?? 0;
+            const py = p.transform?.y ?? 0;
+            const pw = (p.width ?? p.canvas?.width ?? 0);
+            const ph = (p.height ?? p.canvas?.height ?? 0);
+            const pCx = px + pw / 2;
+            const pCy = py + ph / 2;
+            const dx = npcCx - pCx;
+            const dy = npcCy - pCy;
+            if ((dx * dx + dy * dy) <= radiusSq) return true;
+        }
+        return false;
     }
 
     handleKeyInteract() {
@@ -110,23 +176,30 @@ class Npc extends Character {
         }
         
         // Add null checks here too
-        const players = this.gameEnv.gameObjects.filter(
-            obj => obj && obj.state && obj.state.collisionEvents && obj.state.collisionEvents.includes(this.spriteData.id)
-        );
-        const hasInteract = this.interact !== undefined;
+        const isColliding = this.isPlayerColliding();
+        const isNearby = this.isPlayerNearby();
+        const hasInteract = (typeof this.interact === 'function');
 
         // Only trigger interaction if:
-        // 1. Player is in collision with this NPC
+        // 1. Player is colliding OR within proximity radius
         // 2. NPC has an interact function
         // 3. Not already interacting
-        if (players.length > 0 && hasInteract && !this.isInteracting) {
+        if ((isColliding || isNearby) && !this.isInteracting) {
             this.isInteracting = true;
             
-            // Store a reference to this NPC's interact function
-            const originalInteract = this.interact;
-            
-            // Execute the interact function
-            originalInteract.call(this);
+            if (hasInteract) {
+                // Store a reference to this NPC's interact function
+                const originalInteract = this.interact;
+                // Execute the interact function
+                originalInteract.call(this);
+            } else {
+                // Fallbacks: show dialogue when available
+                if (this.dialogueSystem && Array.isArray(this.dialogueSystem.dialogues) && this.dialogueSystem.dialogues.length > 0) {
+                    this.showRandomDialogue();
+                } else if (this.spriteData?.greeting) {
+                    this.showReactionDialogue();
+                }
+            }
             
             // Check if we're still in the same game level after interaction
             // This is important for transitions to other levels

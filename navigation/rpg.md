@@ -529,4 +529,52 @@ function closeCustomAlert() {
             } catch (_) {}
         }
     });
+ 
+    // Key event bridge: allow parent to simulate key events inside iframe
+    window.addEventListener('message', (event) => {
+        const data = event?.data;
+        if (!data || data.type !== 'rpg:simulate-key') return;
+        try {
+            const evType = data.evType === 'keyup' ? 'keyup' : 'keydown';
+            const keyCode = Number(data.keyCode) || 0;
+            const key = typeof data.key === 'string' ? data.key : undefined;
+            const code = typeof data.code === 'string' ? data.code : undefined;
+            const synth = new KeyboardEvent(evType, {
+                keyCode,
+                which: keyCode,
+                key,
+                code,
+                bubbles: true,
+                cancelable: true
+            });
+            const targets = [document, window, document.activeElement].filter(Boolean);
+            targets.forEach(t => {
+                try { t.dispatchEvent(synth); } catch (_) {}
+            });
+        } catch (e) {
+            console.warn('simulate-key failed', e);
+        }
+    });
+
+    // Fallback interaction trigger: let parent ask NPCs to process interaction now
+    window.addEventListener('message', (event) => {
+        const data = event?.data;
+        if (!data || data.type !== 'rpg:trigger-interact') return;
+        try {
+            const gc = liveAdventure && liveAdventure.gameControl;
+            const handlers = gc && gc.globalInteractionHandlers ? Array.from(gc.globalInteractionHandlers) : [];
+            handlers.forEach(h => {
+                try {
+                    if (typeof h.handleKeyInteract === 'function') {
+                        h.handleKeyInteract();
+                    } else if (typeof h.interact === 'function') {
+                        // As an emergency fallback, invoke interact directly
+                        h.interact.call(h);
+                    }
+                } catch (_) {}
+            });
+        } catch (e) {
+            console.warn('trigger-interact failed', e);
+        }
+    });
 </script>
