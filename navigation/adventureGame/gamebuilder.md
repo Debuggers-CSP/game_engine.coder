@@ -1973,10 +1973,14 @@ export const gameLevelClasses = [CustomLevel];`;
         code = code.replace(ctorRe, (m, p1, p2) => p1 + (insertDefs || '') + '\n' + p2);
         const classesRe = /(this\.classes\s*=\s*\[)([\s\S]*?)(\]\s*;)/;
         code = code.replace(classesRe, (m, p1, inner, p3) => {
-            const existing = inner.trim();
-            const suffix = (insertClasses && insertClasses.length) ? ('\n' + insertClasses.join(',\n')) : '';
-            const sep = existing.length ? ',\n' : '\n';
-            return p1 + existing + (suffix ? sep + suffix.trim() : '') + '\n' + p3;
+            let existing = inner.trim();
+            // Remove any trailing comma(s) to avoid creating ",," when appending
+            existing = existing.replace(/,\s*$/, '');
+            const suffix = (insertClasses && insertClasses.length) ? insertClasses.join(',\n') : '';
+            if (!existing && !suffix) return p1 + p3; // nothing to put
+            if (!existing) return p1 + '\n' + suffix + '\n' + p3;
+            if (!suffix) return p1 + existing + '\n' + p3;
+            return p1 + existing + ',\n' + suffix + '\n' + p3;
         });
         return code;
     }
@@ -2120,11 +2124,10 @@ export const gameLevelClasses = [CustomLevel];`;
 
         if (stagedCode) {
             const applyingStep = stagedStep || current;
-            const codeToApply = stagedCode;
-            animateTypingDiff(oldCode, codeToApply, () => {
-                if (applyingStep === 'background') { lockField(ui.bg); }
-                if (applyingStep === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
-                if (applyingStep === 'npc') {
+            if (applyingStep === 'npc') {
+                const ins = buildNpcInsertText();
+                const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+                animateTypingDiff(oldCode, merged, () => {
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
                             slot.locked = true;
@@ -2141,26 +2144,35 @@ export const gameLevelClasses = [CustomLevel];`;
                             }
                         }
                     });
-
                     stepIndex = steps.indexOf('freestyle');
-                } else {
-                    if (applyingStep === 'walls') {
-                        ui.walls.forEach(w => {
-                            if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
-                                w.locked = true;
-                                const name = w.displayName || `Wall ${w.index}`;
-                                w.displayName = name;
-                                if (w.addBtn) {
-                                    const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
-                                    w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
-                                    w.addBtn.classList.add('btn-confirm');
-                                }
-                                if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                    stagedCode = null; stagedStep = null;
+                    if (btn) btn.classList.remove('staged');
+                    setIndicator();
+                    updateStepUI();
+                    runInEmbed();
+                });
+                return;
+            }
+            const codeToApply = stagedCode;
+            animateTypingDiff(oldCode, codeToApply, () => {
+                if (applyingStep === 'background') { lockField(ui.bg); }
+                if (applyingStep === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
+                if (applyingStep === 'walls') {
+                    ui.walls.forEach(w => {
+                        if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                            w.locked = true;
+                            const name = w.displayName || `Wall ${w.index}`;
+                            w.displayName = name;
+                            if (w.addBtn) {
+                                const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                w.addBtn.classList.add('btn-confirm');
                             }
-                        });
-                    }
-                    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+                            if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                        }
+                    });
                 }
+                stepIndex = Math.min(stepIndex + 1, steps.length - 1);
 
                 stagedCode = null; stagedStep = null;
                 if (btn) btn.classList.remove('staged');
