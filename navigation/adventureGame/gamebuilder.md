@@ -437,7 +437,7 @@ iframe { width: 100%; height: 100%; border: none; }
                         <option value="" selected disabled>Select background…</option>
                         <option value="desert">Desert Dunes</option>
                         <option value="alien">Alien Planet</option>
-                        <option value="clouds">Sky Kingdom</option>
+                        <option value="skykingdom">Sky Kingdom</option>
                     </select>
                     <div class="upload-instructions" style="margin-top:6px;">
                         <button id="bg-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
@@ -498,7 +498,49 @@ iframe { width: 100%; height: 100%; border: none; }
                                     <label>Columns</label>
                                     <input type="number" id="player-cols" min="1" value="1">
                                 </div>
-                                
+                            </div>
+                            <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1);">
+                                <div style="font-weight:600; margin-bottom:6px;">Directional Rows</div>
+                                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; align-items:end;">
+                                    <div>
+                                        <label>Down Row</label>
+                                        <input type="number" id="player-dir-down-row" min="0" value="0">
+                                    </div>
+                                    <div>
+                                        <label>Right Row</label>
+                                        <input type="number" id="player-dir-right-row" min="0" value="1">
+                                    </div>
+                                    <div>
+                                        <label>Left Row</label>
+                                        <input type="number" id="player-dir-left-row" min="0" value="2">
+                                    </div>
+                                    <div>
+                                        <label>Up Row</label>
+                                        <input type="number" id="player-dir-up-row" min="0" value="3">
+                                    </div>
+                                    <div>
+                                        <label>Up-Right Row</label>
+                                        <input type="number" id="player-dir-upright-row" min="0" value="3">
+                                    </div>
+                                    <div>
+                                        <label>Down-Right Row</label>
+                                        <input type="number" id="player-dir-downright-row" min="0" value="1">
+                                    </div>
+                                    <div>
+                                        <label>Up-Left Row</label>
+                                        <input type="number" id="player-dir-upleft-row" min="0" value="2">
+                                    </div>
+                                    <div>
+                                        <label>Down-Left Row</label>
+                                        <input type="number" id="player-dir-downleft-row" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div style="display:grid; grid-template-columns: 1fr; gap:8px; align-items:end; margin-top:8px;">
+                                    <div>
+                                        <label>Direction Frames (columns)</label>
+                                        <input type="number" id="player-dir-columns" min="1" value="3">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -553,7 +595,7 @@ iframe { width: 100%; height: 100%; border: none; }
                 <div class="panel-header">Code View (JS)</div>
                 <div class="editor-container" id="editor-container">
                     <div id="highlight-layer" class="highlight-layer"></div>
-                    <textarea id="code-editor" class="code-layer" readonly spellcheck="false"></textarea>
+                    <textarea id="code-editor" class="code-layer" spellcheck="false"></textarea>
                 </div>
             </div>
         </div>
@@ -740,6 +782,16 @@ document.addEventListener('DOMContentLoaded', () => {
         pAnim: document.getElementById('player-anim'),
         pRows: document.getElementById('player-rows'),
         pCols: document.getElementById('player-cols'),
+        // Player directional overrides
+        pDownRow: document.getElementById('player-dir-down-row'),
+        pRightRow: document.getElementById('player-dir-right-row'),
+        pLeftRow: document.getElementById('player-dir-left-row'),
+        pUpRow: document.getElementById('player-dir-up-row'),
+        pUpRightRow: document.getElementById('player-dir-upright-row'),
+        pDownRightRow: document.getElementById('player-dir-downright-row'),
+        pUpLeftRow: document.getElementById('player-dir-upleft-row'),
+        pDownLeftRow: document.getElementById('player-dir-downleft-row'),
+        pDirCols: document.getElementById('player-dir-columns'),
         
         playerAdvancedBtn: document.getElementById('player-advanced-btn'),
         playerAdvancedPanel: document.getElementById('player-advanced-panel'),
@@ -797,11 +849,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggle(el) {
         if (!el) return;
-        // Simple toggle: if hidden, show; else hide
         const isHidden = el.style.display === 'none';
         el.style.display = isHidden ? '' : 'none';
     }
-    // Ensure panels start closed
     if (ui.bgInstructionsPanel) ui.bgInstructionsPanel.style.display = 'none';
     if (ui.spriteInstructionsPanel) ui.spriteInstructionsPanel.style.display = 'none';
     if (ui.npcSpriteInstructionsPanel) ui.npcSpriteInstructionsPanel.style.display = 'none';
@@ -1043,7 +1093,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ['input','change'].forEach(evt => {
             const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
-            // Update NPC code block only, never overwrite other code
             function updateNpcBlock() {
                 if (typeof ui.editor !== 'undefined' && ui.editor) {
                     const index = slot.index;
@@ -1061,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const npcBlockRegex = new RegExp(`(// --- Added NPC ---\nconst npcData${index} = {)[^}]*}`, 'm');
                     const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
                     const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
-                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${nScale},\n    ANIMATION_RATE: ${nAnim},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
+                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${nScale},\n    ANIMATION_RATE: ${nAnim},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0, columns: 3 },\n    right: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    left: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    up: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    upRight: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    downRight: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    upLeft: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    downLeft: { row: 0, start: 0, columns: 3 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
                     ui.editor.value = ui.editor.value.replace(npcBlockRegex, newNpcBlock);
                 }
             }
@@ -1085,11 +1134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             slot.nY?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
         });
 
-        // Robust: always push to array
         if (!ui.npcs) ui.npcs = [];
         ui.npcs.push(slot);
         updateStepUI();
-        // Strictly append NPC code block to the end, do not modify any other code
         if (typeof ui.editor !== 'undefined' && ui.editor) {
             const index = slot.index;
             const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
@@ -1103,22 +1150,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
             const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
             const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
-            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${Math.max(1, parseInt(slot.nScale?.value || 8, 10))},\n    ANIMATION_RATE: ${Math.max(1, parseInt(slot.nAnim?.value || 50, 10))},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
+            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${Math.max(1, parseInt(slot.nScale?.value || 8, 10))},\n    ANIMATION_RATE: ${Math.max(1, parseInt(slot.nAnim?.value || 50, 10))},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0, columns: 3 },\n    right: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    left: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    up: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    upRight: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    downRight: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    upLeft: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    downLeft: { row: 0, start: 0, columns: 3 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else {\n            if (this.greeting) { alert(this.greeting); } else { alert('Hello!'); }\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
             ui.editor.value = ui.editor.value + npcCode;
         }
-        // Do NOT call syncFromControlsIfFreestyle or code generators here
         return slot;
     }
 
     if (ui.addNpcBtn) {
         ui.addNpcBtn.addEventListener('click', () => {
-            // Always allow asset add, even after direct code edits
             if (typeof state !== 'undefined') state.userEdited = false;
             const slot = makeNpcSlot(ui.npcs.length + 1);
             if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
             slot.fieldsOpen = true;
             slot.addBtn.textContent = `NPC ${ui.npcs.length} ▾`;
-            // Only update UI, do not call any code generators or sync functions
             updateStepUI();
         });
     }
@@ -1196,7 +1240,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (ui.addWallBtn) {
         ui.addWallBtn.addEventListener('click', () => {
-            // Always allow asset add, even after direct code edits
             if (typeof state !== 'undefined') state.userEdited = false;
             const slot = makeWallSlot(ui.walls.length + 1);
             if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
@@ -1210,7 +1253,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const LINE_HEIGHT = 20;
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false };
-    // Stage programmatic code before applying to editor, so user can confirm
     let stagedCode = null;
     let stagedStep = null;
     const steps = ['background','player','freestyle'];
@@ -1247,7 +1289,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStepUI() {
         const current = steps[stepIndex];
-        // Always allow direct code edits across all steps
         ui.editor.readOnly = false;
         const mv = document.getElementById('movement-keys');
         [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = true; });
@@ -1349,9 +1390,10 @@ export const gameLevelClasses = [CustomLevel];`;
         }
 
         function generateStepCode(currentStep) {
-                const bg = assets.bg[ui.bg.value];
-                const p = assets.sprites[ui.pSprite.value];
-                const movement = document.getElementById('movement-keys').value || 'wasd';
+            const bg = assets.bg[ui.bg.value];
+            const p = assets.sprites[ui.pSprite.value];
+            const mvElGen = document.getElementById('movement-keys');
+            const movement = (mvElGen && mvElGen.value) ? mvElGen.value : 'wasd';
                 const keypress = movement === 'arrows'
                         ? '{ up: 38, left: 37, down: 40, right: 39 }'
                         : '{ up: 87, left: 65, down: 83, right: 68 }';
@@ -1451,7 +1493,6 @@ export const gameLevelClasses = [CustomLevel];`;
                         const classes = [
             "      { class: GameEnvBackground, data: bgData }"
                         ];
-                        // Always include any existing barriers so they don't disappear when editing background
                         const barrierDefsB = [];
                         const includedWallsB = ui.walls.slice();
                         includedWallsB.forEach((w, idx) => {
@@ -1496,6 +1537,18 @@ export const gameLevelClasses = [CustomLevel];`;
                         const pRowsVal = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
                         const pColsVal = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
                         
+                        const dirRowsTotal = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
+                        const clamp = (v) => Math.max(0, Math.min(dirRowsTotal - 1, v|0));
+                        const dirCols = Math.max(1, parseInt(ui.pDirCols?.value || 3, 10));
+                        const dRow = clamp(parseInt(ui.pDownRow?.value ?? 0));
+                        const rRow = clamp(parseInt(ui.pRightRow?.value ?? Math.min(1, dirRowsTotal-1)));
+                        const lRow = clamp(parseInt(ui.pLeftRow?.value ?? Math.min(2, dirRowsTotal-1)));
+                        const uRow = clamp(parseInt(ui.pUpRow?.value ?? Math.min(3, dirRowsTotal-1)));
+                        const urRow = clamp(parseInt(ui.pUpRightRow?.value ?? uRow));
+                        const drRow = clamp(parseInt(ui.pDownRightRow?.value ?? rRow));
+                        const ulRow = clamp(parseInt(ui.pUpLeftRow?.value ?? lRow));
+                        const dlRow = clamp(parseInt(ui.pDownLeftRow?.value ?? dRow));
+
                         const defs = `
         const bgData = {
             name: 'custom_bg',
@@ -1511,10 +1564,14 @@ export const gameLevelClasses = [CustomLevel];`;
             INIT_POSITION: { x: ${ui.pX.value}, y: ${ui.pY.value} },
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${pRowsVal}, columns: ${pColsVal} },
-            down: { row: 0, start: 0, columns: 3 },
-            right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
-            left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
-            up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            down: { row: ${dRow}, start: 0, columns: ${dirCols} },
+            right: { row: ${rRow}, start: 0, columns: ${dirCols} },
+            left: { row: ${lRow}, start: 0, columns: ${dirCols} },
+            up: { row: ${uRow}, start: 0, columns: ${dirCols} },
+            upRight: { row: ${urRow}, start: 0, columns: ${dirCols} },
+            downRight: { row: ${drRow}, start: 0, columns: ${dirCols} },
+            upLeft: { row: ${ulRow}, start: 0, columns: ${dirCols} },
+            downLeft: { row: ${dlRow}, start: 0, columns: ${dirCols} },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1523,7 +1580,6 @@ export const gameLevelClasses = [CustomLevel];`;
             "      { class: Player, data: playerData }"
                         ];
 
-                        // Always include any existing barriers so they don't disappear when editing player
                         const barrierDefs = [];
                         const includedWallsP = ui.walls.slice();
                         includedWallsP.forEach((w, idx) => {
@@ -1591,6 +1647,10 @@ export const gameLevelClasses = [CustomLevel];`;
             right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
             left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            upRight: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
+            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
+            downLeft: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1624,7 +1684,14 @@ export const gameLevelClasses = [CustomLevel];`;
             INIT_POSITION: { x: ${nX}, y: ${nY} },
             pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
             orientation: { rows: ${nRows}, columns: ${nCols} },
-            down: { row: 0, start: 0 },
+            down: { row: 0, start: 0, columns: 3 },
+            right: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },
+            left: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },
+            up: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },
+            upRight: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },
+            downRight: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },
+            upLeft: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },
+            downLeft: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
             dialogues: ['${nMsgSafe}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
@@ -1640,7 +1707,6 @@ export const gameLevelClasses = [CustomLevel];`;
         };`);
                             classes.push(`      { class: Npc, data: npcData${index} }`);
                         });
-                        // Always include any existing barriers so they don't disappear when editing NPCs
                         const barrierDefsN = [];
                         const includedWallsN = ui.walls.slice();
                         includedWallsN.forEach((w, idx) => {
@@ -1705,6 +1771,10 @@ export const gameLevelClasses = [CustomLevel];`;
             right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
             left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
             up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            upRight: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
+            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
+            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
+            downLeft: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
             keypress: ${keypress}
         };`;
@@ -1738,6 +1808,13 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${nSprite.h}, width: ${nSprite.w} },
             orientation: { rows: ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))}, columns: ${Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10))} },
             down: { row: 0, start: 0, columns: 3 },
+            right: { row: Math.min(1, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            left: { row: Math.min(2, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            up: { row: Math.min(3, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            upRight: { row: Math.min(3, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            downRight: { row: Math.min(1, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            upLeft: { row: Math.min(2, ${Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10))} - 1), start: 0, columns: 3 },
+            downLeft: { row: 0, start: 0, columns: 3 },
             hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },
             dialogues: ['${nMsgSafe}'],
             reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },
@@ -1749,7 +1826,6 @@ export const gameLevelClasses = [CustomLevel];`;
                     // add walls from sliders AND drawing overlay
                     const barrierDefs = [];
 
-                    // Slider-based walls (legacy)
                     const includedWalls = ui.walls.slice();
                     includedWalls.forEach((w, idx) => {
                         const x = parseInt(w.wX?.value || 100, 10);
@@ -1765,8 +1841,7 @@ export const gameLevelClasses = [CustomLevel];`;
         };`);
                         classes.push(`      { class: Barrier, data: barrierData${idx+1} }`);
                     });
-
-                    // Overlay-drawn barrier shapes only (no pass zones)
+                    
                     const drawnBarriers = ui.drawShapes.filter(s => s.type === 'barrier');
                     drawnBarriers.forEach((b, bIdx) => {
                         const id = `dbarrier_${bIdx+1}`;
@@ -1816,11 +1891,16 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     ui.editor.addEventListener('scroll', renderOverlay);
-    ui.editor.addEventListener('input', () => { if (!state.programmaticEdit) state.userEdited = true; });
+    ui.editor.addEventListener('input', () => {
+        if (!state.programmaticEdit) {
+            state.userEdited = true;
+            const btn = document.getElementById('btn-confirm');
+            if (btn) btn.classList.add('staged');
+        }
+    });
 
     function syncFromControlsIfFreestyle() {
         const current = steps[stepIndex];
-        // Preserve user edits only when in freestyle mode
         if (state.userEdited && current === 'freestyle') return;
         const hasNPCs = ui.npcs.length > 0;
         const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
@@ -1829,12 +1909,10 @@ export const gameLevelClasses = [CustomLevel];`;
         const stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
         const newCode = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
         if (newCode) {
-            // Stage the change instead of applying it immediately.
             stagedCode = newCode;
             stagedStep = stepToCompose;
             const btn = document.getElementById('btn-confirm');
             if (btn) btn.classList.add('staged');
-            // Provide a persistent highlight of the changed region for context
             const { startLine, lineCount } = computeChangeRange(ui.editor.value, newCode);
             state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
             renderOverlay();
@@ -1842,7 +1920,6 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     function animateTypingDiff(oldCode, newCode, onDone) {
-        // Apply new code to editor and mark changed region
         state.programmaticEdit = true;
         const { startLine, lineCount } = computeChangeRange(oldCode, newCode);
         ui.editor.value = newCode;
@@ -1853,7 +1930,6 @@ export const gameLevelClasses = [CustomLevel];`;
         if (typeof onDone === 'function') onDone();
     }
 
-    // Merge helpers: append NPC/Barrier defs and class entries without clobbering existing code
     function buildNpcInsertText() {
         const includedSlots = ui.npcs.slice();
         if (!includedSlots.length) return { defs: '', classes: [] };
@@ -1868,7 +1944,7 @@ export const gameLevelClasses = [CustomLevel];`;
             const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
             const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
             const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
-            return `\n        const npcData${index} = {\n            id: '${nId}',\n            greeting: '${nMsg}',\n            src: path + "${nSprite.src}",\n            SCALE_FACTOR: ${nScale},\n            ANIMATION_RATE: ${nAnim},\n            INIT_POSITION: { x: ${nX}, y: ${nY} },\n            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },\n            down: { row: 0, start: 0, columns: 3 },\n            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n            dialogues: ['${nMsg}'],\n            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }\n        };`;
+            return `\n        const npcData${index} = {\n            id: '${nId}',\n            greeting: '${nMsg}',\n            src: path + "${nSprite.src}",\n            SCALE_FACTOR: ${nScale},\n            ANIMATION_RATE: ${nAnim},\n            INIT_POSITION: { x: ${nX}, y: ${nY} },\n            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },\n            down: { row: 0, start: 0, columns: 3 },\n            right: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            left: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            up: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upRight: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downRight: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upLeft: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downLeft: { row: 0, start: 0, columns: 3 },\n            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n            dialogues: ['${nMsg}'],\n            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }\n        };`;
         }).join('\n');
         includedSlots.forEach((slot) => {
             classes.push(`      { class: Npc, data: npcData${slot.index} }`);
@@ -1893,10 +1969,8 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function mergeDefsAndClasses(oldCode, insertDefs, insertClasses) {
         let code = oldCode;
-        // Insert definitions before the classes array inside constructor
         const ctorRe = /(class\s+CustomLevel[\s\S]*?constructor\s*\(gameEnv\)\s*\{[\s\S]*?)(this\.classes\s*=\s*\[)/;
         code = code.replace(ctorRe, (m, p1, p2) => p1 + (insertDefs || '') + '\n' + p2);
-        // Append class entries inside classes array
         const classesRe = /(this\.classes\s*=\s*\[)([\s\S]*?)(\]\s*;)/;
         code = code.replace(classesRe, (m, p1, inner, p3) => {
             const existing = inner.trim();
@@ -1908,9 +1982,7 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     const mvEl = document.getElementById('movement-keys');
-    // rerunPlayer should stage changes (not auto-apply) so the user can confirm
     const rerunPlayer = () => { syncFromControlsIfFreestyle(); };
-    // Targeted in-editor update of Player INIT_POSITION to work even in freestyle
     function updatePlayerPositionInEditor() {
         const code = ui.editor.value || '';
         const x = parseInt(ui.pX?.value || '0', 10);
@@ -1923,7 +1995,6 @@ export const gameLevelClasses = [CustomLevel];`;
             state.programmaticEdit = false;
             runInEmbed();
         } else {
-            // Fallback to full rerun if pattern not found
             rerunPlayer();
         }
     }
@@ -1935,6 +2006,18 @@ export const gameLevelClasses = [CustomLevel];`;
             if (spr) {
                 if (ui.pRows) ui.pRows.value = spr.rows ?? 1;
                 if (ui.pCols) ui.pCols.value = spr.cols ?? 1;
+                // Initialize directional rows defaults based on common 4-row layout
+                const rows = Math.max(1, parseInt(ui.pRows?.value || spr.rows || 1, 10));
+                const clamp = (v) => Math.max(0, Math.min(rows - 1, v));
+                if (ui.pDownRow) ui.pDownRow.value = clamp(0);
+                if (ui.pRightRow) ui.pRightRow.value = clamp(1);
+                if (ui.pLeftRow) ui.pLeftRow.value = clamp(2);
+                if (ui.pUpRow) ui.pUpRow.value = clamp(3);
+                if (ui.pUpRightRow) ui.pUpRightRow.value = clamp(3);
+                if (ui.pDownRightRow) ui.pDownRightRow.value = clamp(1);
+                if (ui.pUpLeftRow) ui.pUpLeftRow.value = clamp(2);
+                if (ui.pDownLeftRow) ui.pDownLeftRow.value = clamp(0);
+                if (ui.pDirCols && !ui.pDirCols.value) ui.pDirCols.value = 3;
             }
         } finally {
             rerunPlayer();
@@ -1949,6 +2032,9 @@ export const gameLevelClasses = [CustomLevel];`;
     if (ui.pAnim) ui.pAnim.addEventListener('input', rerunPlayer);
     if (ui.pRows) ui.pRows.addEventListener('input', rerunPlayer);
     if (ui.pCols) ui.pCols.addEventListener('input', rerunPlayer);
+    // Player directional overrides listeners
+    [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols]
+        .forEach(el => { if (el) el.addEventListener('input', rerunPlayer); });
     
     ui.npcs.forEach(slot => {
         if (slot.nId) slot.nId.addEventListener('input', syncFromControlsIfFreestyle);
@@ -1972,13 +2058,11 @@ export const gameLevelClasses = [CustomLevel];`;
         const oldCode = ui.editor.value;
         const current = steps[stepIndex];
 
-        // If user manually edited code, avoid regenerating the whole file.
         if (state.userEdited) {
             if (current === 'npc') {
                 const ins = buildNpcInsertText();
                 const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
                 animateTypingDiff(oldCode, merged, () => {
-                    // Lock UI entries visually
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
                             slot.locked = true;
@@ -1999,6 +2083,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     setIndicator();
                     updateStepUI();
                     runInEmbed();
+                    const btnDone = document.getElementById('btn-confirm');
+                    if (btnDone) btnDone.classList.remove('staged');
                 });
                 return;
             }
@@ -2023,20 +2109,19 @@ export const gameLevelClasses = [CustomLevel];`;
                     setIndicator();
                     updateStepUI();
                     runInEmbed();
+                    const btnDone = document.getElementById('btn-confirm');
+                    if (btnDone) btnDone.classList.remove('staged');
                 });
                 return;
             }
-            // For background/player steps, don’t overwrite manual edits.
             alert('You have manual code edits. To avoid resetting them, configure background/player directly in code or clear edits before confirming.');
             return;
         }
 
-        // If there's a staged change, apply that first
         if (stagedCode) {
             const applyingStep = stagedStep || current;
             const codeToApply = stagedCode;
             animateTypingDiff(oldCode, codeToApply, () => {
-                // Apply same locking/advance logic as the normal confirm flow
                 if (applyingStep === 'background') { lockField(ui.bg); }
                 if (applyingStep === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
                 if (applyingStep === 'npc') {
@@ -2077,7 +2162,6 @@ export const gameLevelClasses = [CustomLevel];`;
                     stepIndex = Math.min(stepIndex + 1, steps.length - 1);
                 }
 
-                // Clear staged state and UI
                 stagedCode = null; stagedStep = null;
                 if (btn) btn.classList.remove('staged');
 
@@ -2088,7 +2172,6 @@ export const gameLevelClasses = [CustomLevel];`;
             return;
         }
 
-        // No staged change: behave as before (confirm current step)
         const newCode = generateStepCode(current);
         if (!newCode) {
             if (current === 'background') alert('Select a Background, then Confirm Step.');
@@ -2148,7 +2231,6 @@ export const gameLevelClasses = [CustomLevel];`;
         return hasLevels ? code : generateBaselineCode();
     }
 
-    // Send current overlay-drawn barriers to the runner, adjusted for env offset
     function syncOverlayBarriersToRunner() {
         try {
             const shapes = Array.isArray(ui.drawShapes) ? ui.drawShapes : [];
@@ -2169,20 +2251,16 @@ export const gameLevelClasses = [CustomLevel];`;
     function runInEmbed() {
         renderOverlay();
         const code = safeCodeToRun();
-        // Keep overlay visibility in sync with current toggle state
         updateOverlayVisibility();
         ui.iframe.src = ui.iframe.src;
         ui.iframe.onload = () => {
             setTimeout(() => {
                 ui.iframe.contentWindow.postMessage({ type: 'rpg:run-code', code: code }, '*');
-                // After code loads, enforce current in-game walls visibility
                 setTimeout(() => {
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
-                    // Always re-sync overlay barriers after any code reload so collisions remain accurate
                     try { syncOverlayBarriersToRunner(); } catch (_) {}
-                    // Ensure keyboard focus goes to the game
                     try {
                         ui.iframe.setAttribute('tabindex', '0');
                         ui.iframe.focus();
@@ -2209,19 +2287,21 @@ export const gameLevelClasses = [CustomLevel];`;
     }
 
     function exportCode() {
-        let code = safeCodeToRun();
-        // Ensure exported barriers are invisible by default: flip BUILDER_DEFAULT visible flags
+        let code = stagedCode || safeCodeToRun();
+        if (!/export\s+const\s+gameLevelClasses/.test(code)) {
+            code = generateBaselineCode();
+        }
         code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
-        // Strip builder-only hooks for standalone export
         code = code.replace(/\/\* BUILDER_HOOKS_START \*\/[\s\S]*?\/\* BUILDER_HOOKS_END \*\//g, '');
-        // Add a header for clarity
-        const header = `// Adventure Game Custom Level\n// Exported from GameBuilder on ${(new Date()).toISOString()}\n// Drop this file into your Adventure Game project.\n`;
+        const header = `// Adventure Game Custom Level\n// Exported from GameBuilder on ${(new Date()).toISOString()}\n// Drop this file into your Adventure Game project (e.g., assets/js/adventureGame/levels).\n`;
         code = header + code;
         const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
         const a = document.createElement('a');
         const url = URL.createObjectURL(blob);
         a.href = url;
-        a.download = 'CustomLevel.js';
+        const suggestedName = (ui.pName && ui.pName.value ? ui.pName.value.trim() : 'CustomLevel')
+            .replace(/[^a-zA-Z0-9_-]+/g, '_') || 'CustomLevel';
+        a.download = `${suggestedName}.js`;
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
@@ -2247,8 +2327,6 @@ export const gameLevelClasses = [CustomLevel];`;
 </script>
 
 <script>
-// Prevent page scroll with arrows/space only when the game iframe
-// is NOT focused and user isn’t typing in inputs.
 window.addEventListener('keydown', function(e) {
     const keys = [32, 37, 38, 39, 40];
     if (!keys.includes(e.keyCode)) return;
@@ -2261,7 +2339,6 @@ window.addEventListener('keydown', function(e) {
     }
 }, { passive: false });
 
-// Clicking the game panel should focus the iframe to capture keys
 document.querySelector('.game-frame')?.addEventListener('click', () => {
     const iframe = document.getElementById('game-iframe');
     if (iframe) {
@@ -2272,8 +2349,6 @@ document.querySelector('.game-frame')?.addEventListener('click', () => {
 </script>
 
 <script>
-// Forward E/U interaction keys to the game iframe so interactions work even
-// when the iframe is not currently focused (but user isn’t typing in inputs).
 function forwardInteractKey(ev, type) {
     const tgt = ev.target;
     const isForm = tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable);
@@ -2294,7 +2369,6 @@ function forwardInteractKey(ev, type) {
 
 window.addEventListener('keydown', function(e) {
     forwardInteractKey(e, 'keydown');
-    // Also request a direct interaction trigger inside the iframe as a fallback
     try {
         const iframe = document.getElementById('game-iframe');
         iframe?.contentWindow?.postMessage({ type: 'rpg:trigger-interact' }, '*');
