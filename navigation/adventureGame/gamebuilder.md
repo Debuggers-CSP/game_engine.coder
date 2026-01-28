@@ -1498,16 +1498,22 @@ export const gameLevelClasses = [CustomLevel];`;
                         const pScaleVal = parseInt(ui.pScale?.value || '5', 10);
                         const pStepVal = parseInt(ui.pStep?.value || '1000', 10);
                         const pAnimVal = parseInt(ui.pAnim?.value || '50', 10);
-                        const pRowsVal = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
-                        const pColsVal = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
-                        
-                        const dirRowsTotal = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
-                        const clamp = (v) => Math.max(0, Math.min(dirRowsTotal - 1, v|0));
+                        const pRowsVal = Math.max(1, parseInt((ui.pRows?.value ?? '').trim() || '3', 10));
+                        const pColsVal = Math.max(1, parseInt((ui.pCols?.value ?? '').trim() || '4', 10));
+                        const dirRowsTotal = pRowsVal;
+                        const clamp = (v) => {
+                            const maxIndex = Math.max(0, (dirRowsTotal|0) - 1);
+                            return Math.max(0, Math.min(maxIndex, v|0));
+                        };
                         const dirCols = Math.max(1, parseInt(ui.pDirCols?.value || 3, 10));
                         const dRow = clamp(parseInt(ui.pDownRow?.value ?? 0));
-                        const rRow = clamp(parseInt(ui.pRightRow?.value ?? Math.min(1, dirRowsTotal-1)));
-                        const lRow = clamp(parseInt(ui.pLeftRow?.value ?? Math.min(2, dirRowsTotal-1)));
-                        const uRow = clamp(parseInt(ui.pUpRow?.value ?? Math.min(3, dirRowsTotal-1)));
+                        const dDefault = 0;
+                        const rDefault = 1;
+                        const lDefault = 2;
+                        const uDefault = 3;
+                        const rRow = clamp(parseInt(ui.pRightRow?.value ?? rDefault));
+                        const lRow = clamp(parseInt(ui.pLeftRow?.value ?? lDefault));
+                        const uRow = clamp(parseInt(ui.pUpRow?.value ?? uDefault));
                         const urRow = clamp(parseInt(ui.pUpRightRow?.value ?? uRow));
                         const drRow = clamp(parseInt(ui.pDownRightRow?.value ?? rRow));
                         const ulRow = clamp(parseInt(ui.pUpLeftRow?.value ?? lRow));
@@ -1529,14 +1535,14 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${pRowsVal}, columns: ${pColsVal} },
             down: { row: ${dRow}, start: 0, columns: ${dirCols} },
-            right: { row: ${rRow}, start: 0, columns: ${dirCols} },
+            downRight: { row: ${drRow}, start: 0, columns: ${dirCols}, rotate: Math.PI/16 },
+            downLeft: { row: ${dlRow}, start: 0, columns: ${dirCols}, rotate: -Math.PI/16 },
             left: { row: ${lRow}, start: 0, columns: ${dirCols} },
+            right: { row: ${rRow}, start: 0, columns: ${dirCols} },
             up: { row: ${uRow}, start: 0, columns: ${dirCols} },
-            upRight: { row: ${urRow}, start: 0, columns: ${dirCols} },
-            downRight: { row: ${drRow}, start: 0, columns: ${dirCols} },
-            upLeft: { row: ${ulRow}, start: 0, columns: ${dirCols} },
-            downLeft: { row: ${dlRow}, start: 0, columns: ${dirCols} },
-            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
+            upLeft: { row: ${ulRow}, start: 0, columns: ${dirCols}, rotate: Math.PI/16 },
+            upRight: { row: ${urRow}, start: 0, columns: ${dirCols}, rotate: -Math.PI/16 },
+            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: ${keypress}
         };`;
                         const classes = [
@@ -1608,14 +1614,14 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${pRowsValN}, columns: ${pColsValN} },
             down: { row: 0, start: 0, columns: 3 },
-            right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
-            left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
-            up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            upRight: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
-            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
-            downLeft: { row: 0, start: 0, columns: 3 },
-            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
+            downRight: { row: 1, start: 0, columns: 3, rotate: Math.PI/16 },
+            downLeft: { row: 2, start: 0, columns: 3, rotate: -Math.PI/16 },
+            left: { row: 2, start: 0, columns: 3 },
+            right: { row: 1, start: 0, columns: 3 },
+            up: { row: 3, start: 0, columns: 3 },
+            upLeft: { row: 2, start: 0, columns: 3, rotate: Math.PI/16 },
+            upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI/16 },
+            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: ${keypress}
         };`;
                         const npcDefs = [];
@@ -1713,8 +1719,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     const pScaleValW = parseInt(ui.pScale?.value || '5', 10);
                     const pStepValW = parseInt(ui.pStep?.value || '1000', 10);
                     const pAnimValW = parseInt(ui.pAnim?.value || '50', 10);
-                    const pRowsValW = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
-                    const pColsValW = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
+                    const pRowsValW = Math.max(1, parseInt((ui.pRows?.value ?? '').trim() || '3', 10));
+                    const pColsValW = Math.max(1, parseInt((ui.pCols?.value ?? '').trim() || '4', 10));
                     
                     const defsStart = `
         const bgData = {
@@ -1732,14 +1738,14 @@ export const gameLevelClasses = [CustomLevel];`;
             pixels: { height: ${p.h}, width: ${p.w} },
             orientation: { rows: ${pRowsValW}, columns: ${pColsValW} },
             down: { row: 0, start: 0, columns: 3 },
-            right: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
-            left: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
-            up: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            upRight: { row: Math.min(3, ${p.rows} - 1), start: 0, columns: 3 },
-            downRight: { row: Math.min(1, ${p.rows} - 1), start: 0, columns: 3 },
-            upLeft: { row: Math.min(2, ${p.rows} - 1), start: 0, columns: 3 },
-            downLeft: { row: 0, start: 0, columns: 3 },
-            hitbox: { widthPercentage: 0.1, heightPercentage: 0.1 },
+            downRight: { row: 1, start: 0, columns: 3, rotate: Math.PI/16 },
+            downLeft: { row: 2, start: 0, columns: 3, rotate: -Math.PI/16 },
+            left: { row: 2, start: 0, columns: 3 },
+            right: { row: 1, start: 0, columns: 3 },
+            up: { row: 3, start: 0, columns: 3 },
+            upLeft: { row: 2, start: 0, columns: 3, rotate: Math.PI/16 },
+            upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI/16 },
+            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
             keypress: ${keypress}
         };`;
                     const classes = [
@@ -2145,6 +2151,33 @@ export const gameLevelClasses = [CustomLevel];`;
                     if (btn) btn.classList.remove('staged');
                     setIndicator();
                     updateStepUI();
+                    runInEmbed();
+                });
+                return;
+            }
+            if (applyingStep === 'walls') {
+                const ins = buildBarrierInsertText();
+                const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+                animateTypingDiff(oldCode, merged, () => {
+                    ui.walls.forEach(w => {
+                        if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                            w.locked = true;
+                            const name = w.displayName || `Wall ${w.index}`;
+                            w.displayName = name;
+                            if (w.addBtn) {
+                                const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                w.addBtn.classList.add('btn-confirm');
+                            }
+                            if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                        }
+                    });
+                    stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+                    stagedCode = null; stagedStep = null;
+                    if (btn) btn.classList.remove('staged');
+                    setIndicator();
+                    updateStepUI();
+                    ui.overlayConfirmed = true;
                     runInEmbed();
                 });
                 return;
