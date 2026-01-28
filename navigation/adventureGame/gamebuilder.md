@@ -817,6 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawShapes: [],
         toggleWallsGameBtn: document.getElementById('toggle-walls-game'),
         gameWallsVisible: true,
+        overlayConfirmed: false,
 
         editor: document.getElementById('code-editor'),
         hLayer: document.getElementById('highlight-layer'),
@@ -881,7 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!mode) removePreview();
     }
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
-    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; renderDrawShapes(); syncFromControlsIfFreestyle(); if (state.userEdited) syncOverlayBarriersToRunner(); });
+    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; ui.overlayConfirmed = false; renderDrawShapes(); syncFromControlsIfFreestyle(); });
 
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
@@ -902,9 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
             frag.appendChild(el);
         });
         ui.drawOverlay.appendChild(frag);
-        if (state.userEdited) {
-            syncOverlayBarriersToRunner();
-        }
+        if (ui.overlayConfirmed) syncOverlayBarriersToRunner();
     }
 
     function currentPreviewEl() {
@@ -953,9 +952,10 @@ document.addEventListener('DOMContentLoaded', () => {
         removePreview();
         if (width >= 4 && height >= 4) {
             ui.drawShapes.push({ type: mode, x: Math.round(left), y: Math.round(top), width: Math.round(width), height: Math.round(height) });
+            ui.overlayConfirmed = false;
             renderDrawShapes();
             syncFromControlsIfFreestyle();
-            if (state.userEdited) syncOverlayBarriersToRunner();
+            // overlay sync happens on Confirm
         }
     }
 
@@ -1093,29 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ['input','change'].forEach(evt => {
             const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
-            function updateNpcBlock() {
-                if (typeof ui.editor !== 'undefined' && ui.editor) {
-                    const index = slot.index;
-                    const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
-                    const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
-                    const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
-                    const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
-                    const nSprite = assets && assets.sprites ? assets.sprites[nSpriteKey] || assets.sprites['chillguy'] : { h: 32, w: 32, rows: 1, cols: 1, src: '' };
-                    const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
-                    const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
-                    const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
-                    const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
-                    const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
-                    const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
-                    const npcBlockRegex = new RegExp(`(// --- Added NPC ---\nconst npcData${index} = {)[^}]*}`, 'm');
-                    const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
-                    const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
-                    const newNpcBlock = `// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${nScale},\n    ANIMATION_RATE: ${nAnim},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0, columns: 3 },\n    right: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    left: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    up: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    upRight: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    downRight: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    upLeft: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    downLeft: { row: 0, start: 0, columns: 3 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else if (this.greeting) {\n            alert(this.greeting);\n        } else {\n            alert('Hello!');\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
-                    ui.editor.value = ui.editor.value.replace(npcBlockRegex, newNpcBlock);
-                }
-            }
-            slot.nId?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nMsg?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nId?.addEventListener(evt, () => { rerun(); });
+            slot.nMsg?.addEventListener(evt, () => { rerun(); });
             slot.nSprite?.addEventListener(evt, (e) => {
                 const key = slot.nSprite.value;
                 const spr = assets && assets.sprites ? assets.sprites[key] : null;
@@ -1123,36 +1102,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (slot.nRows) slot.nRows.value = spr.rows ?? 1;
                     if (slot.nCols) slot.nCols.value = spr.cols ?? 1;
                 }
-                updateNpcBlock();
                 rerun();
             });
-            slot.nRows?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nCols?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nScale?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nAnim?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nX?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
-            slot.nY?.addEventListener(evt, () => { updateNpcBlock(); rerun(); });
+            slot.nRows?.addEventListener(evt, () => { rerun(); });
+            slot.nCols?.addEventListener(evt, () => { rerun(); });
+            slot.nScale?.addEventListener(evt, () => { rerun(); });
+            slot.nAnim?.addEventListener(evt, () => { rerun(); });
+            slot.nX?.addEventListener(evt, () => { rerun(); });
+            slot.nY?.addEventListener(evt, () => { rerun(); });
         });
 
         if (!ui.npcs) ui.npcs = [];
         ui.npcs.push(slot);
         updateStepUI();
-        if (typeof ui.editor !== 'undefined' && ui.editor) {
-            const index = slot.index;
-            const nId = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC').replace(/'/g, "\\'");
-            const nMsg = (slot.nMsg && slot.nMsg.value ? slot.nMsg.value.trim() : '').replace(/'/g, "\\'");
-            const nMsgSafe = nMsg && nMsg.length ? nMsg : 'Hello!';
-            const nSpriteKey = (slot.nSprite && slot.nSprite.value) ? slot.nSprite.value : 'chillguy';
-            const nSprite = assets.sprites[nSpriteKey] || assets.sprites['chillguy'];
-            const nX = (slot.nX && slot.nX.value) ? parseInt(slot.nX.value, 10) : 500;
-            const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
-            const nRows = Math.max(1, parseInt(slot.nRows?.value || nSprite.rows || 1, 10));
-            const nCols = Math.max(1, parseInt(slot.nCols?.value || nSprite.cols || 1, 10));
-            const nIsData = nSprite && nSprite.src && nSprite.src.startsWith('data:');
-            const nSrcVal = nIsData ? `'${(nSprite.src||'').replace(/'/g, "\\'")}'` : `path + "${nSprite.src}"`;
-            const npcCode = `\n// --- Added NPC ---\nconst npcData${index} = {\n    id: '${nId}',\n    greeting: '${nMsgSafe}',\n    src: ${nSrcVal},\n    SCALE_FACTOR: ${Math.max(1, parseInt(slot.nScale?.value || 8, 10))},\n    ANIMATION_RATE: ${Math.max(1, parseInt(slot.nAnim?.value || 50, 10))},\n    INIT_POSITION: { x: ${nX}, y: ${nY} },\n    pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n    orientation: { rows: ${nRows}, columns: ${nCols} },\n    down: { row: 0, start: 0, columns: 3 },\n    right: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    left: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    up: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    upRight: { row: Math.min(3, ${nRows} - 1), start: 0, columns: 3 },\n    downRight: { row: Math.min(1, ${nRows} - 1), start: 0, columns: 3 },\n    upLeft: { row: Math.min(2, ${nRows} - 1), start: 0, columns: 3 },\n    downLeft: { row: 0, start: 0, columns: 3 },\n    hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n    dialogues: ['${nMsgSafe}'],\n    reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n    interact: function() {\n        if (this.dialogueSystem) {\n            this.showRandomDialogue();\n        } else {\n            if (this.greeting) { alert(this.greeting); } else { alert('Hello!'); }\n        }\n    }\n};\nthis.classes = [...(this.classes || []), { class: Npc, data: npcData${index} }];\n`;
-            ui.editor.value = ui.editor.value + npcCode;
-        }
+        // Do not modify editor directly here; Confirm handles code updates via merge
         return slot;
     }
 
@@ -1164,6 +1127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             slot.fieldsOpen = true;
             slot.addBtn.textContent = `NPC ${ui.npcs.length} ▾`;
             updateStepUI();
+            // Do not update runner yet; NPC changes apply on Confirm
         });
     }
 
@@ -1969,18 +1933,49 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function mergeDefsAndClasses(oldCode, insertDefs, insertClasses) {
         let code = oldCode;
+        // Sanitize: drop any accidental appended blocks after export line
+        try {
+            const exportRe = /export\s+const\s+gameLevelClasses\s*=\s*\[CustomLevel\];/;
+            const m = exportRe.exec(code);
+            if (m) {
+                code = code.slice(0, m.index + m[0].length);
+            }
+        } catch (_) {}
+
+        // Deduplicate NPC defs: remove any existing const npcDataX blocks that we are about to insert
+        try {
+            const varNames = [];
+            const varRe = /\bconst\s+(npcData\d+)\s*=\s*\{/g;
+            let mm;
+            const scan = insertDefs || '';
+            while ((mm = varRe.exec(scan)) !== null) { varNames.push(mm[1]); }
+            if (varNames.length) {
+                varNames.forEach(vn => {
+                    const blockRe = new RegExp("\\n\\s*const\\s+" + vn + "\\s*=\\s*\\{[\\s\\S]*?\\};\\s*", 'g');
+                    code = code.replace(blockRe, '\n');
+                });
+            }
+        } catch (_) {}
+
         const ctorRe = /(class\s+CustomLevel[\s\S]*?constructor\s*\(gameEnv\)\s*\{[\s\S]*?)(this\.classes\s*=\s*\[)/;
         code = code.replace(ctorRe, (m, p1, p2) => p1 + (insertDefs || '') + '\n' + p2);
+
         const classesRe = /(this\.classes\s*=\s*\[)([\s\S]*?)(\]\s*;)/;
         code = code.replace(classesRe, (m, p1, inner, p3) => {
-            let existing = inner.trim();
-            // Remove any trailing comma(s) to avoid creating ",," when appending
-            existing = existing.replace(/,\s*$/, '');
-            const suffix = (insertClasses && insertClasses.length) ? insertClasses.join(',\n') : '';
-            if (!existing && !suffix) return p1 + p3; // nothing to put
-            if (!existing) return p1 + '\n' + suffix + '\n' + p3;
-            if (!suffix) return p1 + existing + '\n' + p3;
-            return p1 + existing + ',\n' + suffix + '\n' + p3;
+            const toClean = s => s.replace(/,\s*$/, '').trim();
+            const existingLines = inner.split('\n').map(l => toClean(l)).filter(l => l.length);
+            const existingSet = new Set(existingLines);
+            const newLines = (insertClasses || []).map(l => toClean(l));
+            const combined = [...existingLines];
+            for (const nl of newLines) {
+                if (!existingSet.has(nl)) {
+                    combined.push(nl);
+                    existingSet.add(nl);
+                }
+            }
+            if (!combined.length) return p1 + p3;
+            const rebuilt = combined.map(l => '      ' + l).join(',\n');
+            return p1 + rebuilt + '\n' + p3;
         });
         return code;
     }
@@ -2112,6 +2107,7 @@ export const gameLevelClasses = [CustomLevel];`;
                     stepIndex = Math.min(stepIndex + 1, steps.length - 1);
                     setIndicator();
                     updateStepUI();
+                    ui.overlayConfirmed = true;
                     runInEmbed();
                     const btnDone = document.getElementById('btn-confirm');
                     if (btnDone) btnDone.classList.remove('staged');
@@ -2179,6 +2175,7 @@ export const gameLevelClasses = [CustomLevel];`;
 
                 setIndicator();
                 updateStepUI();
+                if (applyingStep === 'walls') ui.overlayConfirmed = true;
                 runInEmbed();
             });
             return;
@@ -2233,14 +2230,16 @@ export const gameLevelClasses = [CustomLevel];`;
             }
             setIndicator();
             updateStepUI();
+            if (current === 'walls') ui.overlayConfirmed = true;
             runInEmbed();
         });
     });
 
     function safeCodeToRun() {
-        const code = ui.editor.value || '';
-        const hasLevels = /export\s+const\s+gameLevelClasses/.test(code);
-        return hasLevels ? code : generateBaselineCode();
+        const preferStaged = (typeof stagedStep !== 'undefined' && !['npc','walls'].includes(stagedStep));
+        const preferred = (preferStaged && typeof stagedCode === 'string' && stagedCode.length) ? stagedCode : (ui.editor.value || '');
+        const hasLevels = /export\s+const\s+gameLevelClasses/.test(preferred);
+        return hasLevels ? preferred : generateBaselineCode();
     }
 
     function syncOverlayBarriersToRunner() {
@@ -2265,14 +2264,14 @@ export const gameLevelClasses = [CustomLevel];`;
         const code = safeCodeToRun();
         updateOverlayVisibility();
         ui.iframe.src = ui.iframe.src;
-        ui.iframe.onload = () => {
+            ui.iframe.onload = () => {
             setTimeout(() => {
                 ui.iframe.contentWindow.postMessage({ type: 'rpg:run-code', code: code }, '*');
                 setTimeout(() => {
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
-                    try { syncOverlayBarriersToRunner(); } catch (_) {}
+                    try { if (ui.overlayConfirmed) syncOverlayBarriersToRunner(); } catch (_) {}
                     try {
                         ui.iframe.setAttribute('tabindex', '0');
                         ui.iframe.focus();
