@@ -1302,6 +1302,9 @@ document.addEventListener('DOMContentLoaded', () => {
             unlockField(ui.pAnim);
             unlockField(ui.pRows);
             unlockField(ui.pCols);
+            // Ensure directional rows and hitbox controls remain editable
+            [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols, ui.pHitboxW, ui.pHitboxH]
+                .forEach(el => unlockField(el));
 
         } else if (current === 'npc') {
             if (ui.addNpcBtn) ui.addNpcBtn.disabled = false;
@@ -1331,6 +1334,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.editor.readOnly = false;
             [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = false; });
             [ui.pScale, ui.pStep, ui.pAnim, ui.pRows, ui.pCols].forEach(el => { if (el) el.disabled = false; });
+            // Keep directional rows and hitbox editable in freestyle
+            [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols, ui.pHitboxW, ui.pHitboxH]
+                .forEach(el => { if (el) el.disabled = false; });
             if (ui.addNpcBtn) ui.addNpcBtn.disabled = false;
             ui.npcs.forEach(slot => {
                 if (slot.addBtn) slot.addBtn.disabled = false;
