@@ -443,7 +443,7 @@ iframe { width: 100%; height: 100%; border: none; }
                         <button id="bg-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
                         <div id="bg-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
                             To add your own backgrounds, place files under <code>images/gamebuilder/bg</code> and then press the Refresh Assets button. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
-                            <div style="margin-top:4px;">Backgrounds manifest: <a href="{{ site.baseurl }}/images/gamebuilder/bg/index.json">images/gamebuilder/bg/index.json</a></div>
+                            <div style="margin-top:4px;">Backgrounds json: <a href="{{ site.baseurl }}/images/gamebuilder/bg/index.json">images/gamebuilder/bg/index.json</a></div>
                         </div>
                     </div>
                 </div>
@@ -460,8 +460,8 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div class="upload-instructions" style="margin-top:6px;">
                         <button id="sprite-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
                         <div id="sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
-                            To add your own spritesheets, place files under <code>images/gamebuilder/sprites</code> (and set rows/cols in the manifest). Then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
-                            <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
+                            To add your own spritesheets, place files under <code>images/gamebuilder/sprites</code> (and set rows/cols in index.json). Then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
+                            <div style="margin-top:4px;">Sprites json: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
                         </div>
                     </div>
                     <label>X Position</label>
@@ -541,6 +541,22 @@ iframe { width: 100%; height: 100%; border: none; }
                                         <input type="number" id="player-dir-columns" min="1" value="3">
                                     </div>
                                 </div>
+                                <div style="margin-top:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-weight:600; margin-bottom:6px;">Hitbox (collision box)</div>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; align-items:end;">
+                                        <div>
+                                            <label>Width Reduction (%)</label>
+                                            <input type="number" id="player-hitbox-width" min="0" max="0.9" step="0.01" value="0.00">
+                                        </div>
+                                        <div>
+                                            <label>Height Reduction (%)</label>
+                                            <input type="number" id="player-hitbox-height" min="0" max="0.9" step="0.01" value="0.00">
+                                        </div>
+                                    </div>
+                                    <div style="margin-top:6px; font-size:0.75em; color: var(--text-muted);">
+                                        Smaller values mean a larger collision box (closer to sprite edges). Larger values trim the box inward symmetrically.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -553,8 +569,8 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div class="upload-instructions" style="margin-top:6px;">
                         <button id="npc-sprite-instructions-btn" class="btn btn-sm">Upload Instructions ▸</button>
                         <div id="npc-sprite-instructions-panel" class="instructions-panel" style="display:none; font-size:0.75em; color: var(--text-muted); margin-top:6px;">
-                            NPCs use the same spritesheet system as the Player. Place files under <code>images/gamebuilder/sprites</code> and set <code>rows</code>/<code>cols</code> in the manifest, then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
-                            <div style="margin-top:4px;">Sprites manifest: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
+                            NPCs use the same spritesheet system as the Player. Place files under <code>images/gamebuilder/sprites</code> and set <code>rows</code>/<code>cols</code> in index.json, then press Refresh Assets. See <a href="{{ site.baseurl }}/gamebuilder-upload-instructions">upload instructions</a>.
+                            <div style="margin-top:4px;">Sprites json: <a href="{{ site.baseurl }}/images/gamebuilder/sprites/index.json">images/gamebuilder/sprites/index.json</a></div>
                             <div style="margin-top:6px;">
                                 Interaction: Walk up to an NPC and press <strong>E</strong> to open their dialogue. Interactions trigger on collision or close proximity. Ensure the NPC has either a <code>greeting</code> or <code>dialogues</code> set for text to appear.
                             </div>
@@ -782,6 +798,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pAnim: document.getElementById('player-anim'),
         pRows: document.getElementById('player-rows'),
         pCols: document.getElementById('player-cols'),
+        // Player hitbox controls
+        pHitboxW: document.getElementById('player-hitbox-width'),
+        pHitboxH: document.getElementById('player-hitbox-height'),
         // Player directional overrides
         pDownRow: document.getElementById('player-dir-down-row'),
         pRightRow: document.getElementById('player-dir-right-row'),
@@ -844,6 +863,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e && e.data && e.data.type === 'rpg:env-metrics') {
                 envTopOffset = Number(e.data.top) || 0;
                 envLeftOffset = Number(e.data.left) || 0;
+                // Re-sync barriers once we have fresh env metrics
+                try { syncOverlayBarriersToRunner(); } catch (_) {}
             }
         } catch (_) { /* ignore */ }
     });
@@ -903,7 +924,8 @@ document.addEventListener('DOMContentLoaded', () => {
             frag.appendChild(el);
         });
         ui.drawOverlay.appendChild(frag);
-        if (ui.overlayConfirmed) syncOverlayBarriersToRunner();
+        // Always sync overlay barriers so drawing works regardless of builder state
+        syncOverlayBarriersToRunner();
     }
 
     function currentPreviewEl() {
@@ -1518,6 +1540,8 @@ export const gameLevelClasses = [CustomLevel];`;
                         const drRow = clamp(parseInt(ui.pDownRightRow?.value ?? rRow));
                         const ulRow = clamp(parseInt(ui.pUpLeftRow?.value ?? lRow));
                         const dlRow = clamp(parseInt(ui.pDownLeftRow?.value ?? dRow));
+                        const hbW = Math.max(0, Math.min(parseFloat(ui.pHitboxW?.value || '0'), 0.9));
+                        const hbH = Math.max(0, Math.min(parseFloat(ui.pHitboxH?.value || '0'), 0.9));
 
                         const defs = `
         const bgData = {
@@ -1542,7 +1566,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: ${uRow}, start: 0, columns: ${dirCols} },
             upLeft: { row: ${ulRow}, start: 0, columns: ${dirCols}, rotate: Math.PI/16 },
             upRight: { row: ${urRow}, start: 0, columns: ${dirCols}, rotate: -Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: ${hbW}, heightPercentage: ${hbH} },
             keypress: ${keypress}
         };`;
                         const classes = [
@@ -1597,6 +1621,8 @@ export const gameLevelClasses = [CustomLevel];`;
                         const pAnimValN = parseInt(ui.pAnim?.value || '50', 10);
                         const pRowsValN = Math.max(1, parseInt(ui.pRows?.value || p.rows || 1, 10));
                         const pColsValN = Math.max(1, parseInt(ui.pCols?.value || p.cols || 1, 10));
+                        const hbWN = Math.max(0, Math.min(parseFloat(ui.pHitboxW?.value || '0'), 0.9));
+                        const hbHN = Math.max(0, Math.min(parseFloat(ui.pHitboxH?.value || '0'), 0.9));
                         
                         const defsStart = `
         const bgData = {
@@ -1621,7 +1647,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: 3, start: 0, columns: 3 },
             upLeft: { row: 2, start: 0, columns: 3, rotate: Math.PI/16 },
             upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: ${hbWN}, heightPercentage: ${hbHN} },
             keypress: ${keypress}
         };`;
                         const npcDefs = [];
@@ -1745,7 +1771,7 @@ export const gameLevelClasses = [CustomLevel];`;
             up: { row: 3, start: 0, columns: 3 },
             upLeft: { row: 2, start: 0, columns: 3, rotate: Math.PI/16 },
             upRight: { row: 1, start: 0, columns: 3, rotate: -Math.PI/16 },
-            hitbox: { widthPercentage: 0.45, heightPercentage: 0.2 },
+            hitbox: { widthPercentage: ${Math.max(0, Math.min(parseFloat(ui.pHitboxW?.value || '0'), 0.9))}, heightPercentage: ${Math.max(0, Math.min(parseFloat(ui.pHitboxH?.value || '0'), 0.9))} },
             keypress: ${keypress}
         };`;
                     const classes = [
@@ -2037,6 +2063,8 @@ export const gameLevelClasses = [CustomLevel];`;
     if (ui.pAnim) ui.pAnim.addEventListener('input', rerunPlayer);
     if (ui.pRows) ui.pRows.addEventListener('input', rerunPlayer);
     if (ui.pCols) ui.pCols.addEventListener('input', rerunPlayer);
+    if (ui.pHitboxW) ui.pHitboxW.addEventListener('input', rerunPlayer);
+    if (ui.pHitboxH) ui.pHitboxH.addEventListener('input', rerunPlayer);
     // Player directional overrides listeners
     [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols]
         .forEach(el => { if (el) el.addEventListener('input', rerunPlayer); });
@@ -2282,6 +2310,7 @@ export const gameLevelClasses = [CustomLevel];`;
                 .filter(s => s && s.type === 'barrier')
                 .map((s, i) => ({
                     id: `dbarrier_rt_${i+1}`,
+                    // Map overlay coordinates to game space using latest env offsets
                     x: Math.max(0, Math.round((s.x || 0) - (envLeftOffset || 0))),
                     y: Math.max(0, Math.round((s.y || 0) - (envTopOffset || 0))),
                     width: Math.max(0, Math.round(s.width || 0)),
@@ -2304,7 +2333,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
-                    try { if (ui.overlayConfirmed) syncOverlayBarriersToRunner(); } catch (_) {}
+                    // Always push overlay barriers into the runner after code load
+                    try { syncOverlayBarriersToRunner(); } catch (_) {}
                     try {
                         ui.iframe.setAttribute('tabindex', '0');
                         ui.iframe.focus();

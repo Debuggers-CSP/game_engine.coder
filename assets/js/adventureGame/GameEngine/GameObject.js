@@ -116,13 +116,19 @@ class GameObject {
      */
     preemptCollisionStop() {
         if (!this.gameEnv || !this.gameEnv.gameObjects) return;
-        const nextX = (this.transform?.x ?? 0) + (this.transform?.xv ?? 0);
-        const nextY = (this.transform?.y ?? 0) + (this.transform?.yv ?? 0);
+        const thisX = this.transform?.x ?? 0;
+        const thisY = this.transform?.y ?? 0;
+        const nextX = thisX + (this.transform?.xv ?? 0);
+        const nextY = thisY + (this.transform?.yv ?? 0);
         const w = (this.width ?? this.canvas?.width ?? 0);
         const h = (this.height ?? this.canvas?.height ?? 0);
         const thisWidthReduction = w * (this.hitbox?.widthPercentage || 0.0);
         const thisHeightReduction = h * (this.hitbox?.heightPercentage || 0.0);
 
+        const pLeft = thisX + thisWidthReduction;
+        const pTop = thisY + thisHeightReduction;
+        const pRight = thisX + w - thisWidthReduction;
+        const pBottom = thisY + h;
         const nLeft = nextX + thisWidthReduction;
         const nTop = nextY + thisHeightReduction;
         const nRight = nextX + w - thisWidthReduction;
@@ -147,28 +153,24 @@ class GameObject {
             const willHit = (nLeft < oRight && nRight > oLeft && nTop < oBottom && nBottom > oTop);
             if (!willHit) continue;
 
-            // Stop components that push into the barrier
-            if (this.transform.xv > 0 && (nRight > oLeft) && ((this.transform.x + w - thisWidthReduction) <= oLeft)) {
+            // Stop and clamp only when crossing an edge on the movement axis
+            if (this.transform.xv > 0 && pRight <= oLeft && nRight > oLeft) {
                 this.transform.xv = 0;
                 this.state.movement.right = false;
-                // Clamp flush against left side
                 this.transform.x = oLeft - (w - thisWidthReduction);
-            } else if (this.transform.xv < 0 && (nLeft < oRight) && ((this.transform.x + thisWidthReduction) >= oRight)) {
+            } else if (this.transform.xv < 0 && pLeft >= oRight && nLeft < oRight) {
                 this.transform.xv = 0;
                 this.state.movement.left = false;
-                // Clamp flush against right side
                 this.transform.x = oRight - thisWidthReduction;
             }
 
-            if (this.transform.yv > 0 && (nBottom > oTop) && ((this.transform.y + h) <= oTop)) {
+            if (this.transform.yv > 0 && pBottom <= oTop && nBottom > oTop) {
                 this.transform.yv = 0;
                 this.state.movement.down = false;
-                // Clamp flush above top side
-                this.transform.y = oTop - h;
-            } else if (this.transform.yv < 0 && (nTop < oBottom) && ((this.transform.y + thisHeightReduction) >= oBottom)) {
+                this.transform.y = oTop - h + thisHeightReduction;
+            } else if (this.transform.yv < 0 && pTop >= oBottom && nTop < oBottom) {
                 this.transform.yv = 0;
                 this.state.movement.up = false;
-                // Clamp flush below bottom side
                 this.transform.y = oBottom - thisHeightReduction;
             }
         }
@@ -359,13 +361,17 @@ class GameObject {
             // Robust separation: resolve minimal overlap on primary axis using engine-space bounds
             const b2 = this.collisionData?.bounds;
             if (b2 && b2.this && b2.other) {
-                const SEP_EPS = 1; // separation epsilon to avoid sticky re-collisions
                 const dxRight = Math.max(0, b2.this.right - b2.other.left);
                 const dxLeft = Math.max(0, b2.other.right - b2.this.left);
                 const dyBottom = Math.max(0, b2.this.bottom - b2.other.top);
                 const dyTop = Math.max(0, b2.other.bottom - b2.this.top);
                 const overlapX = Math.min(dxRight, dxLeft);
                 const overlapY = Math.min(dyBottom, dyTop);
+
+                const w = b2.this.w;
+                const h = b2.this.h;
+                const thisWidthReduction = w * (this.hitbox?.widthPercentage || 0.0);
+                const thisHeightReduction = h * (this.hitbox?.heightPercentage || 0.0);
 
                 // Proactively block adding velocity into the collided sides
                 if (dxRight > 0 && this.transform.xv > 0) { this.state.movement.right = false; this.transform.xv = 0; }
@@ -375,39 +381,27 @@ class GameObject {
 
                 if (overlapX > 0 || overlapY > 0) {
                     if (overlapX <= overlapY) {
-                        // Separate horizontally
-                        if (this.transform.xv > 0) {
-                            this.transform.x -= (dxRight + SEP_EPS); // moving right, push left
+                        // Separate horizontally flush to edge
+                        if (dxRight <= dxLeft) {
+                            this.transform.x = b2.other.left - (w - thisWidthReduction);
                             this.state.movement.right = false;
-                        } else if (this.transform.xv < 0) {
-                            this.transform.x += (dxLeft + SEP_EPS); // moving left, push right
-                            this.state.movement.left = false;
                         } else {
-                            // No velocity: choose nearest side
-                            if (dxRight <= dxLeft) { this.transform.x -= (dxRight + SEP_EPS); this.state.movement.right = false; }
-                            else { this.transform.x += (dxLeft + SEP_EPS); this.state.movement.left = false; }
+                            this.transform.x = b2.other.right - thisWidthReduction;
+                            this.state.movement.left = false;
                         }
-                        // Stop horizontal motion
                         this.transform.xv = 0;
                     } else {
-                        // Separate vertically
-                        if (this.transform.yv > 0) {
-                            this.transform.y -= (dyBottom + SEP_EPS); // moving down, push up
+                        // Separate vertically flush to edge
+                        if (dyBottom <= dyTop) {
+                            this.transform.y = b2.other.top - h + thisHeightReduction;
                             this.state.movement.down = false;
-                        } else if (this.transform.yv < 0) {
-                            this.transform.y += (dyTop + SEP_EPS); // moving up, push down
-                            this.state.movement.up = false;
                         } else {
-                            // No velocity: choose nearest side
-                            if (dyBottom <= dyTop) { this.transform.y -= (dyBottom + SEP_EPS); this.state.movement.down = false; }
-                            else { this.transform.y += (dyTop + SEP_EPS); this.state.movement.up = false; }
+                            this.transform.y = b2.other.bottom - thisHeightReduction;
+                            this.state.movement.up = false;
                         }
-                        // Stop vertical motion
                         this.transform.yv = 0;
                     }
                     // Clamp final position within bounds
-                    const w = (this.width ?? this.canvas?.width ?? 0);
-                    const h = (this.height ?? this.canvas?.height ?? 0);
                     this.transform.x = Math.max(0, Math.min(this.transform.x, this.gameEnv.innerWidth - w));
                     this.transform.y = Math.max(0, Math.min(this.transform.y, this.gameEnv.innerHeight - h));
                 }

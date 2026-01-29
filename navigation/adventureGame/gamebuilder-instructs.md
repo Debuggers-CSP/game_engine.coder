@@ -103,3 +103,31 @@ down:  { row: 0, start: 0, columns: 1 }
 - If your animation plays too fast or slow, adjust `ANIMATION_RATE`.
 - If frames clip, verify `pixels.height` and `pixels.width` match the image dimensions.
 - If diagonal movement looks odd, remove `rotate` or tweak the angles.
+
+## Hitboxes (collision boxes)
+
+Hitboxes define the rectangle used for collision, which can be smaller than the visible sprite. GameBuilder uses axis-aligned bounding boxes (AABB) and supports percentage-based reductions to trim the collision box inward symmetrically.
+
+- Width reduction: trims from left and right equally by a fraction of the sprite width.
+- Height reduction: trims from top and bottom equally by a fraction of the sprite height.
+
+Example: `hitbox: { widthPercentage: 0.10, heightPercentage: 0.20 }` makes the collision box 10% narrower and 20% shorter than the sprite, centered inside the sprite.
+
+### Why adjust hitbox?
+- Avoids colliding on transparent padding around sprites.
+- Fine-tunes how “close” you can get to walls/objects before stopping.
+
+### Recommended starting point
+- For precise edge collisions against barriers, start with `0.00` for both.
+- If your sprite has empty margins, increase values slightly (e.g., `0.05–0.15`).
+
+### Editing the Player hitbox in GameBuilder
+- Open GameBuilder → Assets → Player → Advanced.
+- Under “Hitbox (collision box)”, set:
+	- Width Reduction (%) → `widthPercentage`
+	- Height Reduction (%) → `heightPercentage`
+- Press Confirm Step or Run to apply. The generated `playerData` will include the hitbox values.
+
+Notes:
+- Values are fractions (0.00–0.90). Setting `0.30` means 30% reduction total, split across both sides.
+- Larger reductions make the collision box smaller, allowing more visual overlap before a collision.
