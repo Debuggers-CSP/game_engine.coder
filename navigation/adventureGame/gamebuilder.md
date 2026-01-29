@@ -2373,6 +2373,10 @@ export const gameLevelClasses = [CustomLevel];`;
         }
         code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
         code = code.replace(/\/\* BUILDER_HOOKS_START \*\/[\s\S]*?\/\* BUILDER_HOOKS_END \*\//g, '');
+        // Normalize exports to a drop-in GameLevel file
+        code = code.replace(/import\s+GameControl\s+from\s+[^\n]+\n/g, '');
+        code = code.replace(/export\s*\{\s*GameControl\s*\};?/g, '');
+        code = code.replace(/export\s+const\s+gameLevelClasses\s*=\s*\[\s*CustomLevel\s*\];?/g, 'export default CustomLevel;');
         const header = `// Adventure Game Custom Level\n// Exported from GameBuilder on ${(new Date()).toISOString()}\n// Drop this file into your Adventure Game project (e.g., assets/js/adventureGame/levels).\n`;
         code = header + code;
         const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
