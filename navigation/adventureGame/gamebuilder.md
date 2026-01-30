@@ -5,6 +5,7 @@ description: Helping programmers understand how to create a game
 permalink: /rpg/gamebuilder
 ---
 
+<!-- page-level styles and UI layout for the GameBuilder interface -->
 <style>
 .page-content .wrapper { max-width: 100% !important; padding: 0 !important; }
 
@@ -315,30 +316,25 @@ iframe { width: 100%; height: 100%; border: none; }
 .wall-slot { margin-top:8px; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.08); }
 .wall-fields label { display:block; }
 
-/* Drawing overlay for walls/pass zones */
+/* drawing overlay for walls/pass zones */
 .game-frame {
     position: relative;
 }
 .draw-overlay {
     position: absolute;
     inset: 0;
-    pointer-events: none; /* only active in draw mode */
+    pointer-events: none; 
     z-index: 50;
 }
 .draw-overlay.active { pointer-events: auto; }
 .draw-overlay.mode-barrier { cursor: crosshair; }
-.draw-overlay.mode-pass { cursor: crosshair; }
 .draw-rect {
     position: absolute;
     box-sizing: border-box;
 }
 .draw-rect.barrier {
-    border: 2px solid #ff2d2d; /* red */
+    border: 2px solid #ff2d2d; 
     background: rgba(255,0,0,0.05);
-}
-.draw-rect.pass {
-    border: 2px dashed #2e7bf7; /* blue */
-    background: rgba(46,123,247,0.15);
 }
 .draw-toolbar {
     display: flex;
@@ -406,10 +402,13 @@ iframe { width: 100%; height: 100%; border: none; }
 
 </style>
 
+<!-- title banner for the GameBuilder page -->
 <div class="gamebuilder-title">{{page.title}}</div>
 
+<!-- main builder layout: left (assets) + right (code and game) -->
 <div class="creator-layout">
     <div class="col-asset">
+        <!-- assets panel: background, player, NPCs, and walls inputs -->
         <div class="glass-panel creator-panel" style="position: relative;">
             <div class="panel-header">
                 <span>Assets</span>
@@ -422,6 +421,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <button id="btn-refresh-assets" class="icon-btn" data-tooltip="Refresh Assets">⟳</button>
                 </div>
             </div>
+            <!-- help panel: shows step-by-step guidance and tips -->
             <div class="help-panel" id="help-panel">
                 <strong>Steps:</strong><br>
                 1. Background - Select environment<br>
@@ -429,8 +429,10 @@ iframe { width: 100%; height: 100%; border: none; }
                 3. Freestyle - Add NPCs, Walls, etc<br><br>
                 <strong>Tips:</strong> Draw red barriers directly on the game view. Barriers collide. Walls are visible in-game by default; use the Walls toggle to hide them while testing.
             </div>
+            <!-- scrollable form: asset configuration sections -->
             <div class="scroll-form">
                 <div class="asset-group">
+                    <!-- environment selection and upload instructions -->
                     <div class="group-title">ENVIRONMENT</div>
                     <label>Background Selection</label>
                     <select id="bg-select">
@@ -448,6 +450,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     </div>
                 </div>
                 <div class="asset-group">
+                    <!-- player configuration: name, sprite, position, controls, advanced settings -->
                     <div class="group-title">PLAYER</div>
                     <label>Name</label>
                     <input type="text" id="player-name" value="" placeholder="Player name">
@@ -562,6 +565,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     </div>
                 </div>
                 <div class="asset-group">
+                    <!-- NPC builder: dynamic slots with sprite and dialogue -->
                     <div class="group-title">
                         <span>NPC</span>
                         <button class="add-item-btn" id="add-npc">+</button>
@@ -579,6 +583,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div id="npcs-container"></div>
                 </div>
                 <div class="asset-group">
+                    <!-- walls: toggle visibility, draw barriers, clear shapes -->
                     <div class="group-title">
                         <span>WALLS</span>
                     </div>
@@ -593,12 +598,14 @@ iframe { width: 100%; height: 100%; border: none; }
         </div>
     </div>
     <div class="col-main view-split">
+        <!-- view controls: switch between code, game, or split view -->
         <div class="view-controls">
             <button class="view-btn" data-view="code">Code</button>
             <button class="view-btn" data-view="game">Game</button>
             <button class="view-btn active" data-view="split">Split</button>
         </div>
         <div class="main-content">
+            <!-- game panel: iframe runner + drawing overlay -->
             <div class="glass-panel panel-game">
                 <div class="panel-header">Game View</div>
                 <div class="game-frame">
@@ -606,6 +613,7 @@ iframe { width: 100%; height: 100%; border: none; }
                     <div id="draw-overlay" class="draw-overlay"></div>
                 </div>
             </div>
+            <!-- code panel: live JS editor with highlight -->
             <div class="glass-panel code-panel panel-code">
                 <div class="panel-header">Code View (JS)</div>
                 <div class="editor-container" id="editor-container">
@@ -771,7 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const key = sanitizeKey(name);
                     if (assets.sprites[key]) continue;
                     const dims = await ensureImageDims(src);
-                    const rows = 4, cols = 3; // default fallback
+                    const rows = 4, cols = 3; 
                     assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.pSprite.appendChild(opt);
                     document.querySelectorAll('.npc-sprite').forEach(sel => {
@@ -797,10 +805,8 @@ document.addEventListener('DOMContentLoaded', () => {
         pAnim: document.getElementById('player-anim'),
         pRows: document.getElementById('player-rows'),
         pCols: document.getElementById('player-cols'),
-        // Player hitbox controls
         pHitboxW: document.getElementById('player-hitbox-width'),
         pHitboxH: document.getElementById('player-hitbox-height'),
-        // Player directional overrides
         pDownRow: document.getElementById('player-dir-down-row'),
         pRightRow: document.getElementById('player-dir-right-row'),
         pLeftRow: document.getElementById('player-dir-left-row'),
@@ -862,7 +868,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e && e.data && e.data.type === 'rpg:env-metrics') {
                 envTopOffset = Number(e.data.top) || 0;
                 envLeftOffset = Number(e.data.left) || 0;
-                // Re-sync barriers once we have fresh env metrics
                 try { syncOverlayBarriersToRunner(); } catch (_) {}
             }
         } catch (_) { /* ignore */ }
@@ -923,7 +928,6 @@ document.addEventListener('DOMContentLoaded', () => {
             frag.appendChild(el);
         });
         ui.drawOverlay.appendChild(frag);
-        // Always sync overlay barriers so drawing works regardless of builder state
         syncOverlayBarriersToRunner();
     }
 
@@ -976,7 +980,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.overlayConfirmed = false;
             renderDrawShapes();
             syncFromControlsIfFreestyle();
-            // overlay sync happens on Confirm
         }
     }
 
@@ -1136,7 +1139,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ui.npcs) ui.npcs = [];
         ui.npcs.push(slot);
         updateStepUI();
-        // Do not modify editor directly here; Confirm handles code updates via merge
         return slot;
     }
 
@@ -1148,7 +1150,6 @@ document.addEventListener('DOMContentLoaded', () => {
             slot.fieldsOpen = true;
             slot.addBtn.textContent = `NPC ${ui.npcs.length} ▾`;
             updateStepUI();
-            // Do not update runner yet; NPC changes apply on Confirm
         });
     }
 
@@ -1302,7 +1303,6 @@ document.addEventListener('DOMContentLoaded', () => {
             unlockField(ui.pAnim);
             unlockField(ui.pRows);
             unlockField(ui.pCols);
-            // Ensure directional rows and hitbox controls remain editable
             [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols, ui.pHitboxW, ui.pHitboxH]
                 .forEach(el => unlockField(el));
 
@@ -1334,7 +1334,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.editor.readOnly = false;
             [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = false; });
             [ui.pScale, ui.pStep, ui.pAnim, ui.pRows, ui.pCols].forEach(el => { if (el) el.disabled = false; });
-            // Keep directional rows and hitbox editable in freestyle
             [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols, ui.pHitboxW, ui.pHitboxH]
                 .forEach(el => { if (el) el.disabled = false; });
             if (ui.addNpcBtn) ui.addNpcBtn.disabled = false;
@@ -1825,7 +1824,6 @@ export const gameLevelClasses = [CustomLevel];`;
                         classes.push(`      { class: Npc, data: npcData${index} }`);
                     });
 
-                    // add walls from sliders AND drawing overlay
                     const barrierDefs = [];
 
                     const includedWalls = ui.walls.slice();
@@ -1976,7 +1974,6 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function mergeDefsAndClasses(oldCode, insertDefs, insertClasses) {
         let code = oldCode;
-        // Sanitize: drop any accidental appended blocks after export line
         try {
             const exportRe = /export\s+const\s+gameLevelClasses\s*=\s*\[CustomLevel\];/;
             const m = exportRe.exec(code);
@@ -1985,7 +1982,6 @@ export const gameLevelClasses = [CustomLevel];`;
             }
         } catch (_) {}
 
-        // Deduplicate NPC defs: remove any existing const npcDataX blocks that we are about to insert
         try {
             const varNames = [];
             const varRe = /\bconst\s+(npcData\d+)\s*=\s*\{/g;
@@ -2049,7 +2045,6 @@ export const gameLevelClasses = [CustomLevel];`;
             if (spr) {
                 if (ui.pRows) ui.pRows.value = spr.rows ?? 1;
                 if (ui.pCols) ui.pCols.value = spr.cols ?? 1;
-                // Initialize directional rows defaults based on common 4-row layout
                 const rows = Math.max(1, parseInt(ui.pRows?.value || spr.rows || 1, 10));
                 const clamp = (v) => Math.max(0, Math.min(rows - 1, v));
                 if (ui.pDownRow) ui.pDownRow.value = clamp(0);
@@ -2078,7 +2073,6 @@ export const gameLevelClasses = [CustomLevel];`;
     if (ui.pCols) ui.pCols.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
     if (ui.pHitboxW) ui.pHitboxW.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
     if (ui.pHitboxH) ui.pHitboxH.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
-    // Player directional overrides listeners
     [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols]
         .forEach(el => { if (el) el.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); }); });
     
@@ -2323,7 +2317,6 @@ export const gameLevelClasses = [CustomLevel];`;
                 .filter(s => s && s.type === 'barrier')
                 .map((s, i) => ({
                     id: `dbarrier_rt_${i+1}`,
-                    // Map overlay coordinates to game space using latest env offsets
                     x: Math.max(0, Math.round((s.x || 0) - (envLeftOffset || 0))),
                     y: Math.max(0, Math.round((s.y || 0) - (envTopOffset || 0))),
                     width: Math.max(0, Math.round(s.width || 0)),
@@ -2346,7 +2339,6 @@ export const gameLevelClasses = [CustomLevel];`;
                     try {
                         ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
                     } catch (e) { /* ignore */ }
-                    // Always push overlay barriers into the runner after code load
                     try { syncOverlayBarriersToRunner(); } catch (_) {}
                     try {
                         ui.iframe.setAttribute('tabindex', '0');
@@ -2373,6 +2365,7 @@ export const gameLevelClasses = [CustomLevel];`;
         });
     }
 
+    // Export current level code as a download-ready JS file
     function exportCode() {
         let code = stagedCode || safeCodeToRun();
         if (!/export\s+const\s+gameLevelClasses/.test(code)) {
@@ -2380,7 +2373,6 @@ export const gameLevelClasses = [CustomLevel];`;
         }
         code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
         code = code.replace(/\/\* BUILDER_HOOKS_START \*\/[\s\S]*?\/\* BUILDER_HOOKS_END \*\//g, '');
-        // Normalize exports to a drop-in GameLevel file
         code = code.replace(/import\s+GameControl\s+from\s+[^\n]+\n/g, '');
         code = code.replace(/export\s*\{\s*GameControl\s*\};?/g, '');
         code = code.replace(/export\s+const\s+gameLevelClasses\s*=\s*\[\s*CustomLevel\s*\];?/g, 'export default CustomLevel;');
@@ -2408,6 +2400,7 @@ export const gameLevelClasses = [CustomLevel];`;
     if (refreshBtn) refreshBtn.addEventListener('click', () => { scanServerAssets(); });
 
 
+    // Initialize editor and UI on load
     ui.editor.value = generateBaselineCode();
     setIndicator();
     updateStepUI();
