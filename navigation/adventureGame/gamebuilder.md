@@ -581,11 +581,10 @@ iframe { width: 100%; height: 100%; border: none; }
                 <div class="asset-group">
                     <div class="group-title">
                         <span>WALLS</span>
-                        <button class="add-item-btn" id="add-wall">+</button>
                     </div>
                     <div class="draw-toolbar">
                         <button id="toggle-walls-game" class="draw-btn">Show Walls (Game)</button>
-                        <button id="draw-barrier" class="draw-btn">Draw Barrier (Red)</button>
+                        <button id="draw-barrier" class="draw-btn">Draw Wall (Red)</button>
                         <button id="draw-clear" class="draw-btn">Clear Shapes</button>
                     </div>
                     <div id="walls-container"></div>
@@ -902,8 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (!mode) removePreview();
     }
-    if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => setDrawMode('barrier'));
-    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { ui.drawShapes = []; ui.overlayConfirmed = false; renderDrawShapes(); syncFromControlsIfFreestyle(); });
+    if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => { state.lastEdited = 'walls'; setDrawMode('barrier'); });
+    if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { state.lastEdited = 'walls'; ui.drawShapes = []; ui.overlayConfirmed = false; renderDrawShapes(); syncFromControlsIfFreestyle(); });
 
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
@@ -1214,10 +1213,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ['input','change'].forEach(evt => {
-            slot.wX.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.wY.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.wW.addEventListener(evt, syncFromControlsIfFreestyle);
-            slot.wH.addEventListener(evt, syncFromControlsIfFreestyle);
+            slot.wX.addEventListener(evt, () => { state.lastEdited = 'walls'; syncFromControlsIfFreestyle(); });
+            slot.wY.addEventListener(evt, () => { state.lastEdited = 'walls'; syncFromControlsIfFreestyle(); });
+            slot.wW.addEventListener(evt, () => { state.lastEdited = 'walls'; syncFromControlsIfFreestyle(); });
+            slot.wH.addEventListener(evt, () => { state.lastEdited = 'walls'; syncFromControlsIfFreestyle(); });
         });
 
         ui.walls.push(slot);
@@ -1227,6 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.addWallBtn) {
         ui.addWallBtn.addEventListener('click', () => {
             if (typeof state !== 'undefined') state.userEdited = false;
+            state.lastEdited = 'walls';
             const slot = makeWallSlot(ui.walls.length + 1);
             if (slot.fieldsContainer) slot.fieldsContainer.style.display = '';
             slot.fieldsOpen = true;
@@ -1238,7 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const LINE_HEIGHT = 20;
-    const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false };
+    const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false, lastEdited: null };
     let stagedCode = null;
     let stagedStep = null;
     const steps = ['background','player','freestyle'];
@@ -1908,7 +1908,12 @@ export const gameLevelClasses = [CustomLevel];`;
         const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
         const hasPlayer = !!ui.pSprite.value;
         const hasBackground = !!ui.bg.value;
-        const stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
+        let stepToCompose;
+        if (current === 'freestyle' && state.lastEdited) {
+            stepToCompose = state.lastEdited;
+        } else {
+            stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
+        }
         const newCode = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
         if (newCode) {
             stagedCode = newCode;
@@ -2021,6 +2026,7 @@ export const gameLevelClasses = [CustomLevel];`;
     const mvEl = document.getElementById('movement-keys');
     const rerunPlayer = () => { syncFromControlsIfFreestyle(); };
     function updatePlayerPositionInEditor() {
+        state.lastEdited = 'player';
         const code = ui.editor.value || '';
         const x = parseInt(ui.pX?.value || '0', 10);
         const y = parseInt(ui.pY?.value || '0', 10);
@@ -2035,7 +2041,7 @@ export const gameLevelClasses = [CustomLevel];`;
             rerunPlayer();
         }
     }
-    if (ui.bg) ui.bg.addEventListener('change', rerunPlayer);
+    if (ui.bg) ui.bg.addEventListener('change', () => { state.lastEdited = 'background'; rerunPlayer(); });
     if (ui.pSprite) ui.pSprite.addEventListener('change', () => {
         try {
             const key = ui.pSprite.value;
@@ -2057,26 +2063,27 @@ export const gameLevelClasses = [CustomLevel];`;
                 if (ui.pDirCols && !ui.pDirCols.value) ui.pDirCols.value = 3;
             }
         } finally {
+            state.lastEdited = 'player';
             rerunPlayer();
         }
     });
     if (ui.pX) ui.pX.addEventListener('input', updatePlayerPositionInEditor);
     if (ui.pY) ui.pY.addEventListener('input', updatePlayerPositionInEditor);
-    if (ui.pName) ui.pName.addEventListener('input', rerunPlayer);
-    if (mvEl) mvEl.addEventListener('change', rerunPlayer);
-    if (ui.pScale) ui.pScale.addEventListener('input', rerunPlayer);
-    if (ui.pStep) ui.pStep.addEventListener('input', rerunPlayer);
-    if (ui.pAnim) ui.pAnim.addEventListener('input', rerunPlayer);
-    if (ui.pRows) ui.pRows.addEventListener('input', rerunPlayer);
-    if (ui.pCols) ui.pCols.addEventListener('input', rerunPlayer);
-    if (ui.pHitboxW) ui.pHitboxW.addEventListener('input', rerunPlayer);
-    if (ui.pHitboxH) ui.pHitboxH.addEventListener('input', rerunPlayer);
+    if (ui.pName) ui.pName.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (mvEl) mvEl.addEventListener('change', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pScale) ui.pScale.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pStep) ui.pStep.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pAnim) ui.pAnim.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pRows) ui.pRows.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pCols) ui.pCols.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pHitboxW) ui.pHitboxW.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
+    if (ui.pHitboxH) ui.pHitboxH.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); });
     // Player directional overrides listeners
     [ui.pDownRow, ui.pRightRow, ui.pLeftRow, ui.pUpRow, ui.pUpRightRow, ui.pDownRightRow, ui.pUpLeftRow, ui.pDownLeftRow, ui.pDirCols]
-        .forEach(el => { if (el) el.addEventListener('input', rerunPlayer); });
+        .forEach(el => { if (el) el.addEventListener('input', () => { state.lastEdited = 'player'; rerunPlayer(); }); });
     
     ui.npcs.forEach(slot => {
-        if (slot.nId) slot.nId.addEventListener('input', syncFromControlsIfFreestyle);
+        if (slot.nId) slot.nId.addEventListener('input', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
         if (slot.nId) slot.nId.addEventListener('input', () => {
             const name = slot.nId.value.trim();
             if (name.length) {
@@ -2086,10 +2093,10 @@ export const gameLevelClasses = [CustomLevel];`;
                 slot.addBtn.textContent = (slot.locked ? name : 'NPC') + caret;
             }
         });
-        if (slot.nMsg) slot.nMsg.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.nSprite) slot.nSprite.addEventListener('change', syncFromControlsIfFreestyle);
-        if (slot.nX) slot.nX.addEventListener('input', syncFromControlsIfFreestyle);
-        if (slot.nY) slot.nY.addEventListener('input', syncFromControlsIfFreestyle);
+        if (slot.nMsg) slot.nMsg.addEventListener('input', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
+        if (slot.nSprite) slot.nSprite.addEventListener('change', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
+        if (slot.nX) slot.nX.addEventListener('input', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
+        if (slot.nY) slot.nY.addEventListener('input', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
     });
 
     document.getElementById('btn-confirm').addEventListener('click', () => {
