@@ -107,27 +107,26 @@ function closeCustomAlert() {
         let lastErr = null;
         for (const cand of uniq) {
             try {
-                const testUrl = `${cand}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
-                const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
-                if (res && res.ok) {
-                    const ctype = (res.headers.get('content-type') || '').toLowerCase();
-                    // Prefer JS MIME types; if ambiguous, inspect body
-                    if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
-                        basePrefix = cand; return basePrefix;
-                    }
-                    const text = await res.text();
-                    // Reject HTML responses (which cause "Unexpected token '<'")
-                    if (text.trim().startsWith('<')) {
+                const probePaths = [
+                    `/assets/js/adventureGame/GameEngine/Game.js`,
+                    `/assets/js/BetterGameEngine/GameEngine/Game.js`
+                ];
+                for (const pth of probePaths) {
+                    const testUrl = `${cand}${pth}?v=${Date.now()}`;
+                    const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                    if (res && res.ok) {
+                        const ctype = (res.headers.get('content-type') || '').toLowerCase();
+                        if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
+                            basePrefix = cand; return basePrefix;
+                        }
+                        const text = await res.text();
+                        if (!text.trim().startsWith('<')) { basePrefix = cand; return basePrefix; }
                         lastErr = new Error(`Probe returned HTML @ ${testUrl}`);
                     } else {
-                        basePrefix = cand; return basePrefix;
+                        lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
                     }
-                } else {
-                    lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
                 }
-            } catch (e) {
-                lastErr = e;
-            }
+            } catch (e) { lastErr = e; }
         }
         // Fallback to origin + siteBase even if probe failed
         basePrefix = `${origin}${siteBase}`;
@@ -148,7 +147,7 @@ function closeCustomAlert() {
     let engineType = null; // 'adventure' | 'better'
     async function loadEngine() {
         if (EngineModule) return EngineModule;
-        // Prefer Adventure engine first (present in this workspace), fallback to Better
+        // Prefer Adventure engine first (if present), fallback to Better
         try {
             const prefix = await ensureBasePrefix();
             const advUrl = `${prefix}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
@@ -369,13 +368,17 @@ function closeCustomAlert() {
             const Engine = await loadEngine();
 
             // Create module blob and import
-            const blob = new Blob([code], { type: 'application/javascript' });
+            const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             let mod = null;
             try {
                 mod = await import(url);
+            } catch (e) {
+                console.error('Blob module import failed', e);
+                throw e;
             } finally {
-                URL.revokeObjectURL(url);
+                // Delay revoke slightly to avoid edge cases on some browsers
+                setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 1500);
             }
 
             // Prepare environment references
