@@ -9,6 +9,14 @@ permalink: /rpg/gamebuilder
 <style>
 .page-content .wrapper { max-width: 100% !important; padding: 0 !important; }
 
+/* Hide BetterGameEngine control buttons in gamebuilder iframe */
+iframe .pause-button-bar,
+iframe button.pause-btn,
+iframe .leaderboard-widget {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 .gamebuilder-title {
     text-align: center;
     font-size: 2em;
@@ -1111,6 +1119,34 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.npcs = ui.npcs.filter(n => n !== slot);
             updateStepUI();
             scanServerAssets();
+
+            // Inject CSS into iframe to hide HUD/scoreboard elements (non-breaking)
+            if (ui.iframe) {
+                ui.iframe.addEventListener('load', () => {
+                    try {
+                        const doc = ui.iframe.contentDocument;
+                        if (!doc) return;
+                        if (doc.getElementById('gb-hide-hud-style')) return;
+                        const style = doc.createElement('style');
+                        style.id = 'gb-hide-hud-style';
+                        style.textContent = `
+                            .pause-button-bar { display: none !important; }
+                            .leaderboard-widget { display: none !important; }
+                            .score-display { display: none !important; }
+                            .score-counter { display: none !important; }
+                            .stats-display { display: none !important; }
+                            #scoreDisplay { display: none !important; }
+                            #score { display: none !important; }
+                            .hud { display: none !important; }
+                            [id*="score" i] { display: none !important; }
+                            [class*="score" i] { display: none !important; }
+                        `;
+                        doc.head.appendChild(style);
+                    } catch (_) {
+                        // Cross-origin or missing doc; ignore
+                    }
+                });
+            }
             syncFromControlsIfFreestyle();
             if (ui.freestyleMode) syncToCode();
         });
@@ -1353,11 +1389,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
         function generateBaselineCode() {
-                return `import GameControl from '/assets/js/adventureGame/GameEngine/GameControl.js';
-import GameEnvBackground from '/assets/js/adventureGame/GameEngine/GameEnvBackground.js';
-import Player from '/assets/js/adventureGame/GameEngine/Player.js';
-import Npc from '/assets/js/adventureGame/GameEngine/Npc.js';
-    import Barrier from '/assets/js/adventureGame/GameEngine/Barrier.js';
+                return `import GameEnvBackground from '/assets/js/BetterGameEngine/essentials/GameEnvBackground.js';
+import Player from '/assets/js/BetterGameEngine/gameObjects/Player.js';
+import Npc from '/assets/js/BetterGameEngine/gameObjects/Npc.js';
+    import Barrier from '/assets/js/adventureGame/Barrier.js';
 
 class CustomLevel {
     constructor(gameEnv) {
@@ -1376,7 +1411,6 @@ class CustomLevel {
     }
 }
 
-export { GameControl };
 export const gameLevelClasses = [CustomLevel];`;
         }
 
@@ -1390,11 +1424,10 @@ export const gameLevelClasses = [CustomLevel];`;
                         : '{ up: 87, left: 65, down: 83, right: 68 }';
 
                 function header() {
-                        return `import GameControl from '/assets/js/adventureGame/GameEngine/GameControl.js';
-import GameEnvBackground from '/assets/js/adventureGame/GameEngine/GameEnvBackground.js';
-import Player from '/assets/js/adventureGame/GameEngine/Player.js';
-import Npc from '/assets/js/adventureGame/GameEngine/Npc.js';
-import Barrier from '/assets/js/adventureGame/GameEngine/Barrier.js';
+                        return `import GameEnvBackground from '/assets/js/BetterGameEngine/essentials/GameEnvBackground.js';
+import Player from '/assets/js/BetterGameEngine/gameObjects/Player.js';
+import Npc from '/assets/js/BetterGameEngine/gameObjects/Npc.js';
+import Barrier from '/assets/js/adventureGame/Barrier.js';
 
 class CustomLevel {
     constructor(gameEnv) {
@@ -1467,7 +1500,6 @@ class CustomLevel {
     }
 }
 
-export { GameControl };
 export const gameLevelClasses = [CustomLevel];`;
                 }
 
@@ -2330,23 +2362,17 @@ export const gameLevelClasses = [CustomLevel];`;
     function runInEmbed() {
         renderOverlay();
         const code = safeCodeToRun();
-        updateOverlayVisibility();
         ui.iframe.src = ui.iframe.src;
-            ui.iframe.onload = () => {
+        ui.iframe.onload = () => {
             setTimeout(() => {
                 ui.iframe.contentWindow.postMessage({ type: 'rpg:run-code', code: code }, '*');
-                setTimeout(() => {
-                    try {
-                        ui.iframe.contentWindow.postMessage({ type: 'rpg:toggle-walls', visible: ui.gameWallsVisible }, '*');
-                    } catch (e) { /* ignore */ }
-                    try { syncOverlayBarriersToRunner(); } catch (_) {}
-                    try {
-                        ui.iframe.setAttribute('tabindex', '0');
-                        ui.iframe.focus();
-                    } catch (_) {}
-                }, 150);
             }, 100);
         };
+        
+        // Force iframe reload by changing src to self with cache bust
+        const urlObj = new URL(currentSrc, window.location.origin);
+        urlObj.searchParams.set('t', Date.now());
+        ui.iframe.src = urlObj.toString();
     }
 
     document.getElementById('btn-run').addEventListener('click', runInEmbed);
@@ -2405,8 +2431,6 @@ export const gameLevelClasses = [CustomLevel];`;
     setIndicator();
     updateStepUI();
     renderOverlay();
-    updateOverlayVisibility();
-    scanServerAssets();
 });
 </script>
 
