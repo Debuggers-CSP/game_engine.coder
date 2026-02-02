@@ -107,26 +107,27 @@ function closeCustomAlert() {
         let lastErr = null;
         for (const cand of uniq) {
             try {
-                const probePaths = [
-                    `/assets/js/adventureGame/GameEngine/Game.js`,
-                    `/assets/js/BetterGameEngine/GameEngine/Game.js`
-                ];
-                for (const pth of probePaths) {
-                    const testUrl = `${cand}${pth}?v=${Date.now()}`;
-                    const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
-                    if (res && res.ok) {
-                        const ctype = (res.headers.get('content-type') || '').toLowerCase();
-                        if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
-                            basePrefix = cand; return basePrefix;
-                        }
-                        const text = await res.text();
-                        if (!text.trim().startsWith('<')) { basePrefix = cand; return basePrefix; }
+                const testUrl = `${cand}/assets/js/BetterGameEngine/essentials/Game.js?v=${Date.now()}`;
+                const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                if (res && res.ok) {
+                    const ctype = (res.headers.get('content-type') || '').toLowerCase();
+                    // Prefer JS MIME types; if ambiguous, inspect body
+                    if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
+                        basePrefix = cand; return basePrefix;
+                    }
+                    const text = await res.text();
+                    // Reject HTML responses (which cause "Unexpected token '<'")
+                    if (text.trim().startsWith('<')) {
                         lastErr = new Error(`Probe returned HTML @ ${testUrl}`);
                     } else {
-                        lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
+                        basePrefix = cand; return basePrefix;
                     }
+                } else {
+                    lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
                 }
-            } catch (e) { lastErr = e; }
+            } catch (e) {
+                lastErr = e;
+            }
         }
         // Fallback to origin + siteBase even if probe failed
         basePrefix = `${origin}${siteBase}`;
@@ -147,10 +148,10 @@ function closeCustomAlert() {
     let engineType = null; // 'adventure' | 'better'
     async function loadEngine() {
         if (EngineModule) return EngineModule;
-        // Prefer Adventure engine first (if present), fallback to Better
+        // Prefer Adventure engine first (present in this workspace), fallback to Better
         try {
             const prefix = await ensureBasePrefix();
-            const advUrl = `${prefix}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
+            const advUrl = `${prefix}/assets/js/BetterGameEngine/essentials/Game.js?v=${Date.now()}`;
             // Prefetch to validate MIME/content to avoid HTML imports
             try {
                 const r = await fetch(advUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
@@ -170,7 +171,7 @@ function closeCustomAlert() {
             console.warn('Adventure engine load failed, trying BetterGameEngine:', eAdv);
             try {
                 const prefix = await ensureBasePrefix();
-                const betterUrl = `${prefix}/assets/js/BetterGameEngine/GameEngine/Game.js?v=${Date.now()}`;
+                const betterUrl = `${prefix}/assets/js/mansionGame/MansionLogic/Game.js?v=${Date.now()}`;
                 // Prefetch and validate Better engine too
                 try {
                     const r = await fetch(betterUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
@@ -197,7 +198,7 @@ function closeCustomAlert() {
     async function loadAdventureEngine() {
         try {
             const prefix = await ensureBasePrefix();
-            const url = `${prefix}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`;
+            const url = `${prefix}/assets/js/BetterGameEngine/essentials/Game.js?v=${Date.now()}`;
             // Prefetch and validate response isn't HTML
             try {
                 const r = await fetch(url, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
@@ -368,17 +369,13 @@ function closeCustomAlert() {
             const Engine = await loadEngine();
 
             // Create module blob and import
-            const blob = new Blob([code], { type: 'text/javascript;charset=utf-8' });
+            const blob = new Blob([code], { type: 'application/javascript' });
             const url = URL.createObjectURL(blob);
             let mod = null;
             try {
                 mod = await import(url);
-            } catch (e) {
-                console.error('Blob module import failed', e);
-                throw e;
             } finally {
-                // Delay revoke slightly to avoid edge cases on some browsers
-                setTimeout(() => { try { URL.revokeObjectURL(url); } catch (_) {} }, 1500);
+                URL.revokeObjectURL(url);
             }
 
             // Prepare environment references
@@ -427,74 +424,32 @@ function closeCustomAlert() {
 
             let started = false;
             let lastStartError = null;
-            // Preferred: Use Adventure Game engine entrypoint with provided levels
+            // Always use Adventure engine for gamebuilder code (which only exports gameLevelClasses)
             if (levelClasses.length > 0 && Engine && typeof Engine.main === 'function') {
                 try {
-                    if (engineType === 'better') {
-                        // BetterGameEngine expects (environment, GameControlClass)
-                        // Accept both named and default exports
-                        const GameControlClass = mod.GameControl || mod?.default?.GameControl; // from user module
-                        if (!GameControlClass) throw new Error('GameControl export required for BetterGameEngine');
-                        // Prepare explicit dimensions similar to game-runner
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        env.innerWidth = containerWidth;
-                        env.innerHeight = containerHeight;
-                        env.gameLevelClasses = levelClasses;
-                        try {
-                            liveAdventure = Engine.main(env, GameControlClass);
-                        } catch (startErrBetter) {
-                            lastStartError = startErrBetter;
-                            throw startErrBetter;
-                        }
-                    } else {
-                        // Adventure engine expects environment with level classes
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        try {
-                            liveAdventure = Engine.main({
-                            path: env.path,
-                            gameContainer: env.gameContainer,
-                            gameCanvas: env.gameCanvas,
-                            pythonURI: env.pythonURI,
-                            javaURI: env.javaURI,
-                            fetchOptions: env.fetchOptions,
-                            innerWidth: containerWidth,
-                            innerHeight: containerHeight,
-                            gameLevelClasses: levelClasses
-                            });
-                        } catch (startErrAdv) {
-                            lastStartError = startErrAdv;
-                            throw startErrAdv;
-                        }
+                    // Force Adventure engine for all code coming through rpg.md (gamebuilder uses this)
+                    const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
+                    const containerHeight = Math.min(580, window.innerHeight);
+                    try {
+                        liveAdventure = Engine.main({
+                        path: env.path,
+                        gameContainer: env.gameContainer,
+                        gameCanvas: env.gameCanvas,
+                        pythonURI: env.pythonURI,
+                        javaURI: env.javaURI,
+                        fetchOptions: env.fetchOptions,
+                        innerWidth: containerWidth,
+                        innerHeight: containerHeight,
+                        gameLevelClasses: levelClasses
+                        });
+                    } catch (startErr) {
+                        lastStartError = startErr;
+                        throw startErr;
                     }
                     started = true;
                 } catch (e) {
-                    console.warn('Engine start failed, attempting Adventure fallback:', e);
-                    try {
-                        const Engine2 = await loadAdventureEngine();
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        try {
-                            liveAdventure = Engine2.main({
-                            path: env.path,
-                            gameContainer: env.gameContainer,
-                            gameCanvas: env.gameCanvas,
-                            pythonURI: env.pythonURI,
-                            javaURI: env.javaURI,
-                            fetchOptions: env.fetchOptions,
-                            innerWidth: containerWidth,
-                            innerHeight: containerHeight,
-                            gameLevelClasses: levelClasses
-                            });
-                        } catch (startErrFB) {
-                            lastStartError = startErrFB;
-                            throw startErrFB;
-                        }
-                        started = true;
-                    } catch (ef) {
-                        console.error('Adventure fallback failed:', ef);
-                    }
+                    console.error('Game start failed:', e);
+                    lastStartError = e;
                 }
             }
 
@@ -514,8 +469,7 @@ function closeCustomAlert() {
                     if (el && msgBtn) {
                         msgBtn.textContent = msg;
                         el.style.display = 'block';
-                        // Do NOT keep blockers active on failure; allow builder controls to remain responsive
-                        disableBlockers();
+                        enableBlockers();
                     }
                 } catch (_) {}
                 return;
@@ -528,58 +482,9 @@ function closeCustomAlert() {
                 if (el && msgBtn) {
                     msgBtn.textContent = `Error: ${err.message || err}`;
                     el.style.display = 'block';
-                    // Do NOT keep blockers active on failure
-                    disableBlockers();
+                    enableBlockers();
                 }
             } catch (_) {}
-        }
-    });
- 
-    // Key event bridge: allow parent to simulate key events inside iframe
-    window.addEventListener('message', (event) => {
-        const data = event?.data;
-        if (!data || data.type !== 'rpg:simulate-key') return;
-        try {
-            const evType = data.evType === 'keyup' ? 'keyup' : 'keydown';
-            const keyCode = Number(data.keyCode) || 0;
-            const key = typeof data.key === 'string' ? data.key : undefined;
-            const code = typeof data.code === 'string' ? data.code : undefined;
-            const synth = new KeyboardEvent(evType, {
-                keyCode,
-                which: keyCode,
-                key,
-                code,
-                bubbles: true,
-                cancelable: true
-            });
-            const targets = [document, window, document.activeElement].filter(Boolean);
-            targets.forEach(t => {
-                try { t.dispatchEvent(synth); } catch (_) {}
-            });
-        } catch (e) {
-            console.warn('simulate-key failed', e);
-        }
-    });
-
-    // Fallback interaction trigger: let parent ask NPCs to process interaction now
-    window.addEventListener('message', (event) => {
-        const data = event?.data;
-        if (!data || data.type !== 'rpg:trigger-interact') return;
-        try {
-            const gc = liveAdventure && liveAdventure.gameControl;
-            const handlers = gc && gc.globalInteractionHandlers ? Array.from(gc.globalInteractionHandlers) : [];
-            handlers.forEach(h => {
-                try {
-                    if (typeof h.handleKeyInteract === 'function') {
-                        h.handleKeyInteract();
-                    } else if (typeof h.interact === 'function') {
-                        // As an emergency fallback, invoke interact directly
-                        h.interact.call(h);
-                    }
-                } catch (_) {}
-            });
-        } catch (e) {
-            console.warn('trigger-interact failed', e);
         }
     });
 </script>
