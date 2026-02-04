@@ -308,7 +308,7 @@ select:disabled, option[disabled] { color: #fff; }
     width: calc(100% - 20px);
 }
 
-.game-frame { flex: 1; }
+.game-frame { flex: 1; min-height: 0; }
 iframe { width: 100%; height: 100%; border: none; }
 .wall-slot { margin-top:8px; border: 1px solid rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.08); }
 .wall-fields label { display:block; }
@@ -329,25 +329,24 @@ iframe { width: 100%; height: 100%; border: none; }
         min-height: 600px;
     }
     
-    .col-main.view-code,
-    .col-main.view-game {
-    }
-    
-    .col-main.view-code .panel-game,
-    .col-main.view-game .panel-code {
-        display: flex !important;
-    }
-    
     .col-main .main-content {
         flex-direction: column !important;
     }
     
-    .col-main .panel-game { 
+    /* On mobile, only constrain sizes in Split view */
+    .col-main.view-split .panel-game { 
         flex: 0 0 45% !important;
     }
-    
-    .col-main .panel-code { 
+    .col-main.view-split .panel-code { 
         flex: 1 !important;
+    }
+
+    /* Ensure single-view modes truly hide the other panel */
+    .col-main.view-code .panel-game { 
+        display: none !important;
+    }
+    .col-main.view-game .panel-code { 
+        display: none !important;
     }
     
     .view-controls {
@@ -496,14 +495,30 @@ document.addEventListener('DOMContentLoaded', () => {
         viewBtns: document.querySelectorAll('.view-btn')
     };
 
+    function triggerRunnerResize() {
+        try {
+            if (ui.iframe) {
+                ui.iframe.style.width = '100%';
+                ui.iframe.style.height = '100%';
+            }
+            const container = document.querySelector('.panel-game .game-frame');
+            const dims = container ? { width: container.clientWidth, height: container.clientHeight } : undefined;
+            ui.iframe?.contentWindow?.postMessage({ type: 'rpg:resize', ...(dims || {}) }, '*');
+            try { ui.iframe?.contentWindow?.dispatchEvent(new Event('resize')); } catch (_) {}
+        } catch (_) {}
+    }
+
     ui.viewBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const view = btn.dataset.view;
             ui.colMain.className = `col-main view-${view}`;
             ui.viewBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+
+            // Prompt the embedded runner to expand after layout settles
+            setTimeout(() => { triggerRunnerResize(); }, 50);
         });
-    
+
             // NOTE: removed preloading/inlining of full engine sources to keep the editor focused
             // Students only need the import lines and asset/JSON definitions; no fetching here.
     });
@@ -1248,6 +1263,8 @@ export const gameLevelClasses = [CustomLevel];`;
             setTimeout(() => {
                 try {
                     ui.iframe.contentWindow.postMessage({ type: 'rpg:run-code', code: code }, '*');
+                    // Nudge sizing right after code injection
+                    triggerRunnerResize();
                 } catch (e) {
                     console.error('Failed to send code to iframe:', e);
                 }
@@ -1268,11 +1285,26 @@ export const gameLevelClasses = [CustomLevel];`;
     updateStepUI();
     renderOverlay();
     
+    // Observe container/window resizes to keep runner flexible
+    try {
+        if (window.ResizeObserver) {
+            const container = document.querySelector('.panel-game .game-frame');
+            if (container) {
+                const ro = new ResizeObserver(() => { triggerRunnerResize(); });
+                ro.observe(container);
+            }
+        }
+        window.addEventListener('resize', () => { triggerRunnerResize(); });
+    } catch (_) {}
+
     // Hide control buttons in the iframe by injecting CSS
     ui.iframe.addEventListener('load', () => {
         try {
             const style = ui.iframe.contentDocument.createElement('style');
             style.textContent = `
+                html, body { height: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+                #root, #app, .game, .game-container, canvas { height: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+                canvas { display: block !important; }
                 .pause-button-bar { display: none !important; }
                 .leaderboard-widget { display: none !important; }
                 .score-display { display: none !important; }
@@ -1285,6 +1317,8 @@ export const gameLevelClasses = [CustomLevel];`;
                 [class*="score" i] { display: none !important; }
             `;
             ui.iframe.contentDocument.head.appendChild(style);
+            // Also nudge sizing on load
+            triggerRunnerResize();
         } catch (e) {
             // Cross-origin restriction, ignore
             console.debug('Cannot inject CSS into iframe:', e);
