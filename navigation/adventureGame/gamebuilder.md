@@ -1285,6 +1285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false, lastEdited: null };
     let stagedCode = null;
     let stagedStep = null;
+    // Step flow: add background → player → freestyle
     const steps = ['background','player','freestyle'];
     let stepIndex = 0; 
     const stepIndicatorMini = document.getElementById('step-indicator-mini');
@@ -1305,9 +1306,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setIndicator() {
         const current = steps[stepIndex];
+        const freestyleIndex = steps.indexOf('freestyle');
         if (stepIndicatorMini) {
-            if (stepIndex < 2) {
-                stepIndicatorMini.textContent = `Step ${stepIndex + 1}/2`;
+            if (stepIndex < freestyleIndex) {
+                stepIndicatorMini.textContent = `Step ${stepIndex + 1}/${freestyleIndex}`;
             } else {
                 stepIndicatorMini.textContent = 'Freestyle';
             }
@@ -1448,6 +1450,16 @@ class CustomLevel {
         this.classes = [
             ${classesArray.join(',\n')}
         ];
+        // Post object summary to builder (debugging visibility of NPCs/walls)
+        try {
+            setTimeout(() => {
+                try {
+                    const objs = Array.isArray(gameEnv?.gameObjects) ? gameEnv.gameObjects : [];
+                    const summary = objs.map(o => ({ cls: o?.constructor?.name || 'Unknown', id: o?.canvas?.id || '', z: o?.canvas?.style?.zIndex || '' }));
+                    if (window && window.parent) window.parent.postMessage({ type: 'rpg:objects', summary }, '*');
+                } catch (_) {}
+            }, 250);
+        } catch (_) {}
         // Report environment metrics (like top offset) to builder
         try {
             if (window && window.parent) {
@@ -1960,6 +1972,13 @@ export const gameLevelClasses = [CustomLevel];`;
             const { startLine, lineCount } = computeChangeRange(ui.editor.value, newCode);
             state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
             renderOverlay();
+            // Live preview NPC/walls in code view so additions are visible before confirm
+            if (stepToCompose === 'npc' || stepToCompose === 'walls') {
+                animateTypingDiff(ui.editor.value, newCode, () => {
+                    const btnDone = document.getElementById('btn-confirm');
+                    if (btnDone) btnDone.classList.add('staged');
+                });
+            }
         }
     }
 
@@ -1988,7 +2007,7 @@ export const gameLevelClasses = [CustomLevel];`;
             const nY = (slot.nY && slot.nY.value) ? parseInt(slot.nY.value, 10) : 300;
             const nScale = Math.max(1, parseInt(slot.nScale?.value || 8, 10));
             const nAnim = Math.max(1, parseInt(slot.nAnim?.value || 50, 10));
-            return `\n        const npcData${index} = {\n            id: '${nId}',\n            greeting: '${nMsg}',\n            src: path + "${nSprite.src}",\n            SCALE_FACTOR: ${nScale},\n            ANIMATION_RATE: ${nAnim},\n            INIT_POSITION: { x: ${nX}, y: ${nY} },\n            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },\n            down: { row: 0, start: 0, columns: 3 },\n            right: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            left: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            up: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upRight: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downRight: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upLeft: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downLeft: { row: 0, start: 0, columns: 3 },\n            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n            dialogues: ['${nMsg}'],\n            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }\n        };`;
+            return `\n        const npcData${index} = {\n            id: '${nId}',\n            greeting: '${nMsg}',\n            src: path + "${nSprite.src}",\n            SCALE_FACTOR: ${nScale},\n            ANIMATION_RATE: ${nAnim},\n            INIT_POSITION: { x: ${nX}, y: ${nY} },\n            pixels: { height: ${nSprite.h}, width: ${nSprite.w} },\n            orientation: { rows: ${nSprite.rows}, columns: ${nSprite.cols} },\n            down: { row: 0, start: 0, columns: 3 },\n            right: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            left: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            up: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upRight: { row: Math.min(3, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downRight: { row: Math.min(1, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            upLeft: { row: Math.min(2, ${nSprite.rows} - 1), start: 0, columns: 3 },\n            downLeft: { row: 0, start: 0, columns: 3 },\n            hitbox: { widthPercentage: 0.1, heightPercentage: 0.2 },\n            zIndex: 12,\n            dialogues: ['${nMsg}'],\n            reaction: function() { if (this.dialogueSystem) { this.showReactionDialogue(); } else { console.log(this.greeting); } },\n            interact: function() { if (this.dialogueSystem) { this.showRandomDialogue(); } }\n        };`;
         }).join('\n');
         includedSlots.forEach((slot) => {
             classes.push(`      { class: Npc, data: npcData${slot.index} }`);
@@ -2029,6 +2048,17 @@ export const gameLevelClasses = [CustomLevel];`;
             while ((mm = varRe.exec(scan)) !== null) { varNames.push(mm[1]); }
             if (varNames.length) {
                 varNames.forEach(vn => {
+                    const blockRe = new RegExp("\\n\\s*const\\s+" + vn + "\\s*=\\s*\\{[\\s\\S]*?\\};\\s*", 'g');
+                    code = code.replace(blockRe, '\n');
+                });
+            }
+            // Also remove existing barrier blocks to avoid duplicates when merging
+            const barrierVarNames = [];
+            const bVarRe = /\bconst\s+(barrierData\d+)\s*=\s*\{/g;
+            let bm;
+            while ((bm = bVarRe.exec(scan)) !== null) { barrierVarNames.push(bm[1]); }
+            if (barrierVarNames.length) {
+                barrierVarNames.forEach(vn => {
                     const blockRe = new RegExp("\\n\\s*const\\s+" + vn + "\\s*=\\s*\\{[\\s\\S]*?\\};\\s*", 'g');
                     code = code.replace(blockRe, '\n');
                 });
@@ -2137,10 +2167,62 @@ export const gameLevelClasses = [CustomLevel];`;
         const oldCode = ui.editor.value;
         const current = steps[stepIndex];
 
+        // Always attempt to merge NPC and Barrier inserts on confirm, regardless of step
+        try {
+            const npcInsAll = buildNpcInsertText();
+            const wallInsAll = buildBarrierInsertText();
+            const hasNpcAll = (npcInsAll.defs && npcInsAll.defs.trim().length) || (npcInsAll.classes && npcInsAll.classes.length);
+            const hasWallAll = (wallInsAll.defs && wallInsAll.defs.trim().length) || (wallInsAll.classes && wallInsAll.classes.length);
+            if (hasNpcAll || hasWallAll) {
+                const merged = mergeDefsAndClasses(oldCode, (npcInsAll.defs || '') + (wallInsAll.defs || ''), [...(npcInsAll.classes || []), ...(wallInsAll.classes || [])]);
+                animateTypingDiff(oldCode, merged, () => {
+                    // Lock NPC slots and set display names
+                    ui.npcs.forEach(slot => {
+                        if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
+                            slot.locked = true;
+                            const name = (slot.nId && slot.nId.value ? slot.nId.value.trim() : 'NPC');
+                            slot.displayName = name;
+                            if (slot.addBtn) {
+                                const open = slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none';
+                                slot.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                slot.addBtn.classList.add('btn-confirm');
+                            }
+                            if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
+                        }
+                    });
+                    // Lock wall slots
+                    ui.walls.forEach(w => {
+                        if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
+                            w.locked = true;
+                            const name = w.displayName || `Wall ${w.index}`;
+                            w.displayName = name;
+                            if (w.addBtn) {
+                                const open = w.fieldsContainer && w.fieldsContainer.style.display !== 'none';
+                                w.addBtn.textContent = name + (open ? ' ▾' : ' ▸');
+                                w.addBtn.classList.add('btn-confirm');
+                            }
+                            if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
+                        }
+                    });
+                    // Advance to Player step if not already there; then freestyle afterwards
+                    stepIndex = steps.indexOf('player');
+                    setIndicator();
+                    updateStepUI();
+                    ui.overlayConfirmed = ui.overlayConfirmed || hasWallAll;
+                    // Clear staged state so live engine uses merged editor code
+                    stagedCode = null; stagedStep = null;
+                    runInEmbed();
+                    if (btn) btn.classList.remove('staged');
+                });
+                return;
+            }
+        } catch (_) {}
+
         if (state.userEdited) {
-            if (current === 'npc') {
-                const ins = buildNpcInsertText();
-                const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+            const npcIns = buildNpcInsertText();
+            const hasNpcIns = (npcIns.defs && npcIns.defs.trim().length) || (npcIns.classes && npcIns.classes.length);
+            if (hasNpcIns) {
+                const merged = mergeDefsAndClasses(oldCode, npcIns.defs, npcIns.classes);
                 animateTypingDiff(oldCode, merged, () => {
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
@@ -2158,7 +2240,8 @@ export const gameLevelClasses = [CustomLevel];`;
                             }
                         }
                     });
-                    stepIndex = steps.indexOf('freestyle');
+                    // After inserting NPCs, guide to Player step; then freestyle after Player confirm
+                    stepIndex = steps.indexOf('player');
                     setIndicator();
                     updateStepUI();
                     runInEmbed();
@@ -2220,7 +2303,8 @@ export const gameLevelClasses = [CustomLevel];`;
                             }
                         }
                     });
-                    stepIndex = steps.indexOf('freestyle');
+                    // After confirming NPCs, move to Player step
+                    stepIndex = steps.indexOf('player');
                     stagedCode = null; stagedStep = null;
                     if (btn) btn.classList.remove('staged');
                     setIndicator();
@@ -2316,7 +2400,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     }
                 });
 
-                stepIndex = steps.indexOf('freestyle');
+                // After confirming NPCs, move to Player step
+                stepIndex = steps.indexOf('player');
             } else {
                 if (current === 'walls') {
                     ui.walls.forEach(w => {
@@ -2343,6 +2428,7 @@ export const gameLevelClasses = [CustomLevel];`;
     });
 
     function safeCodeToRun() {
+        // Prefer staged for background/player, but not for npc/walls so live engine uses editor merges
         const preferStaged = (typeof stagedStep !== 'undefined' && !['npc','walls'].includes(stagedStep));
         const preferred = (preferStaged && typeof stagedCode === 'string' && stagedCode.length) ? stagedCode : (ui.editor.value || '');
         const hasLevels = /export\s+const\s+gameLevelClasses/.test(preferred);

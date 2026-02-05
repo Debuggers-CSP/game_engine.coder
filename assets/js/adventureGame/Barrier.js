@@ -27,12 +27,17 @@ class Barrier extends GameObject {
     }
 
     draw() {
-        // Position the collision canvas; draw only if editing/visible
+        // Position the collision canvas using same offsets/scaling as Character
+        const offsetLeft = this.gameEnv?.canvasOffsetLeft || 0;
+        const offsetTop = this.gameEnv?.canvasOffsetTop || 0;
+        const scaleX = this.gameEnv?.canvasScaleX || 1;
+        const scaleY = this.gameEnv?.canvasScaleY || 1;
+
         this.canvas.style.position = 'absolute';
-        this.canvas.style.left = `${this.transform.x}px`;
-        this.canvas.style.top = `${this.gameEnv.top + this.transform.y}px`;
-        this.canvas.style.width = `${this.canvas.width}px`;
-        this.canvas.style.height = `${this.canvas.height}px`;
+        this.canvas.style.left = `${offsetLeft + (this.transform.x * scaleX)}px`;
+        this.canvas.style.top = `${offsetTop + (this.transform.y * scaleY)}px`;
+        this.canvas.style.width = `${this.canvas.width * scaleX}px`;
+        this.canvas.style.height = `${this.canvas.height * scaleY}px`;
         this.canvas.style.zIndex = this.spriteData.zIndex !== undefined ? String(this.spriteData.zIndex) : '5';
 
         if (this.visible) {
