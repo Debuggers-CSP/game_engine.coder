@@ -635,6 +635,8 @@ iframe { width: 100%; height: 100%; border: none; }
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Resolve site base for fetching manifests and assets
+    const SITE_BASE = "{{ site.baseurl }}" || "";
     const assets = {
         bg: {
             desert: { src: "/images/gamify/desert.png", h: 580, w: 1038 },
@@ -654,7 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchJson(url) {
         try {
-            const res = await fetch(url, { cache: 'no-store' });
+            const res = await fetch((SITE_BASE ? (SITE_BASE + url) : url), { cache: 'no-store' });
             if (!res.ok) return null;
             const ct = res.headers.get('content-type') || '';
             if (ct.includes('application/json')) return await res.json();
@@ -664,7 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchText(url) {
         try {
-            const res = await fetch(url, { cache: 'no-store' });
+            const res = await fetch((SITE_BASE ? (SITE_BASE + url) : url), { cache: 'no-store' });
             if (!res.ok) return null;
             const ct = res.headers.get('content-type') || '';
             if (ct.includes('text/html')) return await res.text();
@@ -697,7 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let m;
         while ((m = aRe.exec(html)) !== null) {
             const href = m[1];
-            const full = href.startsWith('http') ? href : (dirUrl.replace(/\/$/, '') + '/' + href.replace(/^\//, ''));
+            const fullRel = href.startsWith('http') ? href : (dirUrl.replace(/\/$/, '') + '/' + href.replace(/^\//, ''));
+            const full = SITE_BASE ? (SITE_BASE + fullRel) : fullRel;
             if (IMG_EXT_RE.test(full)) results.push(full);
         }
         return results;
@@ -708,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const img = new Image();
             img.onload = () => resolve({ h: img.naturalHeight, w: img.naturalWidth });
             img.onerror = () => resolve({ h: undefined, w: undefined });
-            img.src = src;
+            img.src = SITE_BASE ? (SITE_BASE + src) : src;
         });
     }
 
@@ -741,7 +744,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const item of data) {
                     const name = item.name || item.key || item.src;
                     const key = sanitizeKey(name);
-                    const src = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const srcRel = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const src = srcRel; // store without SITE_BASE; runtime uses gameEnv.path
                     const dims = (item.h && item.w) ? { h: item.h, w: item.w } : await ensureImageDims(src);
                     if (!assets.bg[key]) assets.bg[key] = { src, h: dims.h, w: dims.w };
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
@@ -753,8 +757,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = base.replace(/\.[^.]+$/, '');
                     const key = sanitizeKey(name);
                     if (assets.bg[key]) continue;
-                    const dims = await ensureImageDims(src);
-                    assets.bg[key] = { src, h: dims.h, w: dims.w };
+                    const relSrc = src.replace(SITE_BASE, '');
+                    const dims = await ensureImageDims(relSrc);
+                    assets.bg[key] = { src: relSrc, h: dims.h, w: dims.w };
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.bg.appendChild(opt);
                 }
             }
@@ -770,7 +775,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const item of data) {
                     const name = item.name || item.key || item.src;
                     const key = sanitizeKey(name);
-                    const src = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const srcRel = item.src?.startsWith('/') ? item.src : (dir.replace(/\/$/, '') + '/' + (item.src || ''));
+                    const src = srcRel; // store without SITE_BASE
                     const dims = (item.h && item.w) ? { h: item.h, w: item.w } : await ensureImageDims(src);
                     const rows = item.rows || 4; const cols = item.cols || 3;
                     if (!assets.sprites[key]) assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
@@ -786,9 +792,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = base.replace(/\.[^.]+$/, '');
                     const key = sanitizeKey(name);
                     if (assets.sprites[key]) continue;
-                    const dims = await ensureImageDims(src);
+                    const relSrc = src.replace(SITE_BASE, '');
+                    const dims = await ensureImageDims(relSrc);
                     const rows = 4, cols = 3; 
-                    assets.sprites[key] = { src, h: dims.h, w: dims.w, rows, cols };
+                    assets.sprites[key] = { src: relSrc, h: dims.h, w: dims.w, rows, cols };
                     const opt = document.createElement('option'); opt.value = key; opt.textContent = name; ui.pSprite.appendChild(opt);
                     document.querySelectorAll('.npc-sprite').forEach(sel => {
                         const o = document.createElement('option'); o.value = key; o.textContent = name; sel.appendChild(o);
@@ -2430,6 +2437,9 @@ export const gameLevelClasses = [CustomLevel];`;
 
     const refreshBtn = document.getElementById('btn-refresh-assets');
     if (refreshBtn) refreshBtn.addEventListener('click', () => { scanServerAssets(); });
+
+    // Initial scan to reflect latest JSON changes
+    try { scanServerAssets(); } catch (_) {}
 
 
     // Initialize editor and UI on load
