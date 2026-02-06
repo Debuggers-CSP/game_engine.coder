@@ -304,8 +304,8 @@ select:disabled, option[disabled] { color: #fff; }
 
 .highlight-persistent-block {
     position: absolute;
-    background: color-mix(in srgb, var(--pref-accent-color) 12%, transparent);
-    border: 2px solid var(--pref-accent-color);
+    background: rgba(255, 230, 0, 0.6); /* Opaque yellow highlight for added code */
+    border: 2px solid #ffdd00;
     border-left-width: 4px;
     left: 10px;
     width: calc(100% - 20px);
@@ -2016,27 +2016,71 @@ export const gameLevelClasses = [CustomLevel];`;
             stagedStep = stepToCompose;
             const btn = document.getElementById('btn-confirm');
             if (btn) btn.classList.add('staged');
-            const { startLine, lineCount } = computeChangeRange(ui.editor.value, newCode);
-            state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
-            renderOverlay();
-            if (stepToCompose === 'npc' || stepToCompose === 'walls') {
-                animateTypingDiff(ui.editor.value, newCode, () => {
-                    const btnDone = document.getElementById('btn-confirm');
-                    if (btnDone) btnDone.classList.add('staged');
-                });
-            }
+            // Show live typing animation for any composed step
+            simulateTypingChange(ui.editor.value, newCode, () => {
+                const btnDone = document.getElementById('btn-confirm');
+                if (btnDone) btnDone.classList.add('staged');
+            });
         }
     }
 
-    function animateTypingDiff(oldCode, newCode, onDone) {
-        state.programmaticEdit = true;
+    /* IMPORTANT: Simulate typing the changed code region, then persist highlight */
+    function simulateTypingChange(oldCode, newCode, onDone) {
         const { startLine, lineCount } = computeChangeRange(oldCode, newCode);
-        ui.editor.value = newCode;
-        state.typing = null;
-        state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
+        // If no visible change, just swap and persist
+        if (!lineCount || lineCount < 1) {
+            state.programmaticEdit = true;
+            ui.editor.value = newCode;
+            state.typing = null;
+            state.persistent = null;
+            renderOverlay();
+            state.programmaticEdit = false;
+            if (typeof onDone === 'function') onDone();
+            return;
+        }
+
+        const newLines = newCode.split('\n');
+        const before = newLines.slice(0, startLine).join('\n');
+        const changed = newLines.slice(startLine, startLine + lineCount).join('\n');
+        const after = newLines.slice(startLine + lineCount).join('\n');
+
+        const join3 = (a, b, c) => {
+            const s1 = a ? a + (b ? '\n' : (c ? '\n' : '')) : '';
+            const s2 = b ? b + (c ? '\n' : '') : '';
+            const s3 = c || '';
+            return s1 + s2 + s3;
+        };
+
+        const TICK_MS = 16;
+        const CHARS_PER_TICK = 80;
+        let idx = 0;
+
+        state.programmaticEdit = true;
+        state.typing = { startLine, lineCount: Math.max(1, lineCount) };
         renderOverlay();
-        state.programmaticEdit = false;
-        if (typeof onDone === 'function') onDone();
+
+        const typeStep = () => {
+            const nextIdx = Math.min(changed.length, idx + CHARS_PER_TICK);
+            const typedSegment = changed.slice(0, nextIdx);
+            ui.editor.value = join3(before, typedSegment, after);
+            renderOverlay();
+            idx = nextIdx;
+            if (idx < changed.length) {
+                window.setTimeout(typeStep, TICK_MS);
+            } else {
+                // Finished typing; set final value to ensure exact match
+                ui.editor.value = newCode;
+                state.typing = null;
+                state.persistent = { startLine, lineCount: Math.max(1, lineCount) };
+                renderOverlay();
+                state.programmaticEdit = false;
+                if (typeof onDone === 'function') onDone();
+            }
+        };
+
+        // Initialize the editor with the unchanged prefix and empty typed region
+        ui.editor.value = join3(before, '', after);
+        window.setTimeout(typeStep, TICK_MS);
     }
 
     function buildNpcInsertText() {
@@ -2219,7 +2263,7 @@ export const gameLevelClasses = [CustomLevel];`;
             const hasWallAll = (wallInsAll.defs && wallInsAll.defs.trim().length) || (wallInsAll.classes && wallInsAll.classes.length);
             if (hasNpcAll || hasWallAll) {
                 const merged = mergeDefsAndClasses(oldCode, (npcInsAll.defs || '') + (wallInsAll.defs || ''), [...(npcInsAll.classes || []), ...(wallInsAll.classes || [])]);
-                animateTypingDiff(oldCode, merged, () => {
+                simulateTypingChange(oldCode, merged, () => {
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
                             slot.locked = true;
@@ -2263,7 +2307,7 @@ export const gameLevelClasses = [CustomLevel];`;
             const hasNpcIns = (npcIns.defs && npcIns.defs.trim().length) || (npcIns.classes && npcIns.classes.length);
             if (hasNpcIns) {
                 const merged = mergeDefsAndClasses(oldCode, npcIns.defs, npcIns.classes);
-                animateTypingDiff(oldCode, merged, () => {
+                simulateTypingChange(oldCode, merged, () => {
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
                             slot.locked = true;
@@ -2293,7 +2337,7 @@ export const gameLevelClasses = [CustomLevel];`;
             if (current === 'walls') {
                 const ins = buildBarrierInsertText();
                 const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
-                animateTypingDiff(oldCode, merged, () => {
+                simulateTypingChange(oldCode, merged, () => {
                     ui.walls.forEach(w => {
                         if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
                             w.locked = true;
@@ -2326,7 +2370,7 @@ export const gameLevelClasses = [CustomLevel];`;
             if (applyingStep === 'npc') {
                 const ins = buildNpcInsertText();
                 const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
-                animateTypingDiff(oldCode, merged, () => {
+                simulateTypingChange(oldCode, merged, () => {
                     ui.npcs.forEach(slot => {
                         if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
                             slot.locked = true;
@@ -2356,7 +2400,7 @@ export const gameLevelClasses = [CustomLevel];`;
             if (applyingStep === 'walls') {
                 const ins = buildBarrierInsertText();
                 const merged = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
-                animateTypingDiff(oldCode, merged, () => {
+                simulateTypingChange(oldCode, merged, () => {
                     ui.walls.forEach(w => {
                         if (w.fieldsContainer && w.fieldsContainer.style.display !== 'none') {
                             w.locked = true;
@@ -2381,7 +2425,7 @@ export const gameLevelClasses = [CustomLevel];`;
                 return;
             }
             const codeToApply = stagedCode;
-            animateTypingDiff(oldCode, codeToApply, () => {
+            simulateTypingChange(oldCode, codeToApply, () => {
                 if (applyingStep === 'background') { lockField(ui.bg); }
                 if (applyingStep === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
                 if (applyingStep === 'walls') {
@@ -2419,7 +2463,7 @@ export const gameLevelClasses = [CustomLevel];`;
             else alert('Add at least one NPC, then Confirm Step.');
             return;
         }
-        animateTypingDiff(oldCode, newCode, () => {
+        simulateTypingChange(oldCode, newCode, () => {
             if (current === 'background') { lockField(ui.bg); }
             if (current === 'player') { lockField(ui.pSprite); lockField(ui.pX); lockField(ui.pY); lockField(ui.pName); lockField(document.getElementById('movement-keys')); }
             if (current === 'npc') {
