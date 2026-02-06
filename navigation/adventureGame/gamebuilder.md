@@ -597,8 +597,8 @@ iframe { width: 100%; height: 100%; border: none; }
                     </div>
                     <div class="draw-toolbar">
                         <button id="toggle-walls-game" class="draw-btn">Show Walls (Game)</button>
-                        <button id="draw-barrier" class="draw-btn">Draw Wall (Red)</button>
-                        <button id="draw-clear" class="draw-btn">Clear Shapes</button>
+                        <button id="draw-barrier" class="draw-btn">Draw Collision Wall</button>
+                        <button id="draw-clear" class="draw-btn">Clear All Walls</button>
                     </div>
                     <div id="walls-container"></div>
                 </div>
@@ -634,6 +634,7 @@ iframe { width: 100%; height: 100%; border: none; }
 </div>
 
 <script>
+/* builder bootstrapping and asset scanning */
 document.addEventListener('DOMContentLoaded', () => {
     const SITE_BASE = "{{ site.baseurl }}" || "";
     const assets = {
@@ -672,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (_) { return null; }
     }
 
+    // label normalization
     function sanitizeKey(name) {
         return String(name || '')
             .toLowerCase()
@@ -679,6 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/^_+|_+$/g, '');
     }
 
+    // select option management
     function clearSelectOptions(selectEl) {
         if (!selectEl) return;
         const opts = Array.from(selectEl.options || []);
@@ -689,6 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // asset discovery: scan directory listing for image files
     async function scanDirForImages(dirUrl) {
         const html = await fetchText(dirUrl);
         const results = [];
@@ -704,6 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return results;
     }
 
+    // asset metadata: ensure image dimensions by loading it
     async function ensureImageDims(src) {
         return new Promise((resolve) => {
             const img = new Image();
@@ -729,6 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /* server asset scan → populate background/sprite selectors */
     async function scanServerAssets() {
         clearSelectOptions(ui.bg);
         clearSelectOptions(ui.pSprite);
@@ -806,6 +812,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.npc-sprite').forEach(sel => dedupSelectOptions(sel));
     }
 
+    /*  UI element references and state containers */
     const ui = {
         bg: document.getElementById('bg-select'),
         bgInstructionsBtn: document.getElementById('bg-instructions-btn'),
@@ -864,6 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewBtns: document.querySelectorAll('.view-btn')
     };
 
+    // view switching: preview/game/code panels
     ui.viewBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const view = btn.dataset.view;
@@ -875,12 +883,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let envTopOffset = 0;
     let envLeftOffset = 0;
-    // Live game container dimensions (from iframe)
+    // live game container dimensions (from iframe)
     let envWidth = 0;
     let envHeight = 0;
-    // Track overlay size to rescale drawn shapes on container changes
+    // track overlay size to rescale drawn shapes on container changes
     let overlayPrevW = 0;
     let overlayPrevH = 0;
+    /* rceive live game container metrics (from iframe) */
     window.addEventListener('message', (e) => {
         try {
             if (e && e.data && e.data.type === 'rpg:env-metrics') {
@@ -888,13 +897,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 envLeftOffset = Number(e.data.left) || 0;
                 envWidth = Number(e.data.width) || envWidth || 0;
                 envHeight = Number(e.data.height) || envHeight || 0;
-                // If the game container resized, adapt overlay-drawn shapes (unless user confirmed walls)
                 try { renderDrawShapes(); } catch (_) {}
                 try { syncOverlayBarriersToRunner(); } catch (_) {}
             }
         } catch (_) { /* ignore */ }
     });
 
+    // simple toggler for disclosure panels
     function toggle(el) {
         if (!el) return;
         const isHidden = el.style.display === 'none';
@@ -910,6 +919,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.npcSpriteInstructionsBtn) ui.npcSpriteInstructionsBtn.addEventListener('click', () => toggle(ui.npcSpriteInstructionsPanel));
     if (ui.playerAdvancedBtn) ui.playerAdvancedBtn.addEventListener('click', () => toggle(ui.playerAdvancedPanel));
 
+    /* overlay drawing (barriers) */
     function removePreview() {
         if (!ui.drawOverlay) return;
         const preview = ui.drawOverlay.querySelector('.draw-rect.preview');
@@ -931,15 +941,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.drawBarrierBtn) ui.drawBarrierBtn.addEventListener('click', () => { state.lastEdited = 'walls'; setDrawMode('barrier'); });
     if (ui.drawClearBtn) ui.drawClearBtn.addEventListener('click', () => { state.lastEdited = 'walls'; ui.drawShapes = []; ui.overlayConfirmed = false; renderDrawShapes(); syncFromControlsIfFreestyle(); });
 
+    // show/hide overlay per game walls visibility
     function updateOverlayVisibility() {
         if (!ui.drawOverlay) return;
         ui.drawOverlay.style.display = ui.gameWallsVisible ? '' : 'none';
     }
 
+    // render overlay rectangles and sync to game
     function renderDrawShapes() {
         if (!ui.drawOverlay) return;
         const rect = ui.drawOverlay.getBoundingClientRect();
-        // Auto-rescale shapes when overlay size changes (before confirmation)
+        // auto-rescale shapes when overlay size changes (before confirmation)
         if (!ui.overlayConfirmed && overlayPrevW && overlayPrevH && rect.width && rect.height && (rect.width !== overlayPrevW || rect.height !== overlayPrevH)) {
             const scaleX = rect.width / overlayPrevW;
             const scaleY = rect.height / overlayPrevH;
@@ -1049,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // npcs
+    /* NPC UI slots and interactions */
     function makeNpcSlot(index) {
         const slot = {
             index,
@@ -1143,39 +1155,14 @@ document.addEventListener('DOMContentLoaded', () => {
             syncFromControlsIfFreestyle();
         });
 
+        // NPC deletion handler
+        // removes the slot, updates UI, rescans assets, and re-syncs code.
         slot.deleteBtn.addEventListener('click', () => {
             slot.container.remove();
             ui.npcs = ui.npcs.filter(n => n !== slot);
             updateStepUI();
             scanServerAssets();
-
-            if (ui.iframe) {
-                ui.iframe.addEventListener('load', () => {
-                    try {
-                        const doc = ui.iframe.contentDocument;
-                        if (!doc) return;
-                        if (doc.getElementById('gb-hide-hud-style')) return;
-                        const style = doc.createElement('style');
-                        style.id = 'gb-hide-hud-style';
-                        style.textContent = `
-                            .pause-button-bar { display: none !important; }
-                            .leaderboard-widget { display: none !important; }
-                            .score-display { display: none !important; }
-                            .score-counter { display: none !important; }
-                            .stats-display { display: none !important; }
-                            #scoreDisplay { display: none !important; }
-                            #score { display: none !important; }
-                            .hud { display: none !important; }
-                            [id*="score" i] { display: none !important; }
-                            [class*="score" i] { display: none !important; }
-                        `;
-                        doc.head.appendChild(style);
-                    } catch (_) {
-                    }
-                });
-            }
             syncFromControlsIfFreestyle();
-            if (ui.freestyleMode) syncToCode();
         });
 
         ['input','change'].forEach(evt => {
@@ -1216,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* wall UI slots and interactions */
     function makeWallSlot(index) {
         const slot = {
             index,
@@ -1273,7 +1261,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStepUI();
             scanServerAssets();
             syncFromControlsIfFreestyle();
-            if (ui.freestyleMode) syncToCode();
         });
 
         ['input','change'].forEach(evt => {
@@ -1301,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    /* editor overlay + state */
     const LINE_HEIGHT = 20;
     const state = { persistent: null, typing: null, userEdited: false, programmaticEdit: false, lastEdited: null };
     let stagedCode = null;
@@ -1335,6 +1323,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // field lock/unlock helpers for step gating
     function lockField(el) { if (el) { el.disabled = true; el.classList.add('locked'); } }
     function unlockField(el) { if (el) { el.disabled = false; el.classList.remove('locked'); } }
 
@@ -1343,10 +1332,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.editor.readOnly = false;
         const mv = document.getElementById('movement-keys');
         [ui.bg, ui.pSprite, ui.pX, ui.pY, ui.pName, mv].forEach(el => { if (el) el.disabled = true; });
-        ui.npcs.forEach(slot => {
-            if (slot.addBtn) slot.addBtn.disabled = true;
-            [slot.nId, slot.nMsg, slot.nSprite, slot.nX, slot.nY, slot.deleteBtn].forEach(el => { if (el) el.disabled = true; });
-        });
         if (ui.addWallBtn) ui.addWallBtn.disabled = true;
         ui.walls.forEach(slot => {
             const fields = [slot.wX, slot.wY, slot.wW, slot.wH, slot.deleteBtn];
@@ -1414,8 +1399,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
         }
+
+        // Always allow NPC edits, even after confirmation
+        ui.npcs.forEach(slot => {
+            if (slot.addBtn) slot.addBtn.disabled = false;
+            if (slot.fieldsContainer && slot.fieldsContainer.style.display !== 'none') {
+                [slot.nId, slot.nMsg, slot.nSprite, slot.nRows, slot.nCols, slot.nScale, slot.nAnim, slot.nX, slot.nY]
+                    .forEach(el => unlockField(el));
+                if (slot.deleteBtn) { slot.deleteBtn.disabled = false; slot.deleteBtn.style.display = ''; }
+            } else {
+                if (slot.deleteBtn) { slot.deleteBtn.disabled = !slot.locked; slot.deleteBtn.style.display = slot.locked ? '' : 'none'; }
+            }
+        });
     }
 
+        /* code generation (baseline and steps) */
         function generateBaselineCode() {
             return `import GameEnvBackground from '/assets/js/GameEngine/essentials/GameEnvBackground.js';
     import Player from '/assets/js/GameEngine/gameObjects/Player.js';
@@ -1959,6 +1957,7 @@ export const gameLevelClasses = [CustomLevel];`;
                 return ui.editor.value;
         }
 
+    /* SECTION: Diff computation for typed highlights */
     function computeChangeRange(oldCode, newCode) {
         const oldLines = oldCode.split('\n');
         const newLines = newCode.split('\n');
@@ -1973,6 +1972,7 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function clearOverlay() { ui.hLayer.innerHTML = ''; }
 
+    // Render highlight overlay for typing and persistent blocks
     function renderOverlay() {
         clearOverlay();
         ui.hLayer.style.transform = `translateY(${-ui.editor.scrollTop}px)`;
@@ -1999,7 +1999,8 @@ export const gameLevelClasses = [CustomLevel];`;
 
     function syncFromControlsIfFreestyle() {
         const current = steps[stepIndex];
-        if (state.userEdited && current === 'freestyle') return;
+        // Allow control-driven updates in freestyle even after manual edits
+        if (state.userEdited && current === 'freestyle' && !state.lastEdited) return;
         const hasNPCs = ui.npcs.length > 0;
         const hasWalls = (ui.walls.length > 0) || (ui.drawShapes && ui.drawShapes.some(s => s.type === 'barrier'));
         const hasPlayer = !!ui.pSprite.value;
@@ -2010,21 +2011,32 @@ export const gameLevelClasses = [CustomLevel];`;
         } else {
             stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
         }
-        const newCode = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
-        if (newCode) {
-            stagedCode = newCode;
-            stagedStep = stepToCompose;
+        const oldCode = ui.editor.value;
+        let composed = null;
+        let composedStep = stepToCompose;
+        // IMPORTANT: For NPC and Walls, merge into existing code instead of regenerating full file
+        if (stepToCompose === 'npc') {
+            const ins = buildNpcInsertText();
+            composed = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+        } else if (stepToCompose === 'walls') {
+            const ins = buildBarrierInsertText();
+            composed = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
+        } else {
+            composed = stepToCompose ? generateStepCode(stepToCompose) : generateBaselineCode();
+        }
+        if (composed) {
+            stagedCode = composed;
+            stagedStep = composedStep;
             const btn = document.getElementById('btn-confirm');
             if (btn) btn.classList.add('staged');
-            // Show live typing animation for any composed step
-            simulateTypingChange(ui.editor.value, newCode, () => {
+            simulateTypingChange(oldCode, composed, () => {
                 const btnDone = document.getElementById('btn-confirm');
                 if (btnDone) btnDone.classList.add('staged');
             });
         }
     }
 
-    /* IMPORTANT: Simulate typing the changed code region, then persist highlight */
+    /* SECTION: Typing animation (simulate code being typed, then persist highlight) */
     function simulateTypingChange(oldCode, newCode, onDone) {
         const { startLine, lineCount } = computeChangeRange(oldCode, newCode);
         // If no visible change, just swap and persist
@@ -2052,7 +2064,7 @@ export const gameLevelClasses = [CustomLevel];`;
         };
 
         const TICK_MS = 16;
-        const CHARS_PER_TICK = 80;
+        const CHARS_PER_TICK = 50;
         let idx = 0;
 
         state.programmaticEdit = true;
@@ -2083,6 +2095,7 @@ export const gameLevelClasses = [CustomLevel];`;
         window.setTimeout(typeStep, TICK_MS);
     }
 
+    /* SECTION: NPC and Barrier code inserts for confirm merges */
     function buildNpcInsertText() {
         const includedSlots = ui.npcs.slice();
         if (!includedSlots.length) return { defs: '', classes: [] };
@@ -2120,6 +2133,7 @@ export const gameLevelClasses = [CustomLevel];`;
         return { defs, classes };
     }
 
+    /* SECTION: Code merge utilities (defs + classes into editor content) */
     function mergeDefsAndClasses(oldCode, insertDefs, insertClasses) {
         let code = oldCode;
         try {
@@ -2251,6 +2265,7 @@ export const gameLevelClasses = [CustomLevel];`;
         if (slot.nY) slot.nY.addEventListener('input', () => { state.lastEdited = 'npc'; syncFromControlsIfFreestyle(); });
     });
 
+    /* SECTION: Confirm handler (apply staged code via typing, then lock fields) */
     document.getElementById('btn-confirm').addEventListener('click', () => {
         const btn = document.getElementById('btn-confirm');
         const oldCode = ui.editor.value;
@@ -2511,6 +2526,7 @@ export const gameLevelClasses = [CustomLevel];`;
         });
     });
 
+    /* SECTION: Runtime + iframe comms */
     function safeCodeToRun() {
         // Prefer staged for background/player, but not for npc/walls so live engine uses editor merges
         const preferStaged = (typeof stagedStep !== 'undefined' && !['npc','walls'].includes(stagedStep));
@@ -2575,6 +2591,7 @@ export const gameLevelClasses = [CustomLevel];`;
         });
     }
 
+    /* SECTION: Export composed level code */
     function exportCode() {
         let code = stagedCode || safeCodeToRun();
         if (!/export\s+const\s+gameLevelClasses/.test(code)) {
