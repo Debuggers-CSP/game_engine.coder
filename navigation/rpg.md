@@ -175,11 +175,15 @@ function closeCustomAlert() {
             const el = document.getElementById('gameContainer');
             const rect = el?.getBoundingClientRect?.() || { top: 0, left: 0 };
             if (window && window.parent) {
-                window.parent.postMessage({ type: 'rpg:env-metrics', top: rect.top || 0, left: rect.left || 0 }, '*');
+                const w = el?.clientWidth || 0;
+                const h = el?.clientHeight || 0;
+                window.parent.postMessage({ type: 'rpg:env-metrics', top: rect.top || 0, left: rect.left || 0, width: w, height: h }, '*');
             }
         } catch (_) {}
     }
     window.addEventListener('resize', () => { postEnvMetrics(); });
+    // Send initial metrics so overlays align before any resize
+    try { postEnvMetrics(); } catch (_) {}
 
 
     // Lazy-load engine (Prefer GameEngine, fallback to Mansion engine)
