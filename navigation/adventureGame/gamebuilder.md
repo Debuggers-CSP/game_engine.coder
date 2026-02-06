@@ -1166,7 +1166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ['input','change'].forEach(evt => {
-            const rerun = () => { try { syncFromControlsIfFreestyle(); } finally { runInEmbed(); } };
+            // Stage changes only; do not reload game until Confirm is pressed
+            const rerun = () => { try { syncFromControlsIfFreestyle(); } catch (_) {} };
             slot.nId?.addEventListener(evt, () => { rerun(); });
             slot.nMsg?.addEventListener(evt, () => { rerun(); });
             slot.nSprite?.addEventListener(evt, (e) => {
@@ -1467,6 +1468,7 @@ class CustomLevel {
         this.classes = [
             ${classesArray.join(',\n')}
         ];
+        /* BUILDER_ONLY_START */
         // Post object summary to builder (debugging visibility of NPCs/walls)
         try {
             setTimeout(() => {
@@ -1533,6 +1535,7 @@ class CustomLevel {
                 }
             });
         } catch (_) {}
+        /* BUILDER_ONLY_END */
     }
 }
 
@@ -2011,10 +2014,10 @@ export const gameLevelClasses = [CustomLevel];`;
         } else {
             stepToCompose = hasWalls ? 'walls' : (hasNPCs ? 'npc' : (hasPlayer ? 'player' : (hasBackground ? 'background' : null)));
         }
+        // Stage changes only; do not update editor or reload game until Confirm
         const oldCode = ui.editor.value;
         let composed = null;
         let composedStep = stepToCompose;
-        // IMPORTANT: For NPC and Walls, merge into existing code instead of regenerating full file
         if (stepToCompose === 'npc') {
             const ins = buildNpcInsertText();
             composed = mergeDefsAndClasses(oldCode, ins.defs, ins.classes);
@@ -2029,10 +2032,7 @@ export const gameLevelClasses = [CustomLevel];`;
             stagedStep = composedStep;
             const btn = document.getElementById('btn-confirm');
             if (btn) btn.classList.add('staged');
-            simulateTypingChange(oldCode, composed, () => {
-                const btnDone = document.getElementById('btn-confirm');
-                if (btnDone) btnDone.classList.add('staged');
-            });
+            // Do not call simulateTypingChange here; wait for Confirm
         }
     }
 
@@ -2194,20 +2194,9 @@ export const gameLevelClasses = [CustomLevel];`;
     const mvEl = document.getElementById('movement-keys');
     const rerunPlayer = () => { syncFromControlsIfFreestyle(); };
     function updatePlayerPositionInEditor() {
+        // Stage player position changes; no live reload until Confirm
         state.lastEdited = 'player';
-        const code = ui.editor.value || '';
-        const x = parseInt(ui.pX?.value || '0', 10);
-        const y = parseInt(ui.pY?.value || '0', 10);
-        const re = /(INIT_POSITION:\s*\{\s*x:\s*)(\d+)(\s*,\s*y:\s*)(\d+)(\s*\})/;
-        const updated = code.replace(re, `$1${x}$3${y}$5`);
-        if (updated !== code) {
-            state.programmaticEdit = true;
-            ui.editor.value = updated;
-            state.programmaticEdit = false;
-            runInEmbed();
-        } else {
-            rerunPlayer();
-        }
+        rerunPlayer();
     }
     if (ui.bg) ui.bg.addEventListener('change', () => { state.lastEdited = 'background'; rerunPlayer(); });
     if (ui.pSprite) ui.pSprite.addEventListener('change', () => {
@@ -2305,7 +2294,7 @@ export const gameLevelClasses = [CustomLevel];`;
                             if (w.deleteBtn) { w.deleteBtn.disabled = false; w.deleteBtn.style.display = ''; }
                         }
                     });
-                    stepIndex = steps.indexOf('player');
+                    stepIndex = steps.indexOf('freestyle');
                     setIndicator();
                     updateStepUI();
                     ui.overlayConfirmed = ui.overlayConfirmed || hasWallAll;
@@ -2339,8 +2328,8 @@ export const gameLevelClasses = [CustomLevel];`;
                             }
                         }
                     });
-                    // After inserting NPCs, guide to Player step; then freestyle after Player confirm
-                    stepIndex = steps.indexOf('player');
+                    // Stay in Freestyle after inserting NPCs
+                    stepIndex = steps.indexOf('freestyle');
                     setIndicator();
                     updateStepUI();
                     runInEmbed();
@@ -2402,8 +2391,8 @@ export const gameLevelClasses = [CustomLevel];`;
                             }
                         }
                     });
-                    // After confirming NPCs, move to Player step
-                    stepIndex = steps.indexOf('player');
+                    // Stay in Freestyle after confirming NPCs
+                    stepIndex = steps.indexOf('freestyle');
                     stagedCode = null; stagedStep = null;
                     if (btn) btn.classList.remove('staged');
                     setIndicator();
@@ -2499,8 +2488,8 @@ export const gameLevelClasses = [CustomLevel];`;
                     }
                 });
 
-                // After confirming NPCs, move to Player step
-                stepIndex = steps.indexOf('player');
+                // Stay in Freestyle after confirming NPCs
+                stepIndex = steps.indexOf('freestyle');
             } else {
                 if (current === 'walls') {
                     ui.walls.forEach(w => {
@@ -2591,13 +2580,18 @@ export const gameLevelClasses = [CustomLevel];`;
         });
     }
 
-    /* SECTION: Export composed level code */
+    /* export composed level code */
     function exportCode() {
         let code = stagedCode || safeCodeToRun();
         if (!/export\s+const\s+gameLevelClasses/.test(code)) {
             code = generateBaselineCode();
         }
         code = code.replace(/visible:\s*true\s*\/\*\s*BUILDER_DEFAULT\s*\*\//g, 'visible: false');
+        // remove any builder-only diagnostics and comms blocks
+        code = code.replace(/\/\*\s*BUILDER_ONLY_START\s*\*\/[\s\S]*?\/\*\s*BUILDER_ONLY_END\s*\*\//g, '');
+        // fallback cleanup if markers are missing in the current editor content
+        code = code.replace(/^.*window\.parent\.postMessage\([^\n]*\)\s*;?\s*$/gm, '');
+        code = code.replace(/try\s*\{\s*window\.addEventListener\(\s*'message'[\s\S]*?\}\s*catch\s*\(_\)\s*\{\}\s*/g, '');
         code = code.replace(/\/\* BUILDER_HOOKS_START \*\/[\s\S]*?\/\* BUILDER_HOOKS_END \*\//g, '');
         code = code.replace(/import\s+GameControl\s+from\s+[^\n]+\n/g, '');
         code = code.replace(/export\s*\{\s*GameControl\s*\};?/g, '');
