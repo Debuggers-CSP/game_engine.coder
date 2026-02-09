@@ -4,7 +4,6 @@ title: RPG
 permalink: /rpg/latest
 ---
 
-
 <style>
 .embedded .site-header,
 .embedded .post-header,
@@ -15,16 +14,13 @@ permalink: /rpg/latest
 .embedded .page-content, .embedded .post-content, .embedded main, .embedded .page { margin: 0 !important; padding: 0 !important; }
 html.embedded, html.embedded body { overflow: hidden !important; }
 
-
 html, body { height: 100%; }
 #gameContainer { width: 100%; height: 85vh; margin: 0; position: relative; }
 .embedded #gameContainer { height: 100vh; position: fixed; top: 0; left: 0; right: 0; }
 #gameCanvas { width: 100%; height: 100%; display: block; }
 
-
 /* Ensure a black screen when the engine is not started */
 #gameContainer, #gameCanvas { background: #000; }
-
 
 /* Overlay to block interactions and ensure black screen when stopped */
 #engine-blocker {
@@ -35,21 +31,8 @@ html, body { height: 100%; }
     display: none; /* shown when engine is stopped */
 }
 
-
 /* Hide Engine leaderboard when running inside Game Builder iframe */
 .embedded .leaderboard-widget { display: none !important; visibility: hidden !important; }
-
-/* Hide Engine HUD/scoreboard elements when embedded (used by GameBuilder) */
-.embedded .pause-button-bar { display: none !important; }
-.embedded .score-display { display: none !important; }
-.embedded .score-counter { display: none !important; }
-.embedded .stats-display { display: none !important; }
-.embedded #scoreDisplay { display: none !important; }
-.embedded #score { display: none !important; }
-.embedded .hud { display: none !important; }
-.embedded [id*="score" i] { display: none !important; }
-.embedded [class*="score" i] { display: none !important; }
-
 
 .custom-alert {
     display: none;
@@ -59,7 +42,6 @@ html, body { height: 100%; }
     transform: translate(-50%, -50%);
     z-index: 1000;
 }
-
 
 .custom-alert button {
     background-color: transparent; /* Fully transparent background */
@@ -71,9 +53,7 @@ html, body { height: 100%; }
     position: absolute; /* Position the button relative to the alert box */
 }
 
-
 </style>
-
 
 <script>
 // Enable embed mode when inside an iframe or with ?embed=1
@@ -88,7 +68,6 @@ html, body { height: 100%; }
     }
 })();
 
-
 function closeCustomAlert() {
     try {
         const el = document.getElementById('custom-alert');
@@ -97,22 +76,18 @@ function closeCustomAlert() {
 }
 </script>
 
-
 <div id="gameContainer">
     <canvas id='gameCanvas'></canvas>
     <div id="engine-blocker" aria-hidden="true"></div>
 </div>
 
-
 <div id="custom-alert" class="custom-alert">
     <button onclick="closeCustomAlert()" id="custom-alert-message"></button>
     </div>
 
-
 <script type="module">
     const path = "{{site.baseurl}}";
     const origin = window.location.origin;
-
 
     // Dynamically resolve a working base prefix for assets (handles empty or mismatched baseurl)
     let basePrefix = null;
@@ -132,40 +107,24 @@ function closeCustomAlert() {
         let lastErr = null;
         for (const cand of uniq) {
             try {
-                // Probe multiple likely engine locations to detect a correct base
-                const probes = [
-                    `${cand}/assets/js/GameEngine/essentials/Game.js?v=${Date.now()}`,
-                    `${cand}/assets/js/mansionGame/GameEngine/Game.js?v=${Date.now()}`,
-                    `${cand}/assets/js/adventureGame/GameEngine/Game.js?v=${Date.now()}`
-                ];
-                let ok = false;
-                let lastProbeErr = null;
-                for (const testUrl of probes) {
-                    try {
-                        const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
-                        const ctype = (res.headers.get('content-type') || '').toLowerCase();
-                        const text = res.ok ? await res.text() : '';
-                        if (!res.ok) {
-                            lastProbeErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
-                            continue;
-                        }
-                        // Reject HTML responses (which cause "Unexpected token '<'")
-                        if (text.trim().startsWith('<')) {
-                            lastProbeErr = new Error(`Probe returned HTML @ ${testUrl}`);
-                            continue;
-                        }
-                        // Accept typical JS MIME types; if ambiguous but body isn't HTML, accept as well
-                        if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module') || ctype === '') {
-                            basePrefix = cand; ok = true; break;
-                        } else {
-                            basePrefix = cand; ok = true; break;
-                        }
-                    } catch (probeErr) {
-                        lastProbeErr = probeErr;
+                const testUrl = `${cand}/assets/js/GameEnginev1.5/Game.js?v=${Date.now()}`;
+                const res = await fetch(testUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                if (res && res.ok) {
+                    const ctype = (res.headers.get('content-type') || '').toLowerCase();
+                    // Prefer JS MIME types; if ambiguous, inspect body
+                    if (ctype.includes('javascript') || ctype.includes('ecmascript') || ctype.includes('module')) {
+                        basePrefix = cand; return basePrefix;
                     }
+                    const text = await res.text();
+                    // Reject HTML responses (which cause "Unexpected token '<'")
+                    if (text.trim().startsWith('<')) {
+                        lastErr = new Error(`Probe returned HTML @ ${testUrl}`);
+                    } else {
+                        basePrefix = cand; return basePrefix;
+                    }
+                } else {
+                    lastErr = new Error(`Probe failed: ${res?.status} @ ${testUrl}`);
                 }
-                if (ok) return basePrefix;
-                lastErr = lastProbeErr;
             } catch (e) {
                 lastErr = e;
             }
@@ -176,7 +135,6 @@ function closeCustomAlert() {
         return basePrefix;
     }
 
-
     // Proactively unregister any service workers to avoid stale/cached HTML
     if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
         try {
@@ -185,107 +143,87 @@ function closeCustomAlert() {
         } catch (_) {}
     }
 
-    // Report environment metrics (offsets) to parent for overlay alignment
-    function postEnvMetrics() {
-        try {
-            const el = document.getElementById('gameContainer');
-            const rect = el?.getBoundingClientRect?.() || { top: 0, left: 0 };
-            if (window && window.parent) {
-                const w = el?.clientWidth || 0;
-                const h = el?.clientHeight || 0;
-                window.parent.postMessage({ type: 'rpg:env-metrics', top: rect.top || 0, left: rect.left || 0, width: w, height: h }, '*');
-            }
-        } catch (_) {}
-    }
-    window.addEventListener('resize', () => { postEnvMetrics(); });
-    // Send initial metrics so overlays align before any resize
-    try { postEnvMetrics(); } catch (_) {}
-
-
-    // Lazy-load engine (Prefer GameEngine, fallback to Mansion engine)
+    // Lazy-load engine (Prefer GameEngine, fallback to Adventure)
     let EngineModule = null;
-    let engineType = null; // 'gameengine' | 'mansion'
+    let engineType = null;
     async function loadEngine() {
         if (EngineModule) return EngineModule;
-        // Prefer GameEngine first (present in this workspace), fallback to Mansion
+        // Prefer Adventure engine first (present in this workspace), fallback to Better
         try {
             const prefix = await ensureBasePrefix();
-            const primaryUrl = `${prefix}/assets/js/GameEngine/essentials/Game.js?v=${Date.now()}`;
+            const advUrl = `${prefix}/assets/js/GameEnginev1.5/Game.js?v=${Date.now()}`;
             // Prefetch to validate MIME/content to avoid HTML imports
             try {
-                const r = await fetch(primaryUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                const r = await fetch(advUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
                 const ct = (r.headers.get('content-type') || '').toLowerCase();
                 const body = r.ok ? await r.text() : '';
                 if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
-                    throw new Error(`GameEngine not served as JS (status ${r.status || 'unknown'})`);
+                    throw new Error(`Adventure engine not served as JS (status ${r.status || 'unknown'})`);
                 }
             } catch (prefetchErr) {
                 throw prefetchErr;
             }
-            const primaryMod = await import(primaryUrl);
-            EngineModule = primaryMod?.default ?? primaryMod;
-            engineType = 'gameengine';
+            const advMod = await import(advUrl);
+            EngineModule = advMod?.default ?? advMod;
+            engineType = 'adventure';
             return EngineModule;
         } catch (eAdv) {
-            console.warn('GameEngine load failed, trying Mansion engine:', eAdv);
+            console.warn('Adventure engine load failed, trying GameEngine:', eAdv);
             try {
                 const prefix = await ensureBasePrefix();
-                const mansionUrl = `${prefix}/assets/js/mansionGame/GameEngine/Game.js?v=${Date.now()}`;
-                // Prefetch and validate Mansion engine too
+                const betterUrl = `${prefix}/assets/js/mansionGame/MansionLogic/Game.js?v=${Date.now()}`;
+                // Prefetch and validate Better engine too
                 try {
-                    const r = await fetch(mansionUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
+                    const r = await fetch(betterUrl, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
                     const ct = (r.headers.get('content-type') || '').toLowerCase();
                     const body = r.ok ? await r.text() : '';
                     if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
-                        throw new Error(`Mansion engine not served as JS (status ${r.status || 'unknown'})`);
+                        throw new Error(`Better engine not served as JS (status ${r.status || 'unknown'})`);
                     }
                 } catch (prefetchErr2) {
                     throw prefetchErr2;
                 }
-                const mansionMod = await import(mansionUrl);
-                EngineModule = mansionMod?.default ?? mansionMod;
-                engineType = 'mansion';
+                const betterMod = await import(betterUrl);
+                EngineModule = betterMod?.default ?? betterMod;
+                engineType = 'better';
                 return EngineModule;
             } catch (eBetter) {
-                console.error('Both engine loads failed:', { gameEngineError: eAdv, mansionError: eBetter });
+                console.error('Both engine loads failed:', { adventureError: eAdv, betterError: eBetter });
                 throw eBetter;
             }
         }
     }
 
-
-    // Explicit loader for Mansion engine (runtime fallback)
-    async function loadMansionEngine() {
+    // Explicit loader for Adventure engine for runtime fallback from Better
+    async function loadAdventureEngine() {
         try {
             const prefix = await ensureBasePrefix();
-            const url = `${prefix}/assets/js/mansionGame/GameEngine/Game.js?v=${Date.now()}`;
+            const url = `${prefix}/assets/js/GameEnginev1.5/Game.js?v=${Date.now()}`;
             // Prefetch and validate response isn't HTML
             try {
                 const r = await fetch(url, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
                 const ct = (r.headers.get('content-type') || '').toLowerCase();
                 const body = r.ok ? await r.text() : '';
                 if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
-                    throw new Error(`Mansion fallback not served as JS (status ${r.status || 'unknown'})`);
+                    throw new Error(`Adventure fallback not served as JS (status ${r.status || 'unknown'})`);
                 }
             } catch (prefetchErr) {
                 throw prefetchErr;
             }
             const mod = await import(url);
             EngineModule = mod?.default ?? mod;
-            engineType = 'mansion';
+            engineType = 'adventure';
             return EngineModule;
         } catch (e) {
-            console.error('Failed to load Mansion engine fallback:', e);
+            console.error('Failed to load Adventure engine fallback:', e);
             throw e;
         }
     }
-
 
     // Respect autostart query parameter (default: true)
     const params = new URLSearchParams(window.location.search);
     const autostartParam = (params.get('autostart') || '').toLowerCase();
     const autoStart = !(autostartParam === '0' || autostartParam === 'false' || autostartParam === 'no');
-
 
     // Blockers: prevent all input when engine inactive
     let engineActive = !!autoStart;
@@ -296,7 +234,6 @@ function closeCustomAlert() {
         'wheel','touchstart','touchmove','touchend','pointerdown','pointermove','pointerup'
     ];
     const handlers = new Map();
-
 
     function enableBlockers() {
         if (blockerEl) blockerEl.style.display = 'block';
@@ -309,7 +246,6 @@ function closeCustomAlert() {
         });
     }
 
-
     function disableBlockers() {
         if (blockerEl) blockerEl.style.display = 'none';
         handlers.forEach((h, type) => {
@@ -317,7 +253,6 @@ function closeCustomAlert() {
         });
         handlers.clear();
     }
-
 
     // Try to import RPG GameControl dynamically (may not exist in this repo)
     async function tryStartDefault() {
@@ -335,7 +270,6 @@ function closeCustomAlert() {
         return false;
     }
 
-
     if (!engineActive) {
         enableBlockers();
     } else {
@@ -349,10 +283,8 @@ function closeCustomAlert() {
         });
     }
 
-
-    // Track live engine instance (from code runner)
-    let liveEngine = null;
-
+    // Track live Adventure engine instance (from code runner)
+    let liveAdventure = null;
 
     // Expose simple control handling for parent pages via postMessage
     let isPaused = false;
@@ -378,14 +310,14 @@ function closeCustomAlert() {
                     }
                     break;
                 case 'pause':
-                    if (liveEngine && liveEngine.gameControl && typeof liveEngine.gameControl.pause === 'function') {
-                        liveEngine.gameControl.pause();
+                    if (liveAdventure && liveAdventure.gameControl && typeof liveAdventure.gameControl.pause === 'function') {
+                        liveAdventure.gameControl.pause();
                         isPaused = true;
                     }
                     break;
                 case 'resume':
-                    if (liveEngine && liveEngine.gameControl && typeof liveEngine.gameControl.resume === 'function') {
-                        liveEngine.gameControl.resume();
+                    if (liveAdventure && liveAdventure.gameControl && typeof liveAdventure.gameControl.resume === 'function') {
+                        liveAdventure.gameControl.resume();
                         isPaused = false;
                     }
                     break;
@@ -406,25 +338,6 @@ function closeCustomAlert() {
         }
     });
 
-    // Support simulated key events from GameBuilder
-    window.addEventListener('message', (event) => {
-        const d = event?.data;
-        if (!d || d.type !== 'rpg:simulate-key') return;
-        try {
-            const evType = d.evType === 'keyup' ? 'keyup' : 'keydown';
-            const evt = new KeyboardEvent(evType, { key: d.key || '', code: d.code || '', bubbles: true, cancelable: true });
-            // Patch legacy keyCode/which getters for engines reading numeric codes
-            try {
-                Object.defineProperty(evt, 'keyCode', { get: () => (d.keyCode || 0) });
-                Object.defineProperty(evt, 'which', { get: () => (d.keyCode || 0) });
-            } catch (_) {}
-            document.dispatchEvent(evt);
-        } catch (e) {
-            /* ignore */
-        }
-    });
-
-
     // Live code runner: accept code string, dynamic-import, and start engine
     window.addEventListener('message', async (event) => {
         const data = event?.data;
@@ -436,71 +349,27 @@ function closeCustomAlert() {
             enableBlockers();
             engineActive = false;
 
-
             // Rewrite import specifiers to fully-qualified URLs
             const origin = window.location.origin;
             await ensureBasePrefix();
-            const basePrefixLocal = String(basePrefix || origin).replace(/\/+$/, '');
-            // Static imports: import X from '/abs', import X from './rel'
-            const fromAbsRe = /(from\s*["'])(\/[^"]+)(["'])/g; // import ... from '/x/y'
-            const fromRelRe = /(from\s*["'])(\.{1,2}\/[^"]+)(["'])/g; // import ... from './x' or '../x'
-            // Side-effect imports: import '/abs', import './rel' (no 'from')
-            const bareImpAbsRe = /(import\s*["'])(\/[^"]+)(["'])/g; // import '/x/y'
-            const bareImpRelRe = /(import\s*["'])(\.{1,2}\/[^"]+)(["'])/g; // import './x' or '../x'
-            // Dynamic imports: import('/abs'), import('./rel')
-            const dynImpAbsRe = /(import\(\s*["'])(\/[^"]+)(["']\s*\))/g; // import('/x/y')
-            const dynImpRelRe = /(import\(\s*["'])(\.{1,2}\/[^"]+)(["']\s*\))/g; // import('./x') or import('../x')
+            const basePrefixLocal = basePrefix;
+            const fromAbsRe = /(from\s*["'])(\/[^"']+)(["'])/g; // import ... from '/x/y'
+            const dynImpAbsRe = /(import\(\s*["'])(\/[^"']+)(["']\s*\))/g; // import('/x/y')
+            const fromRelRe = /(from\s*["'])(?!https?:)(\.?\.?[^"']+)(["'])/g; // import ... from './x' or 'x'
+            const dynImpRelRe = /(import\(\s*["'])(?!https?:)(\.?\.?[^"']+)(["']\s*\))/g; // import('./x') or import('x')
             code = code
                 // Absolute root paths
                 .replace(fromAbsRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}${p2}${p3}`)
-                .replace(bareImpAbsRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}${p2}${p3}`)
                 .replace(dynImpAbsRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}${p2}${p3}`)
                 // Relative paths -> prefix with base
                 .replace(fromRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`)
-                .replace(bareImpRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`)
-                .replace(dynImpRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`)
-                // Catch-all: any quoted root-absolute path becomes fully-qualified
-                .replace(/(["'])(\/[^"']+)\1/g, (m, quote, abs) => `${quote}${basePrefixLocal}${abs}${quote}`);
-
+                .replace(dynImpRelRe, (m, p1, p2, p3) => `${p1}${basePrefixLocal}/${p2}${p3}`);
 
             // Ensure engine is loaded before running
             const Engine = await loadEngine();
 
-
-            // Extract and prefetch import specifiers to surface failing URLs early
-            const specifiers = [];
-            try {
-                const fromList = [...code.matchAll(/from\s*["']([^"']+)["']/g)].map(m => m[1]);
-                const dynImpList = [...code.matchAll(/import\(\s*["']([^"']+)["']\s*\)/g)].map(m => m[1]);
-                const bareImpList = [...code.matchAll(/import\s*["']([^"']+)["']/g)].map(m => m[1]);
-                specifiers.push(...fromList, ...dynImpList, ...bareImpList);
-            } catch (_) {}
-            const uniqSpecs = [...new Set(specifiers)].filter(s => /^https?:\/\//.test(s));
-            for (const u of uniqSpecs) {
-                try {
-                    const r = await fetch(u, { method: 'GET', credentials: 'same-origin', cache: 'no-store' });
-                    const ct = (r.headers.get('content-type') || '').toLowerCase();
-                    const body = r.ok ? await r.text() : '';
-                    if (!r.ok || body.trim().startsWith('<') || !(ct.includes('javascript') || ct.includes('ecmascript') || ct.includes('module') || ct === '')) {
-                        throw new Error(`Import check failed for ${u} (status ${r.status || 'unknown'})`);
-                    }
-                } catch (prefErr) {
-                    const el = document.getElementById('custom-alert');
-                    const msgBtn = document.getElementById('custom-alert-message');
-                    if (el && msgBtn) {
-                        msgBtn.textContent = `Error: ${prefErr.message}`;
-                        el.style.display = 'block';
-                        disableBlockers();
-                    }
-                    return;
-                }
-            }
-
             // Create module blob and import
-            // Helpful source name for better error stacks in devtools
-            const sourceNamedCode = `${code}\n//# sourceURL=gamebuilder-live-code.js`;
-            // Use a widely supported MIME for module import of Blob
-            const blob = new Blob([sourceNamedCode], { type: 'application/javascript' });
+            const blob = new Blob([code], { type: 'application/javascript' });
             const url = URL.createObjectURL(blob);
             let mod = null;
             try {
@@ -509,7 +378,7 @@ function closeCustomAlert() {
                 URL.revokeObjectURL(url);
             }
 
-
+            // Prepare environment references
             const env = {
                 path,
                 gameContainer: document.getElementById('gameContainer'),
@@ -519,16 +388,18 @@ function closeCustomAlert() {
                 fetchOptions: {}
             };
 
-
+            // Accept both named and default exports for gameLevelClasses
             let levelClasses = Array.isArray(mod.gameLevelClasses)
                 ? mod.gameLevelClasses
                 : Array.isArray(mod?.default?.gameLevelClasses)
                 ? mod.default.gameLevelClasses
                 : [];
+            // Fallback: single exported level class
             if (!levelClasses.length) {
                 const candidates = [];
                 if (typeof mod?.default === 'function') candidates.push(mod.default);
                 if (typeof mod.CustomLevel === 'function') candidates.push(mod.CustomLevel);
+                // Heuristic: any named export ending with 'Level' and is a function
                 try {
                     Object.keys(mod || {}).forEach(k => {
                         if (k !== 'default' && /Level$/i.test(k) && typeof mod[k] === 'function') {
@@ -539,7 +410,7 @@ function closeCustomAlert() {
                 if (candidates.length) levelClasses = [candidates[0]];
             }
 
-
+            // Diagnostics: surface what we detected from the module
             try {
                 console.debug('[Runner] Module export diagnostics', {
                     hasNamedGameLevelClasses: Array.isArray(mod?.gameLevelClasses),
@@ -551,155 +422,69 @@ function closeCustomAlert() {
                 });
             } catch (_) {}
 
-
             let started = false;
             let lastStartError = null;
+            // Always use Adventure engine for gamebuilder code (which only exports gameLevelClasses)
             if (levelClasses.length > 0 && Engine && typeof Engine.main === 'function') {
                 try {
-                    if (engineType === 'mansion') {
-                        const GameControlClass = mod.GameControl || mod?.default?.GameControl; // from user module
-                        if (!GameControlClass) throw new Error('GameControl export required for Mansion engine');
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        env.innerWidth = containerWidth;
-                        env.innerHeight = containerHeight;
-                        env.gameLevelClasses = levelClasses;
-                        try {
-                            liveEngine = Engine.main(env, GameControlClass);
-                        } catch (startErrBetter) {
-                            lastStartError = startErrBetter;
-                            throw startErrBetter;
-                        }
-                    } else {
-                        // GameEngine expects environment with level classes
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        try {
-                            liveEngine = Engine.main({
-                            path: env.path,
-                            gameContainer: env.gameContainer,
-                            gameCanvas: env.gameCanvas,
-                            pythonURI: env.pythonURI,
-                            javaURI: env.javaURI,
-                            fetchOptions: env.fetchOptions,
-                            innerWidth: containerWidth,
-                            innerHeight: containerHeight,
-                            gameLevelClasses: levelClasses
-                            });
-                        } catch (startErrAdv) {
-                            lastStartError = startErrAdv;
-                            throw startErrAdv;
-                        }
+                    // Force Adventure engine for all code coming through rpg.md (gamebuilder uses this)
+                    const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
+                    const containerHeight = Math.min(580, window.innerHeight);
+                    try {
+                        liveAdventure = Engine.main({
+                        path: env.path,
+                        gameContainer: env.gameContainer,
+                        gameCanvas: env.gameCanvas,
+                        pythonURI: env.pythonURI,
+                        javaURI: env.javaURI,
+                        fetchOptions: env.fetchOptions,
+                        innerWidth: containerWidth,
+                        innerHeight: containerHeight,
+                        gameLevelClasses: levelClasses
+                        });
+                    } catch (startErr) {
+                        lastStartError = startErr;
+                        throw startErr;
                     }
                     started = true;
                 } catch (e) {
-                    console.warn('Engine start failed, attempting Mansion fallback:', e);
-                    try {
-                        const Engine2 = await loadMansionEngine();
-                        const containerWidth = env.gameContainer?.clientWidth || window.innerWidth;
-                        const containerHeight = Math.min(580, window.innerHeight);
-                        try {
-                            liveEngine = Engine2.main({
-                            path: env.path,
-                            gameContainer: env.gameContainer,
-                            gameCanvas: env.gameCanvas,
-                            pythonURI: env.pythonURI,
-                            javaURI: env.javaURI,
-                            fetchOptions: env.fetchOptions,
-                            innerWidth: containerWidth,
-                            innerHeight: containerHeight,
-                            gameLevelClasses: levelClasses
-                            });
-                        } catch (startErrFB) {
-                            lastStartError = startErrFB;
-                            throw startErrFB;
-                        }
-                        started = true;
-                    } catch (ef) {
-                        console.error('Mansion fallback failed:', ef);
-                    }
+                    console.error('Game start failed:', e);
+                    lastStartError = e;
                 }
             }
-
 
             if (started) {
                 engineActive = true;
                 disableBlockers();
-                postEnvMetrics();
             } else {
+                // Provide clearer error message based on detected conditions
                 const noLevels = !levelClasses || levelClasses.length === 0;
                 const msg = noLevels
                     ? 'No levels detected. Export array `gameLevelClasses` or a default/named level class (e.g., `CustomLevel`).'
                     : `Engine start failed. ${lastStartError?.message ? 'Reason: ' + lastStartError.message : 'Check import paths and ensure assets exist under base.'} Base: ${basePrefix || (origin + (path || ''))}`;
+                // Show message without throwing to keep the app responsive
                 try {
                     const el = document.getElementById('custom-alert');
                     const msgBtn = document.getElementById('custom-alert-message');
                     if (el && msgBtn) {
                         msgBtn.textContent = msg;
                         el.style.display = 'block';
-                        disableBlockers();
+                        enableBlockers();
                     }
                 } catch (_) {}
                 return;
             }
         } catch (err) {
             console.error('Live code run error:', err);
-            try { console.debug('[Runner] Code (first 1000 chars):', String(code || '').slice(0, 1000)); } catch (_) {}
             try {
                 const el = document.getElementById('custom-alert');
                 const msgBtn = document.getElementById('custom-alert-message');
                 if (el && msgBtn) {
                     msgBtn.textContent = `Error: ${err.message || err}`;
                     el.style.display = 'block';
-                    disableBlockers();
+                    enableBlockers();
                 }
             } catch (_) {}
-        }
-    });
- 
-    window.addEventListener('message', (event) => {
-        const data = event?.data;
-        if (!data || data.type !== 'rpg:simulate-key') return;
-        try {
-            const evType = data.evType === 'keyup' ? 'keyup' : 'keydown';
-            const keyCode = Number(data.keyCode) || 0;
-            const key = typeof data.key === 'string' ? data.key : undefined;
-            const code = typeof data.code === 'string' ? data.code : undefined;
-            const synth = new KeyboardEvent(evType, {
-                keyCode,
-                which: keyCode,
-                key,
-                code,
-                bubbles: true,
-                cancelable: true
-            });
-            const targets = [document, window, document.activeElement].filter(Boolean);
-            targets.forEach(t => {
-                try { t.dispatchEvent(synth); } catch (_) {}
-            });
-        } catch (e) {
-            console.warn('simulate-key failed', e);
-        }
-    });
-
-
-    window.addEventListener('message', (event) => {
-        const data = event?.data;
-        if (!data || data.type !== 'rpg:trigger-interact') return;
-        try {
-            const gc = liveEngine && liveEngine.gameControl;
-            const handlers = gc && gc.globalInteractionHandlers ? Array.from(gc.globalInteractionHandlers) : [];
-            handlers.forEach(h => {
-                try {
-                    if (typeof h.handleKeyInteract === 'function') {
-                        h.handleKeyInteract();
-                    } else if (typeof h.interact === 'function') {
-                        h.interact.call(h);
-                    }
-                } catch (_) {}
-            });
-        } catch (e) {
-            console.warn('trigger-interact failed', e);
         }
     });
 </script>
